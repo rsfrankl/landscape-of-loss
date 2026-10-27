@@ -4,7 +4,7 @@ Oct 26, 2026 · @Rachel
 
 ## 1. Purpose and scope
 
-Build a static, desktop-first web dashboard that lets people explore the eight county population-change pathways (1950–2020) published in Park, Seymour and Franklin (2026). It visualizes the paper's findings only. No new analysis. The one derived product is a "similar counties" ranking computed from the paper's own decadal change data (section 6.6).
+Build a static, desktop-first web dashboard that lets people explore the eight county population-change pathways (1950–2020) published in Park, Seymour and Franklin (2026). It visualizes the paper's findings only. No new analysis. The one derived product is a "similar counties" ranking computed from the paper's own decadal change data (section 6.7).
 
 **Source paper.** Park, G., Seymour, E., and Franklin, R. (2026). Characterizing the Landscape of Loss: A Spatiotemporal Contextual Approach to Measuring U.S. County-Level Depopulation. *Annals of the American Association of Geographers*. [doi:10.1080/24694452.2026.2691208](https://doi.org/10.1080/24694452.2026.2691208). Cite and link it in the About panel and footer, not in the title area.
 
@@ -46,11 +46,11 @@ An R data pipeline writes static JSON and TopoJSON; a Svelte 5 + Vite + D3 front
 
 No React, no MapLibre or Leaflet, no basemap tiles, no UI component library.
 
-**Repository layout.** The repo does not exist yet; the author will create it.
+**Repository layout.** GitHub repository `rsfrankl/landscape-of-loss`.
 
 ```
 /pipeline        R scripts (_targets.R), raw/ (gitignored), checks/
-/pipeline/raw    inputs listed in section 3 (not committed if > 50 MB)
+/pipeline/raw    inputs listed in section 3 (never committed)
 /web             Svelte app (src/, public/data/ ← pipeline outputs)
 /docs            this spec, data dictionary, validation report
 .github/workflows/deploy.yml
