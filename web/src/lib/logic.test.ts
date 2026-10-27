@@ -5,20 +5,18 @@ import topoJson from '../../public/data/counties.topo.json';
 import componentsJson from '../../public/data/components.json';
 import type { AdCode, Components, County, Meta } from './types';
 import { LAST_DECADE } from './types';
-import { changeClass, formatLag, formatPct, truncate1 } from './format';
-import { dataColor, hexToRgb, isDimmed, legendKey, mix, palettes } from './colors';
+import { changeClass, formatPct, truncate1 } from './format';
+import { dataColor, hexToRgb, isDark, isDimmed, legendKey, mix, palettes } from './colors';
 import { legendCounts } from './counts';
 import { decodePick, pickCandidates, pickColor } from './picking';
 import { alignCounties, type CountyTopology } from './data';
 import {
-  contextLines,
   decadeSentence,
-  lineText,
-  modeLines,
   populationLine,
   recentSentence,
   sentenceText,
-  stripCaption,
+  stripCaptionText,
+  tooltipLines,
   type Segment,
 } from './describe';
 import { DEFAULT_STATE, parseUrl, toSearch } from './url';
@@ -44,17 +42,6 @@ describe('truncation and formatting', () => {
     expect(formatPct(-0.012, 4)).toBe('−0.0%');
     expect(formatPct(0, 3)).toBe('+0.0%');
     expect(formatPct(19.99, 2)).toBe('+19.9%');
-    expect(formatLag(0, 'A')).toBe('−0.0%');
-    expect(formatLag(0, 'B')).toBe('+0.0%');
-    expect(formatLag(5, 'D')).toBe('+5.0%');
-  });
-
-  it('truncates the neighbors’ change rather than rounding it', () => {
-    // Newton MS 1980–90: neighbors at −0.660 read −0.6, not −0.7.
-    const newton = county('28101');
-    expect(newton.lag![3]).toBe(-0.66);
-    expect(formatLag(newton.lag![3], newton.seq[3] as AdCode)).toBe('−0.6%');
-    expect(formatLag(-0.004, 'A')).toBe('−0.0%');
   });
 });
 
@@ -160,44 +147,77 @@ describe('picking', () => {
   });
 });
 
-describe('tooltip lines', () => {
-  const text = (lines: ReturnType<typeof modeLines>) => lines.map(lineText);
+describe('tooltip lines (spec 6.4)', () => {
+  const text = (lines: ReturnType<typeof tooltipLines>) =>
+    lines.map((l) => (l.swatch ? (l.swatch.round ? '● ' : '■ ') : '') + sentenceText(l.segs));
+  const barbour = county('01005');
 
-  it('follow spec 6.4', () => {
-    const barbour = county('01005');
-    expect(text(modeLines(meta, 'pathways', barbour, 3))).toEqual(['Recent population change (2010–20): −8.1%']);
-    expect(text(modeLines(meta, 'change', barbour, 5))).toEqual(['Population change (2000–10): −5.4%']);
-    expect(text(modeLines(meta, 'context', barbour, 5))).toEqual([
-      'Self population loss, neighbor population growth',
-      'Neighboring counties’ population change (2000–10): +4.9%',
+  it('start every line with its time frame, with one swatch', () => {
+    expect(text(tooltipLines(meta, 'context', barbour, 5))).toEqual([
+      '■ 2000–10: lost 5.4%; neighboring counties together grew 4.9%',
+      '1950–2020 pathway: Emerging Localized Loss',
     ]);
+    expect(text(tooltipLines(meta, 'change', barbour, 5))).toEqual([
+      '■ 2000–10: lost 5.4%',
+      '1950–2020 pathway: Emerging Localized Loss',
+    ]);
+    expect(text(tooltipLines(meta, 'pathways', barbour, 3))).toEqual([
+      '● 1950–2020 pathway: Emerging Localized Loss',
+      '2010–20: lost 8.1%',
+    ]);
+    expect(text(tooltipLines(meta, 'context', county('28101'), 3))[0]).toBe(
+      '■ 1980–90: grew 1.7%; neighboring counties together lost 0.6%',
+    );
+    expect(text(tooltipLines(meta, 'pathways', county('48331'), 0))[1]).toBe('2010–20: lost less than 0.1%');
   });
 
-  it('never show the county’s own change in spatial context mode', () => {
-    const barbour = county('01005');
-    expect(text(modeLines(meta, 'context', barbour, 5)).join(' ')).not.toContain('5.4');
-  });
-
-  it('replace the standard label for the three counties with no neighbors', () => {
-    for (const g of ['25007', '25019', '53055']) {
-      const c = county(g);
+  it('match the county’s fill in each mode', () => {
+    for (const c of [barbour, county('28101'), county('25007')]) {
       for (let d = 0; d < 7; d++) {
-        const self = c.seq[d] === 'B' ? 'loss' : 'growth';
-        expect(contextLines(meta, c, d).map(lineText), `${g} decade ${d}`).toEqual([
-          `Self population ${self}; no neighboring counties (counted as neighbor growth)`,
-        ]);
+        const sw = (mode: 'change' | 'context' | 'pathways') =>
+          tooltipLines(meta, mode, c, d).filter((l) => l.swatch).map((l) => hexToRgb(l.swatch!.color));
+        expect(sw('change')).toEqual([dataColor(palettes(meta), 'change', c, d)]);
+        expect(sw('context')).toEqual([dataColor(palettes(meta), 'context', c, d)]);
+        expect(sw('pathways')).toEqual([dataColor(palettes(meta), 'pathways', c, d)]);
       }
     }
+  });
+
+  it('use the no-neighbor wording for the three island counties', () => {
+    expect(text(tooltipLines(meta, 'context', county('25007'), 3))[0]).toBe(
+      '■ 1980–90: grew 30.1%; it has no neighboring counties',
+    );
     expect(new Set(['25007', '25019', '53055'].flatMap((g) => [...county(g).seq]))).toEqual(new Set(['B', 'D']));
   });
 
-  it('label A–D in words', () => {
-    expect(meta.ad.map((a) => a.label)).toEqual([
-      'Self population loss, neighbor population loss',
-      'Self population loss, neighbor population growth',
-      'Self population growth, neighbor population loss',
-      'Self population growth, neighbor population growth',
+  it('name the four states with arrows, county first', () => {
+    expect(meta.ad.map((a) => `${a.arrows} ${a.label}`)).toEqual([
+      '↓↓ Regional loss',
+      '↓↑ Localized loss',
+      '↑↓ Localized growth',
+      '↑↑ Regional growth',
     ]);
+  });
+});
+
+describe('text on the state colours', () => {
+  // WCAG contrast of the ink the strip, key and legend choose (theme --text / --bg, spec 7).
+  const lum = (hex: string) =>
+    hexToRgb(hex)
+      .map((v) => v / 255)
+      .map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4))
+      .reduce((a, v, i) => a + v * [0.2126, 0.7152, 0.0722][i], 0);
+  const contrast = (a: string, b: string) => {
+    const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p);
+    return (x + 0.05) / (y + 0.05);
+  };
+
+  it('meets AA (4.5:1) on every fill, with light text on the navy', () => {
+    for (const a of meta.ad) {
+      const ink = isDark(a.color) ? '#fbfbfb' : '#1a1210';
+      expect(contrast(ink, a.color), a.label).toBeGreaterThanOrEqual(4.5);
+    }
+    expect(isDark(meta.ad.find((a) => a.code === 'D')!.color)).toBe(true);
   });
 });
 
@@ -276,8 +296,13 @@ describe('profile sentences (spec 6.5)', () => {
     }
   });
 
-  it('explain strip cells in the A–D words', () => {
-    expect(stripCaption(meta, county('01005'), 5)).toBe('2000–10 · Self population loss, neighbor population growth');
+  it('explain strip cells with the state names', () => {
+    expect(stripCaptionText(meta, county('01005'), 5)).toBe(
+      '2000–10: Localized loss. Barbour County lost 5.4% while its neighboring counties together grew 4.9%.',
+    );
+    expect(stripCaptionText(meta, county('25007'), 3)).toBe(
+      '1980–90: Regional growth (no neighboring counties; counted as neighbors grew). Dukes County grew 30.1%; it has no neighboring counties.',
+    );
   });
 });
 
@@ -295,6 +320,9 @@ describe('profile detail blocks', () => {
     const shares = driverShares(componentsJson as unknown as Record<string, Components>);
     expect(driverSentence('both', shares)).toBe(
       'Lost population through both net out-migration and natural decrease, like 50% of loss counties.',
+    );
+    expect(driverSentence('other', shares)).toBe(
+      'The census shows a loss, but the 2010–20 estimates show growth (as for 3% of losing counties).',
     );
     expect([...shares.values()].reduce((a, b) => a + b)).toBeCloseTo(1);
   });

@@ -176,7 +176,7 @@ Three tabs, in this order, in sentence case. Tab names only: "pathway" stays the
 | Tab (URL `mode`) | Map colour | Decade control | Legend |
 | --- | --- | --- | --- |
 | Decadal population change (`change`, default at 2010–20) | Decadal % change, 5 classes | Shown | 5 classes with counts for that decade; at 2010–20 the pathway breakdown (6.6) follows below the legend |
-| Decadal population change in spatial context (`context`) | A–D state for the chosen decade | Shown | A–D with counts for that decade |
+| Decadal population change in spatial context (`context`) | A–D state for the chosen decade | Shown | The four states with counts for that decade, each as its arrow pair on its colour and its name (↓↓ Regional loss, ↓↑ Localized loss, ↑↓ Localized growth, ↑↑ Regional growth); hint "Did the county and its neighboring counties lose or gain population? First arrow: the county. Second: its neighbors combined." |
 | Population change trajectories (`pathways`) | 8 pathways (Fig. 8) | Hidden | 8 pathways, grouped Loss / Growth, with county counts |
 
 - The site opens in Decadal population change at 2010–20, which is the corrected Fig. 1.
@@ -195,14 +195,14 @@ Three tabs, in this order, in sentence case. Tab names only: "pathway" stays the
 
 Hovering a county outlines it (cased: 1.5 px `#2E2420` over a 3.5 px `#FBFBFB` halo; section 7) and shows a tooltip after 80 ms. Rule: hover only previews; everything in the tooltip is also in the profile, reached by clicking.
 
-- Line 1: "Barbour County, AL"
-- Line 2: pathway color dot + pathway name
-- Then, by mode (values in IBM Plex Mono; the decade comes from the slider):
-  - Decadal population change: "Population change (1980–90): −4.2%"
-  - Decadal population change in spatial context: the A–D category in words with its color swatch ("Self population loss, neighbor population growth"), then only the neighbors' population-weighted change: "Neighboring counties’ population change (1980–90): +1.3%". The county's own % is not shown in this mode. For the three counties without neighbors (25007, 25019, 53055), one line replaces both: "Self population growth; no neighboring counties (counted as neighbor growth)", or "Self population loss; …" when the county lost population that decade.
-  - Population change trajectories: "Recent population change (2010–20): −8.1%"
-- The profile (6.5) reuses the A–D words and the no-neighbor wording in its sequence strip, and states each decade's change as a sentence rather than these lines.
-- Neighbors' change is truncated to 1 decimal like the county values (−0.66 shows as −0.6, not −0.7), with its sign from the A–D letter.
+- Line 1: "Barbour County, AL".
+- Then two lines by mode. Exactly one colour swatch, matching the county's fill in the current mode (square for change classes and spatial context, round for pathways); every line starts with its time frame; values in IBM Plex Mono; the decade comes from the slider. No state name (regional loss etc.) in the tooltip.
+  - Decadal population change: "■ 1990–2000: grew 9.0%", then "1950–2020 pathway: Constant Growth" (plain text, no dot).
+  - Decadal population change in spatial context: "■ 1990–2000: grew 9.0%; neighboring counties together grew 7.7%", then the same pathway line. For the three counties without neighbors (25007, 25019, 53055): "■ 1980–90: grew 30.1%; it has no neighboring counties".
+  - Population change trajectories: "● 1950–2020 pathway: Constant Growth", then "2010–20: lost 8.1%".
+- Wording follows the profile sentences (6.5 block 4): "grew"/"lost" by sign, unsigned values truncated to 1 decimal, "less than 0.1%" for a value that truncates to zero, and the no-neighbor wording.
+- Neighbors' change is truncated to 1 decimal like the county values (−0.66 shows as 0.6, not 0.7), with "grew"/"lost" from the A–D letter.
+- The swatch takes the county's data colour even when a pathway filter grays the county out on the map.
 
 To show the neighbour figure, add `lag` (7 values, percent, 3 decimals, from section 4 step 5) to the `counties.json` record.
 
@@ -214,15 +214,16 @@ The panel is grouped by time frame: the 70-year pathway first, then the decade-b
 
 1. **Header.** "Newton County, MS"; under it "21,291 people (2020) · Nonmetro" (metro status from 2023 RUCC, 2013 fallback); `rucc_note` in small type when present (the 8 Connecticut counties). × closes.
 2. **"70-year trajectory, 1950–2020".** The pathway colour dot and name, then the pathway's one-line `blurb` from `meta.json`. No "Loss pathway" or "Growth pathway" text.
-3. **"Each decade: the county and its neighbors".** The sequence strip: seven cells coloured A–D, letter inside, two-digit decade labels under ("80–90", so seven fit in the panel; the explanation gives the full label). In the two decade modes the cell for the map's current decade is outlined. Hovering a cell explains it in the A–D words, "2000–10 · Self population loss, neighbor population growth"; for the three counties without neighbors it uses the no-neighbor wording from 6.4. Because hover only previews, focusing or clicking a cell shows the same explanation under the strip.
+3. **"Each decade: the county and its neighbors".** The sequence strip: seven cells in the A–D colours, each marked with an arrow pair (first the county, second its neighbors combined: A ↓↓, B ↓↑, C ↑↓, D ↑↑), two-digit decade labels under ("80–90", so seven fit in the panel; the explanation gives the full label). In the two decade modes the cell for the map's current decade is outlined. Hovering a cell explains it under the strip: "2000–10 · ↓↑ Localized loss", then the decade's sentence ("Barbour County lost 5.4% while its neighboring counties together grew 4.9%."); for the three counties without neighbors the name is followed by "(no neighboring counties; counted as neighbors grew)". Because hover only previews, focusing or clicking a cell pins the same explanation, and the matching key cell is outlined.
+   Below the strip, a compact 2 × 2 key (a table): rows "County lost ↓" / "County grew ↑", columns "Neighbors lost ↓" / "Neighbors grew ↑"; each cell in its state colour with the arrows and name: ↓↓ Regional loss, ↓↑ Localized loss, ↑↓ Localized growth, ↑↑ Regional growth. Then one line: "First arrow: the county. Second: its neighbors combined. Point to a decade for details." Arrows are inline SVG, not text glyphs, so no fallback font is ever used for them. Text and arrows on each fill meet WCAG AA (4.5:1): light text on the navy (↑↑), dark text on the other three.
 4. **"1980–90 (decade on the map)".** One sentence about the map's current decade: "Newton County grew 1.7% while its neighboring counties together lost 0.6%." "Grew" or "lost" comes from the sign (the county's change class; the neighbors' A–D letter), and both values are shown without a sign, truncated to 1 decimal (6.2): neighbors at −0.660 show as 0.6, not 0.7. A value that truncates to 0.0 reads "less than 0.1%" ("Milam County lost less than 0.1% while …"). For the three counties without neighbors (25007, 25019, 53055): "Dukes County grew 30.1%; it has no neighboring counties." Numbers in IBM Plex Mono.
 5. **"Most recent decade, 2010–20".** The county's 2010–20 change as a sentence: "Newton County lost 1.9%." When the map decade is 2010–20, or the mode has no decade (Population change trajectories), blocks 4 and 5 merge into one block headed "Most recent decade, 2010–20 (decade on the map)" (or "Most recent decade, 2010–20" in trajectories mode) holding block 4's sentence for 2010–20.
 6. **"Population, 1950–2020".** Line of the 8 counts (y = people from 0, formatted 25k) with, beneath it, seven signed bars for decadal % change around a zero line, coloured with the 5-class palette; years 1950…2020 along the bottom; note under: "Line: people. Bars: % change in each decade." A visually hidden table carries the counts and changes for screen readers. No headline: the 2020 count is in the header and the 2010–20 change in block 4 or 5.
 7. **"Who lives here (ACS 2016–20)".** One row per indicator (14 rows from section 4 step 6). Each row: county dot with MOE whisker (none for the four 2020 Census race and ethnicity rows, which have no MOE), a tick for the pathway value, a tick for the U.S. value; county value printed at right. Each row has its own axis from 0 to a rounded value above the largest of county value + MOE, pathway value and U.S. value, with the axis end labelled (e.g. "40%"); a shared 0–100% axis would make rows under 15% unreadable. Axis ends step by 5 below 50 and by 10 above, capped at 100. The pathway tick is in the pathway colour with a thin dark edge; the U.S. tick is muted grey; a key above the rows names all three marks. Each row's pathway and U.S. values are in visually hidden text. Note under: "Race and ethnicity from the 2020 Census; other indicators from the ACS 2016–20. Education is bachelor's degree or higher, which differs from Table 1 of the paper (bachelor's degree only). Each row's axis runs from 0 to the value at its right."
-8. **"Why it changed, 2010–20".** Three horizontal bars about zero, in people: natural change, domestic migration, international migration. No net-migration or total bar: the estimates' total can contradict the census change shown in block 4 or 5. Line above the bars: "People, April 2010 to July 2020 (Census Bureau Vintage 2020 estimates)". Gains use the change palette's growth colour and losses its decline colour (from `meta.json`); values signed at right ("−1,043"). For loss counties, the Table 2 driver as a sentence, with the share of that driver among the 1,637 loss counties rounded to a whole percent: "Lost population through net out-migration only, like 35% of loss counties." / "… through both net out-migration and natural decrease, like 50% …" / "… through natural decrease only, like 13% …" / "Lost population although the estimates show net in-migration and natural increase, like 3% of loss counties."
+8. **"Why it changed, 2010–20".** Three horizontal bars about zero, in people: natural change, domestic migration, international migration. No net-migration or total bar: the estimates' total can contradict the census change shown in block 4 or 5. Line above the bars: "People, April 2010 to July 2020 (Census Bureau Vintage 2020 estimates)". All three bars are one neutral colour (`#7A6C68`, the muted interface token), not the change palette; the bar's direction shows the sign, and values are signed at right ("−1,043"). For loss counties, the Table 2 driver as a sentence, with the share of that driver among the 1,637 loss counties rounded to a whole percent: "Lost population through net out-migration only, like 35% of loss counties." / "… through both net out-migration and natural decrease, like 50% …" / "… through natural decrease only, like 13% …" / for "other" (net migration ≥ 0 and natural increase): "The census shows a loss, but the 2010–20 estimates show growth (as for 3% of losing counties)."
 9. **"Similar counties"** (6.7).
 
-The A–D colours appear in the panel only in the strip (block 3); there is no standalone A–D swatch anywhere in the panel.
+The A–D colours appear in the panel only in the strip and its key (block 3); there is no standalone A–D swatch anywhere in the panel, and no letters A–D anywhere in the panel (cells, key, legend, labels). The letters remain internal codes in the data.
 
 Footer of the panel: "Download this county (CSV)".
 
@@ -287,10 +288,10 @@ Pathway and A–D colours come from the paper's data dictionary, unchanged; the 
 | Pathways | 6 Localized Recovery and Regional Growth | `#e5e522` |
 | Pathways | 7 Punctuated Growth | `#bb7693` |
 | Pathways | 8 Emerging Growth | `#8cd17d` |
-| A–D | A Self population loss, neighbor population loss | `#f7786b` |
-| A–D | B Self population loss, neighbor population growth | `#f7cac9` |
-| A–D | C Self population growth, neighbor population loss | `#92a8d1` |
-| A–D | D Self population growth, neighbor population growth | `#214471` |
+| A–D | A ↓↓ Regional loss (county lost, neighbors combined lost) | `#f7786b` |
+| A–D | B ↓↑ Localized loss (county lost, neighbors combined grew) | `#f7cac9` |
+| A–D | C ↑↓ Localized growth (county grew, neighbors combined lost) | `#92a8d1` |
+| A–D | D ↑↑ Regional growth (county grew, neighbors combined grew) | `#214471` |
 | Change | Growth 20% or more | `#2887a1` |
 | Change | +10% to 19.9% | `#79a7ac` |
 | Change | 0% to 9.9% | `#b5c8b8` |
@@ -310,7 +311,7 @@ The change palette replaces the published Fig. 1 colours in Decadal population c
 - Map outlines are cased: a `#FBFBFB` halo underneath and a `#2E2420` line on top, both non-scaling (`vector-effect: non-scaling-stroke`), so they read on light and dark fills alike. Selected county: 2 px line over a 4 px halo. Hover: 1.5 px line over a 3.5 px halo. Similar counties (6.7): the same casing with a dashed line (2 px line over a 4 px halo; the halo stays solid). No coloured outlines, to avoid clashing with data fills.
 - Map: no fill outside the U.S.; county borders `#FBFBFB` at 0.3 px (drop below zoom 1.5 if they clutter); state borders `#FBFBFB` at 0.9 px over fills.
 
-**Spelling.** US spelling in all visible text, labels, blurbs and Data notes (neighbor, color, gray). The A–D labels above are the exact display text in the legend, tooltip and panel. (This spec and code comments may use either spelling.)
+**Spelling.** US spelling in all visible text, labels, blurbs and Data notes (neighbor, color, gray). The four A–D names above ("Regional loss", "Localized loss", "Localized growth", "Regional growth"), with their arrows, are the exact display text in the spatial-context legend and the profile strip and key (`meta.json` `ad[].label` and `ad[].arrows`); the letters are never displayed. (This spec and code comments may use either spelling.)
 
 **Typography.** Never Arial, including as a fallback.
 

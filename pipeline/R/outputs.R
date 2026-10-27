@@ -23,10 +23,9 @@ EXPECTED_PATHWAY_N <- c(557L, 126L, 442L, 512L, 949L, 141L, 312L, 69L)
 
 AD_STATES <- data.frame(
   code = c("A", "B", "C", "D"),
-  label = c("Self population loss, neighbor population loss",
-            "Self population loss, neighbor population growth",
-            "Self population growth, neighbor population loss",
-            "Self population growth, neighbor population growth"),
+  # Display names (spec 7); the first arrow is the county, the second its neighbors combined.
+  label = c("Regional loss", "Localized loss", "Localized growth", "Regional growth"),
+  arrows = c("\u2193\u2193", "\u2193\u2191", "\u2191\u2193", "\u2191\u2191"),
   color = c("#f7786b", "#f7cac9", "#92a8d1", "#214471"),
   stringsAsFactors = FALSE)
 

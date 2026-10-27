@@ -9,11 +9,10 @@ export function axisEnd(largest: number): number {
   return Math.min(100, Math.max(5, (Math.floor(largest / step) + 1) * step));
 }
 
-const DRIVER_TEXT: Record<Driver, string> = {
+const DRIVER_TEXT: Record<Exclude<Driver, 'other'>, string> = {
   outmig: 'Lost population through net out-migration only',
   both: 'Lost population through both net out-migration and natural decrease',
   natural: 'Lost population through natural decrease only',
-  other: 'Lost population although the estimates show net in-migration and natural increase',
 };
 
 /** Share (0–1) of loss counties with each Table 2 driver. */
@@ -30,5 +29,8 @@ export function driverShares(components: Record<string, Components>): Map<Driver
 
 /** "Lost population through both net out-migration and natural decrease, like 50% of loss counties." */
 export function driverSentence(driver: Driver, shares: Map<Driver, number>): string {
-  return `${DRIVER_TEXT[driver]}, like ${Math.round(100 * shares.get(driver)!)}% of loss counties.`;
+  const pct = Math.round(100 * shares.get(driver)!);
+  // "Other": the census count fell but the estimates' components both point up.
+  if (driver === 'other') return `The census shows a loss, but the 2010–20 estimates show growth (as for ${pct}% of losing counties).`;
+  return `${DRIVER_TEXT[driver]}, like ${pct}% of loss counties.`;
 }

@@ -4,6 +4,7 @@
   import { legendCounts } from '../lib/counts';
   import { formatCount } from '../lib/format';
   import { isDark } from '../lib/colors';
+  import Arrows from './Arrows.svelte';
 
   let { meta, counties }: { meta: Meta; counties: County[] } = $props();
 
@@ -50,7 +51,7 @@
     {/each}
   {:else if ui.mode === 'context'}
     <h2>Population change in spatial context, {meta.decades[decade].label}</h2>
-    <p class="hint">Did the county and its neighboring counties lose or gain population?</p>
+    <p class="hint">Did the county and its neighboring counties lose or gain population? First arrow: the county. Second: its neighbors combined.</p>
     <ul>
       {#each meta.ad as a (a.code)}
         <li>
@@ -61,9 +62,9 @@
             onpointerleave={() => isolate(null)}
           >
             <span
-              class="swatch letter"
+              class="swatch arrows"
               style:background={a.color}
-              style:color={isDark(a.color) ? 'var(--bg)' : 'var(--text)'}>{a.code}</span
+              style:color={isDark(a.color) ? 'var(--bg)' : 'var(--text)'}><Arrows arrows={a.arrows} size={13} /></span
             >
             <span class="name">{a.label}</span>
             <span class="num count">{formatCount(counts.get(a.code) ?? 0)}</span>
@@ -155,11 +156,10 @@
     height: 22px;
     border-radius: 3px;
   }
-  .letter {
+  .arrows {
     display: grid;
     place-items: center;
-    font-weight: 800;
-    font-size: var(--size-small);
+    width: 30px;
   }
   .count {
     font-size: var(--size-small);

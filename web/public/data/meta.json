@@ -106,22 +106,26 @@
   "ad": [
     {
       "code": "A",
-      "label": "Self population loss, neighbor population loss",
+      "label": "Regional loss",
+      "arrows": "↓↓",
       "color": "#f7786b"
     },
     {
       "code": "B",
-      "label": "Self population loss, neighbor population growth",
+      "label": "Localized loss",
+      "arrows": "↓↑",
       "color": "#f7cac9"
     },
     {
       "code": "C",
-      "label": "Self population growth, neighbor population loss",
+      "label": "Localized growth",
+      "arrows": "↑↓",
       "color": "#92a8d1"
     },
     {
       "code": "D",
-      "label": "Self population growth, neighbor population growth",
+      "label": "Regional growth",
+      "arrows": "↑↑",
       "color": "#214471"
     }
   ],

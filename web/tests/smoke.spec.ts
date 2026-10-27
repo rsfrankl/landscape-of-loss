@@ -130,8 +130,8 @@ test('keyboard path: search → select → read profile → close', async ({ pag
   await expect(profileTitle(page)).toHaveText('Doña Ana County, NM');
   await expect(page).toHaveURL(/county=35013/);
   // The strip explains a decade on focus, not only on hover.
-  await page.getByRole('button', { name: /^1950–60 · / }).focus();
-  await expect(page.locator('.caption')).toHaveText(/^1950–60 · Self population growth, neighbor population growth$/);
+  await page.getByRole('button', { name: /^1950–60: / }).focus();
+  await expect(page.locator('.caption')).toHaveText(/^1950–60 · +Regional growth Doña Ana County grew \d+\.\d% while its neighboring counties together grew \d+\.\d%\.$/);
   await page.keyboard.press('Escape');
   await expect(profileTitle(page)).toHaveCount(0);
   await expect(page).toHaveURL(/\/landscape-of-loss\/$/);
@@ -203,4 +203,35 @@ test('clicks select the county under the pointer, including near borders and wit
     await expect.poll(() => new URL(page.url()).searchParams.get('county'), { timeout: 2000 }).not.toBeNull().catch(() => missed.push(`${x},${y}`));
   }
   expect(missed).toEqual([]);
+});
+
+test('tooltip: one swatch, every line starting with its time frame, no A–D label', async ({ page }) => {
+  const canvas = page.locator('canvas[role="img"]');
+  const cases: [string, RegExp[], boolean][] = [
+    ['?mode=context&decade=1980', [/^\s*1980–90: (grew|lost) (less than )?\d+\.\d%; (neighboring counties together (grew|lost) (less than )?\d+\.\d%|it has no neighboring counties)$/, /^\s*1950–2020 pathway: .+$/], false],
+    ['?decade=1980', [/^\s*1980–90: (grew|lost) (less than )?\d+\.\d%$/, /^\s*1950–2020 pathway: .+$/], false],
+    ['?mode=pathways', [/^\s*1950–2020 pathway: .+$/, /^\s*2010–20: (grew|lost) (less than )?\d+\.\d%$/], true],
+  ];
+  for (const [search, lines, round] of cases) {
+    await page.goto(`./${search}`);
+    await page.waitForTimeout(300);
+    const box = (await canvas.boundingBox())!;
+    await page.mouse.move(box.x + box.width * 0.5, box.y + box.height * 0.45);
+    await page.mouse.move(box.x + box.width * 0.5 + 2, box.y + box.height * 0.45);
+    const tip = page.locator('.tooltip');
+    await expect(tip).toBeVisible();
+    await expect(tip.locator('.line')).toHaveText(lines);
+    await expect(tip.locator('.dot')).toHaveCount(1);
+    await expect(tip.locator('.dot.square')).toHaveCount(round ? 0 : 1);
+    await expect(tip).not.toContainText(/Regional|Localized|Self population/);
+  }
+});
+
+test('the profile panel shows no A–D letters', async ({ page }) => {
+  await page.goto('./?mode=context&county=28101');
+  const panel = page.locator('aside.panel');
+  await expect(panel.locator('.cell')).toHaveCount(7);
+  await expect(panel.locator('.cell').first()).toHaveText('');
+  await expect(panel.locator('.key tbody td')).toHaveText([/Regional loss/, /Localized loss/, /Localized growth/, /Regional growth/]);
+  await expect(panel).not.toContainText(/\bA–D\b|\b[ABCD]\b(?!\.)/);
 });

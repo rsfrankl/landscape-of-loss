@@ -86,7 +86,7 @@
 
   <ProfileBlock title="Why it changed, {recent}" collapsible bind:open={profileOpen.components}>
     {#if extra && shares}
-      <ComponentsChart {meta} comp={extra.components[county.geoid]} {shares} />
+      <ComponentsChart comp={extra.components[county.geoid]} {shares} />
     {:else}
       <p class="status">{failed ? 'The profile data could not be loaded.' : 'Loading…'}</p>
     {/if}

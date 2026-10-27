@@ -20,7 +20,10 @@ export interface Pathway {
 
 export interface AdState {
   code: AdCode;
+  /** Display name: "Regional loss", "Localized loss", "Localized growth", "Regional growth". */
   label: string;
+  /** County then neighbors combined, e.g. "↓↑". Drawn as SVG (Arrows.svelte), not as text. */
+  arrows: string;
   color: string;
 }
 

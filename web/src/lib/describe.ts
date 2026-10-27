@@ -1,67 +1,9 @@
-import type { AdCode, County, Meta, Mode } from './types';
+import type { AdCode, AdState, County, Meta, Mode } from './types';
 import { LAST_DECADE } from './types';
-import { formatCount, formatLag, formatPct, truncate1 } from './format';
-
-/** One line of tooltip or panel text: a label, an optional value (set in mono) and swatch. */
-export interface Line {
-  label: string;
-  value?: string;
-  color?: string;
-}
+import { formatCount, truncate1 } from './format';
 
 export function countyTitle(c: County): string {
   return `${c.name}, ${c.stusps}`;
-}
-
-/** "Recent population change (2010–20): −8.1%" */
-export function recentLine(meta: Meta, c: County): Line {
-  return {
-    label: `Recent population change (${meta.decades[LAST_DECADE].label})`,
-    value: formatPct(c.pct[LAST_DECADE], c.cls[LAST_DECADE]),
-  };
-}
-
-/** "Population change (1980–90): −4.2%" */
-export function changeLine(meta: Meta, c: County, decade: number): Line {
-  return {
-    label: `Population change (${meta.decades[decade].label})`,
-    value: formatPct(c.pct[decade], c.cls[decade]),
-  };
-}
-
-/**
- * The A–D category in words, then only the neighbors' population-weighted change; the county's
- * own % is not shown in this mode. Counties with no neighbors (always B or D) get one line saying
- * so instead of the standard label.
- */
-export function contextLines(meta: Meta, c: County, decade: number): Line[] {
-  const letter = c.seq[decade] as AdCode;
-  const state = meta.ad.find((a) => a.code === letter)!;
-  if (c.lag === null) {
-    const self = letter === 'B' ? 'loss' : 'growth';
-    return [
-      { label: `Self population ${self}; no neighboring counties (counted as neighbor growth)`, color: state.color },
-    ];
-  }
-  return [
-    { label: state.label, color: state.color },
-    {
-      label: `Neighboring counties’ population change (${meta.decades[decade].label})`,
-      value: formatLag(c.lag[decade], letter),
-    },
-  ];
-}
-
-/** Tooltip lines after the name and pathway, by mode (spec 6.4). */
-export function modeLines(meta: Meta, mode: Mode, c: County, decade: number): Line[] {
-  switch (mode) {
-    case 'pathways':
-      return [recentLine(meta, c)];
-    case 'context':
-      return contextLines(meta, c, decade);
-    case 'change':
-      return [changeLine(meta, c, decade)];
-  }
 }
 
 /** A profile sentence: plain text with the numbers marked so they can be set in mono. */
@@ -82,36 +24,103 @@ function selfVerb(c: County, decade: number): string {
   return c.cls[decade] >= 4 ? 'lost' : 'grew';
 }
 
+/** "grew 1.7%" / "lost less than 0.1%": the county's change in a decade. */
+function selfClause(c: County, decade: number): Segment[] {
+  return [{ text: `${selfVerb(c, decade)} ` }, ...amount(c.pct[decade])];
+}
+
+/** "grew"/"lost" for the neighbors combined, from the A–D letter (A and C: neighbors lost). */
+function neighborVerb(c: County, decade: number): string {
+  const letter = c.seq[decade];
+  return letter === 'A' || letter === 'C' ? 'lost' : 'grew';
+}
+
 /**
  * Profile block 4 (spec 6.5): "Newton County grew 1.7% while its neighboring counties together
- * lost 0.6%." The neighbors' verb comes from the A–D letter (A and C: neighbors lost).
+ * lost 0.6%."
  */
 export function decadeSentence(c: County, decade: number): Segment[] {
-  const self: Segment[] = [{ text: `${c.name} ${selfVerb(c, decade)} ` }, ...amount(c.pct[decade])];
+  const self: Segment[] = [{ text: `${c.name} ` }, ...selfClause(c, decade)];
   if (c.lag === null) return [...self, { text: '; it has no neighboring counties.' }];
-  const letter = c.seq[decade];
-  const nb = letter === 'A' || letter === 'C' ? 'lost' : 'grew';
-  return [...self, { text: ` while its neighboring counties together ${nb} ` }, ...amount(c.lag[decade]), { text: '.' }];
+  return [
+    ...self,
+    { text: ` while its neighboring counties together ${neighborVerb(c, decade)} ` },
+    ...amount(c.lag[decade]),
+    { text: '.' },
+  ];
 }
 
 /** Profile block 5: "Newton County lost 1.9%." */
 export function recentSentence(c: County): Segment[] {
-  return [{ text: `${c.name} ${selfVerb(c, LAST_DECADE)} ` }, ...amount(c.pct[LAST_DECADE]), { text: '.' }];
+  return [{ text: `${c.name} ` }, ...selfClause(c, LAST_DECADE), { text: '.' }];
 }
 
-/** Sequence-strip cell explanation: "2000–10 · Self population loss, neighbor population growth". */
-export function stripCaption(meta: Meta, c: County, decade: number): string {
-  return `${meta.decades[decade].label} · ${contextLines(meta, c, decade)[0].label}`;
+export function adState(meta: Meta, c: County, decade: number): AdState {
+  return meta.ad.find((a) => a.code === (c.seq[decade] as AdCode))!;
+}
+
+/**
+ * Sequence-strip cell explanation (spec 6.5 block 3): the decade, the state's arrows and name,
+ * then the decade's sentence. Counties without neighbors are counted as "neighbors grew".
+ */
+export function stripCaption(meta: Meta, c: County, decade: number): { decade: string; state: AdState; note: string; sentence: Segment[] } {
+  return {
+    decade: meta.decades[decade].label,
+    state: adState(meta, c, decade),
+    note: c.lag === null ? ' (no neighboring counties; counted as neighbors grew)' : '',
+    sentence: decadeSentence(c, decade),
+  };
+}
+
+/** Plain-text form of a strip caption, for labels: "2000–10: Localized loss. Barbour County lost …" */
+export function stripCaptionText(meta: Meta, c: County, decade: number): string {
+  const k = stripCaption(meta, c, decade);
+  return `${k.decade}: ${k.state.label}${k.note}. ${sentenceText(k.sentence)}`;
+}
+
+/** A tooltip line: an optional swatch (the county's fill in the current mode), then text. */
+export interface TipLine {
+  swatch?: { color: string; round: boolean };
+  segs: Segment[];
+}
+
+/**
+ * Tooltip lines after the county name (spec 6.4). Exactly one swatch, matching the county's fill
+ * in the current mode; every line starts with its time frame.
+ */
+export function tooltipLines(meta: Meta, mode: Mode, c: County, decade: number): TipLine[] {
+  const pathway = meta.pathways[c.pathway - 1];
+  const span = `${meta.years[0]}–${meta.years[meta.years.length - 1]}`;
+  const pathwayText = `${span} pathway: ${pathway.name}`;
+  const d = meta.decades[decade].label;
+  switch (mode) {
+    case 'pathways':
+      return [
+        { swatch: { color: pathway.color, round: true }, segs: [{ text: pathwayText }] },
+        { segs: [{ text: `${meta.decades[LAST_DECADE].label}: ` }, ...selfClause(c, LAST_DECADE)] },
+      ];
+    case 'context': {
+      const neighbors: Segment[] =
+        c.lag === null
+          ? [{ text: '; it has no neighboring counties' }]
+          : [{ text: `; neighboring counties together ${neighborVerb(c, decade)} ` }, ...amount(c.lag[decade])];
+      return [
+        { swatch: { color: adState(meta, c, decade).color, round: false }, segs: [{ text: `${d}: ` }, ...selfClause(c, decade), ...neighbors] },
+        { segs: [{ text: pathwayText }] },
+      ];
+    }
+    case 'change':
+      return [
+        { swatch: { color: meta.change.find((k) => k.id === c.cls[decade])!.color, round: false }, segs: [{ text: `${d}: ` }, ...selfClause(c, decade)] },
+        { segs: [{ text: pathwayText }] },
+      ];
+  }
 }
 
 /** "21,291 people (2020) · Nonmetro" */
 export function populationLine(meta: Meta, c: County): string {
   const year = meta.years[meta.years.length - 1];
   return `${formatCount(c.pop[c.pop.length - 1])} people (${year}) · ${c.metro ? 'Metro' : 'Nonmetro'}`;
-}
-
-export function lineText(l: Line): string {
-  return l.value === undefined ? l.label : `${l.label}: ${l.value}`;
 }
 
 export function mapLabel(meta: Meta, mode: Mode, decade: number): string {

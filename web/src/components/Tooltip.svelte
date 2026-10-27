@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { County, Meta } from '../lib/types';
   import { ui } from '../lib/state.svelte';
-  import { countyTitle, modeLines } from '../lib/describe';
+  import { countyTitle, tooltipLines } from '../lib/describe';
 
   let {
     meta,
@@ -14,7 +14,7 @@
   let w = $state(0);
   let h = $state(0);
 
-  const pathway = $derived(meta.pathways[county.pathway - 1]);
+  const lines = $derived(tooltipLines(meta, ui.mode, county, ui.decade));
   // Keep the card inside the map: flip to the left of or above the pointer near an edge.
   const left = $derived(x + 14 + w > bounds.width ? Math.max(4, x - 14 - w) : x + 14);
   const top = $derived(y + 14 + h > bounds.height ? Math.max(4, y - 14 - h) : y + 14);
@@ -22,13 +22,10 @@
 
 <div class="tooltip" bind:clientWidth={w} bind:clientHeight={h} style:left="{left}px" style:top="{top}px">
   <div class="title">{countyTitle(county)}</div>
-  <div class="pathway">
-    <span class="dot" style:background={pathway.color}></span>{pathway.name}
-  </div>
-  {#each modeLines(meta, ui.mode, county, ui.decade) as line (line.label)}
+  {#each lines as line, i (i)}
     <div class="line">
-      {#if line.color}<span class="dot square" style:background={line.color}></span>{/if}
-      <span>{line.label}{#if line.value !== undefined}: <span class="num">{line.value}</span>{/if}</span>
+      {#if line.swatch}<span class="dot" class:square={!line.swatch.round} style:background={line.swatch.color}></span>{/if}
+      <span>{#each line.segs as part, j (j)}{#if part.num}<span class="num">{part.text}</span>{:else}{part.text}{/if}{/each}</span>
     </div>
   {/each}
 </div>
@@ -53,23 +50,19 @@
     font-size: 13px;
     color: var(--heading);
   }
-  .pathway,
   .line {
     display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .line {
     align-items: baseline;
+    gap: 6px;
   }
   .dot {
     width: 10px;
     height: 10px;
     border-radius: 50%;
     flex: none;
+    align-self: center;
   }
   .square {
     border-radius: 2px;
-    align-self: center;
   }
 </style>
