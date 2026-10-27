@@ -265,11 +265,14 @@
     <g transform="translate({transform.x},{transform.y}) scale({transform.k})">
       <g transform="translate({base.x},{base.y}) scale({base.s})">
         <path class="states" d={stateD} />
+        <!-- Cased outlines: a background-coloured halo under a dark line (spec 7). -->
         {#if ui.selected >= 0}
-          <path class="selected" d={countyD[ui.selected]} />
+          <path class="halo selected" d={countyD[ui.selected]} />
+          <path class="line selected" d={countyD[ui.selected]} />
         {/if}
         {#if ui.hovered >= 0}
-          <path class="hover" d={countyD[ui.hovered]} />
+          <path class="halo hover" d={countyD[ui.hovered]} />
+          <path class="line hover" d={countyD[ui.hovered]} />
         {/if}
       </g>
     </g>
@@ -313,12 +316,22 @@
     stroke: var(--bg);
     stroke-width: 0.9px;
   }
-  .selected {
-    stroke: var(--text);
-    stroke-width: 2.5px;
+  .halo {
+    stroke: var(--bg);
   }
-  .hover {
-    stroke: var(--text);
+  .line {
+    stroke: var(--heading);
+  }
+  .halo.selected {
+    stroke-width: 4px;
+  }
+  .line.selected {
+    stroke-width: 2px;
+  }
+  .halo.hover {
+    stroke-width: 3.5px;
+  }
+  .line.hover {
     stroke-width: 1.5px;
   }
   .reset {

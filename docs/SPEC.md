@@ -193,7 +193,7 @@ Three tabs, in this order, in sentence case. Tab names only: "pathway" stays the
 
 ### 6.4 Hover (desktop preview)
 
-Hovering a county outlines it (1.5 px, `#1A1210`) and shows a tooltip after 80 ms. Rule: hover only previews; everything in the tooltip is also in the profile, reached by clicking.
+Hovering a county outlines it (cased: 1.5 px `#2E2420` over a 3.5 px `#FBFBFB` halo; section 7) and shows a tooltip after 80 ms. Rule: hover only previews; everything in the tooltip is also in the profile, reached by clicking.
 
 - Line 1: "Barbour County, AL"
 - Line 2: pathway colour dot + pathway name
@@ -229,7 +229,7 @@ Ranks the 5 counties whose decade-by-decade population change most closely match
 - **Measure.** Euclidean distance between the 7-value `lgr` vectors (log growth rates). Unstandardised, so a decade with big swings counts more than a quiet one.
 - **Pool.** Toggle "Same pathway" (default) / "Any pathway". Optional checkboxes: "Similar size" (2020 population between 0.5× and 2× the selected county) and "Same metro status" (2023 RUCC, 2013 fallback).
 - **Result.** Exclude the selected county; sort ascending; break ties by GEOID; keep 5. If fewer than 5 qualify, show those and say so.
-- **Display.** Five small multiples, each with the match's indexed population line (1950 = 100) over the selected county's line in a muted colour; name, state, pathway chip. Click opens that county's profile, with a "← Back to Barbour County" link. On the map, the 5 matches get a 2 px dashed ring in `#1A1210` (section 7) and a "Show on map" button zooms to fit them.
+- **Display.** Five small multiples, each with the match's indexed population line (1950 = 100) over the selected county's line in a muted colour; name, state, pathway chip. Click opens that county's profile, with a "← Back to Barbour County" link. On the map, the 5 matches get a cased dashed ring (section 7) and a "Show on map" button zooms to fit them.
 - **Explanation** under the list: "Ranked by how closely population change matched, decade by decade, 1950–2020. Not part of the paper's analysis."
 - Computed in the browser at selection time (3,108 × 7 values; under 5 ms). No precomputed matrix.
 
@@ -295,7 +295,7 @@ The change palette replaces the published Fig. 1 colours in Decadal population c
 
 - Background `#FBFBFB`; text `#1A1210`; headings `#2E2420`; muted text and axes `#7A6C68`; hairlines `#7A6C68` at 30%.
 - Interface accents only, never on the map: forest `#4A7840` for active controls and focus rings.
-- Selected county: 2.5 px `#1A1210` outline. Similar counties: 2 px dashed `#1A1210` ring. Hover: 1.5 px `#1A1210`. No coloured outlines, to avoid clashing with data fills.
+- Map outlines are cased: a `#FBFBFB` halo underneath and a `#2E2420` line on top, both non-scaling (`vector-effect: non-scaling-stroke`), so they read on light and dark fills alike. Selected county: 2 px line over a 4 px halo. Hover: 1.5 px line over a 3.5 px halo. Similar counties (6.7): the same casing with a dashed line (2 px line over a 4 px halo; the halo stays solid). No coloured outlines, to avoid clashing with data fills.
 - Map: no fill outside the U.S.; county borders `#FBFBFB` at 0.3 px (drop below zoom 1.5 if they clutter); state borders `#FBFBFB` at 0.9 px over fills.
 
 **Typography.** Never Arial, including as a fallback.
