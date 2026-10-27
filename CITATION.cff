@@ -1,0 +1,35 @@
+cff-version: 1.2.0
+message: "If you use this dashboard or its data, please cite the article below."
+title: "Landscape of Loss: U.S. County Population Pathways, 1950–2020"
+type: software
+repository-code: "https://github.com/rsfrankl/landscape-of-loss"
+authors:
+  - family-names: Park
+    given-names: G.
+  - family-names: Seymour
+    given-names: E.
+  - family-names: Franklin
+    given-names: R.
+preferred-citation:
+  type: article
+  title: "Characterizing the Landscape of Loss: A Spatiotemporal Contextual Approach to Measuring U.S. County-Level Depopulation"
+  authors:
+    - family-names: Park
+      given-names: G.
+    - family-names: Seymour
+      given-names: E.
+    - family-names: Franklin
+      given-names: R.
+  journal: "Annals of the American Association of Geographers"
+  year: 2026
+  doi: "10.1080/24694452.2026.2691208"
+references:
+  - type: dataset
+    title: "Historical Population Estimates for 2010 U.S. States, Counties and Metro/Micro Areas, 1790–2010"
+    authors:
+      - family-names: Schroeder
+        given-names: Jonathan P.
+    year: 2016
+    publisher:
+      name: "Data Repository for the University of Minnesota (DRUM)"
+    doi: "10.13020/D6XW2H"
