@@ -98,7 +98,8 @@ build_counties <- function(info, typology, sequences, pop, pct, lgr, lag, rucc, 
     # cls is the change class per decade, binned on the unrounded values.
     pop = I(rows(pop, 0)), pct = I(rows(pct, 3)), cls = I(rows(bin_change(pct), 0)),
     lgr = I(rows(lgr, 4)),
-    lag = I(lapply(seq_along(u), function(i) if (all(is.na(lag[i, ]))) NA else round(unname(lag[i, ]), 1))),
+    # lag keeps 3 decimals too, so the front end truncates it like pct (-0.660 shows as -0.6).
+    lag = I(lapply(seq_along(u), function(i) if (all(is.na(lag[i, ]))) NA else round(unname(lag[i, ]), 3))),
     pct1020 = pct[, ncol(pct)], cat1020 = bin_change(pct[, ncol(pct)]),
     rucc13 = rucc$rucc13, rucc23 = rucc$rucc23, metro = rucc$metro, rucc_note = rucc$rucc_note,
     label = I(lapply(seq_along(u), function(i) round(c(info$label_lon[i], info$label_lat[i]), 4))),

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import metaJson from '../../public/data/meta.json';
 import countiesJson from '../../public/data/counties.json';
 import topoJson from '../../public/data/counties.topo.json';
-import type { County, Meta } from './types';
+import type { AdCode, County, Meta } from './types';
 import { LAST_DECADE } from './types';
 import { changeClass, formatLag, formatPct, truncate1 } from './format';
 import { dataColor, hexToRgb, isDimmed, legendKey, mix, palettes } from './colors';
@@ -32,6 +32,14 @@ describe('truncation and formatting', () => {
     expect(formatLag(0, 'A')).toBe('−0.0%');
     expect(formatLag(0, 'B')).toBe('+0.0%');
     expect(formatLag(5, 'D')).toBe('+5.0%');
+  });
+
+  it('truncates the neighbors’ change rather than rounding it', () => {
+    // Newton MS 1980–90: neighbors at −0.660 read −0.6, not −0.7.
+    const newton = county('28101');
+    expect(newton.lag![3]).toBe(-0.66);
+    expect(formatLag(newton.lag![3], newton.seq[3] as AdCode)).toBe('−0.6%');
+    expect(formatLag(-0.004, 'A')).toBe('−0.0%');
   });
 });
 
@@ -146,7 +154,7 @@ describe('tooltip lines', () => {
     expect(text(modeLines(meta, 'change', barbour, 5))).toEqual(['Population change (2000–10): −5.4%']);
     expect(text(modeLines(meta, 'context', barbour, 5))).toEqual([
       'Self population loss, neighbor population growth',
-      'Neighboring counties’ population change (2000–10): +5.0%',
+      'Neighboring counties’ population change (2000–10): +4.9%',
     ]);
   });
 

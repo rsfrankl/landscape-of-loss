@@ -20,11 +20,12 @@ export function formatPct(pct: number, cls: number): string {
 }
 
 /**
- * Neighbours' change for display. `lag` arrives rounded to 1 decimal, so a zero takes its sign
- * from the A–D letter: A and C mean neighbours lost population.
+ * Neighbours' change for display, truncated like the county's own (−0.660 → −0.6). The sign
+ * comes from the A–D letter, so a value that truncates to zero keeps it: A and C mean
+ * neighbours lost population.
  */
 export function formatLag(lag: number, letter: AdCode): string {
-  return signed(Math.abs(lag), letter === 'A' || letter === 'C');
+  return signed(Math.abs(truncate1(lag)), letter === 'A' || letter === 'C');
 }
 
 /** Class id for an unrounded % change, from the meta.json breaks. Used only as a cross-check. */

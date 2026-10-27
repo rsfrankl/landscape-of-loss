@@ -33,7 +33,7 @@ test_that("Barbour County matches the spec's example record", {
   expect_equal(unlist(b$pct), round(100 * diff(unlist(b$pop)) / head(unlist(b$pop), -1), 3))
   expect_equal(unlist(b$cls), c(5, 4, 3, 3, 2, 4, 4))
   expect_equal(unlist(b$lgr), c(-0.1568, -0.0914, 0.0936, 0.0264, 0.1332, -0.0560, -0.0849))
-  expect_equal(unlist(b$lag), c(1.3, 9.7, 0.1, 0.5, 3.7, 5.0, 1.9))
+  expect_equal(unlist(b$lag), c(1.331, 9.74, 0.097, 0.497, 3.706, 4.974, 1.903))
   expect_equal(b$seq, "BBDDDBB")
   expect_equal(b[c("name", "state", "stusps", "pathway", "group", "cat1020")],
                list(name = "Barbour County", state = "Alabama", stusps = "AL", pathway = 1L,
