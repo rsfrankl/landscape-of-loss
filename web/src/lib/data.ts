@@ -1,5 +1,5 @@
 import type { Topology, GeometryCollection } from 'topojson-specification';
-import type { County, Meta } from './types';
+import type { Acs, Components, County, Meta } from './types';
 
 export type CountyTopology = Topology<{
   counties: GeometryCollection<{ name: string; state: string; stusps: string }>;
@@ -28,6 +28,24 @@ export function alignCounties(topo: CountyTopology, records: County[]): County[]
   });
   if (out.length !== records.length) throw new Error('counties.json and the TopoJSON disagree');
   return out;
+}
+
+export interface ProfileData {
+  acs: Acs;
+  components: Record<string, Components>;
+}
+
+let profileData: Promise<ProfileData> | null = null;
+
+/** acs.json and components.json, fetched once on the first profile open (spec 5). */
+export function loadProfileData(): Promise<ProfileData> {
+  profileData ??= Promise.all([
+    getJson<Acs>('acs.json'),
+    getJson<Record<string, Components>>('components.json'),
+  ]).then(([acs, components]) => ({ acs, components }));
+  // A failed load can be retried on the next open.
+  profileData.catch(() => (profileData = null));
+  return profileData;
 }
 
 export async function loadStartup(): Promise<StartupData> {

@@ -3,13 +3,26 @@
   // decade-by-decade strip, single decades, then the detail blocks.
   import type { County, Meta } from '../lib/types';
   import { LAST_DECADE, MODES } from '../lib/types';
-  import { ui } from '../lib/state.svelte';
+  import { profileOpen, ui } from '../lib/state.svelte';
   import { countyTitle, decadeSentence, populationLine, recentSentence, type Segment } from '../lib/describe';
   import ProfileBlock from './ProfileBlock.svelte';
   import SequenceStrip from './SequenceStrip.svelte';
   import PopulationChart from './PopulationChart.svelte';
+  import AcsProfile from './AcsProfile.svelte';
+  import ComponentsChart from './ComponentsChart.svelte';
+  import { loadProfileData, type ProfileData } from '../lib/data';
+  import { driverShares } from '../lib/profile';
 
   let { meta, county }: { meta: Meta; county: County } = $props();
+
+  // acs.json and components.json load on the first profile open (spec 5).
+  let extra = $state.raw<ProfileData | null>(null);
+  let failed = $state(false);
+  loadProfileData().then(
+    (d) => (extra = d),
+    () => (failed = true),
+  );
+  const shares = $derived(extra ? driverShares(extra.components) : null);
 
   const pathway = $derived(meta.pathways[county.pathway - 1]);
   const first = $derived(meta.years[0]);
@@ -61,6 +74,22 @@
 
   <ProfileBlock title="Population, {first}–{last}">
     <PopulationChart {meta} {county} />
+  </ProfileBlock>
+
+  <ProfileBlock title="Who lives here (ACS 2016–20)" collapsible bind:open={profileOpen.acs}>
+    {#if extra}
+      <AcsProfile acs={extra.acs} {county} {pathway} />
+    {:else}
+      <p class="status">{failed ? 'The profile data could not be loaded.' : 'Loading…'}</p>
+    {/if}
+  </ProfileBlock>
+
+  <ProfileBlock title="Why it changed, {recent}" collapsible bind:open={profileOpen.components}>
+    {#if extra && shares}
+      <ComponentsChart {meta} comp={extra.components[county.geoid]} {shares} />
+    {:else}
+      <p class="status">{failed ? 'The profile data could not be loaded.' : 'Loading…'}</p>
+    {/if}
   </ProfileBlock>
 </section>
 
@@ -117,5 +146,9 @@
   }
   .sentence {
     margin: 0;
+  }
+  .status {
+    margin: 0;
+    color: var(--muted);
   }
 </style>

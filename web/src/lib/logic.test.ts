@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import metaJson from '../../public/data/meta.json';
 import countiesJson from '../../public/data/counties.json';
 import topoJson from '../../public/data/counties.topo.json';
-import type { AdCode, County, Meta } from './types';
+import componentsJson from '../../public/data/components.json';
+import type { AdCode, Components, County, Meta } from './types';
 import { LAST_DECADE } from './types';
 import { changeClass, formatLag, formatPct, truncate1 } from './format';
 import { dataColor, hexToRgb, isDimmed, legendKey, mix, palettes } from './colors';
@@ -21,6 +22,7 @@ import {
   type Segment,
 } from './describe';
 import { DEFAULT_STATE, parseUrl, toSearch } from './url';
+import { axisEnd, driverSentence, driverShares } from './profile';
 
 const meta = metaJson as unknown as Meta;
 const counties = alignCounties(topoJson as unknown as CountyTopology, countiesJson as unknown as County[]);
@@ -274,5 +276,24 @@ describe('profile sentences (spec 6.5)', () => {
 
   it('explain strip cells in the A–D words', () => {
     expect(stripCaption(meta, county('01005'), 5)).toBe('2000–10 · Self population loss, neighbor population growth');
+  });
+});
+
+describe('profile detail blocks', () => {
+  it('end each ACS axis at a rounded value above the largest marker', () => {
+    expect(axisEnd(0.4)).toBe(5);
+    expect(axisEnd(5.8)).toBe(10);
+    expect(axisEnd(20)).toBe(25);
+    expect(axisEnd(60.1)).toBe(70);
+    expect(axisEnd(99)).toBe(100);
+    expect(axisEnd(208.2)).toBe(100);
+  });
+
+  it('give the Table 2 driver with its share of loss counties', () => {
+    const shares = driverShares(componentsJson as unknown as Record<string, Components>);
+    expect(driverSentence('both', shares)).toBe(
+      'Lost population through both net out-migration and natural decrease, like 50% of loss counties.',
+    );
+    expect([...shares.values()].reduce((a, b) => a + b)).toBeCloseTo(1);
   });
 });

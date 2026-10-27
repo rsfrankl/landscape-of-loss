@@ -80,6 +80,38 @@ export interface County {
   bbox: [number, number, number, number];
 }
 
+export interface AcsIndicator {
+  key: string;
+  label: string;
+  unit: string;
+  source: 'census2020' | 'acs';
+  note?: string;
+}
+
+/** acs.json (spec 5): county values are [estimate, MOE]; the MOE is null for 2020 Census rows. */
+export interface Acs {
+  indicators: AcsIndicator[];
+  sources: Record<string, string>;
+  method: string;
+  county: Record<string, Record<string, [number, number | null]>>;
+  pathway: Record<string, Record<string, number>>;
+  us: Record<string, number>;
+}
+
+/** Table 2 drivers of 2010–20 loss, by sign. */
+export type Driver = 'outmig' | 'both' | 'natural' | 'other';
+
+/** components.json record: 2010–20 components of change, in people (Vintage 2020). */
+export interface Components {
+  natural: number;
+  domestic: number;
+  international: number;
+  net: number;
+  total: number;
+  /** Loss counties only. */
+  driver?: Driver | null;
+}
+
 /** Map modes; the ids are the URL `mode` values (spec 6.9). */
 export type Mode = 'change' | 'context' | 'pathways';
 
