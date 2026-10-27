@@ -73,6 +73,8 @@ Five inputs come from the author and three are public downloads. The author file
 | Vintage 2020 county estimates | census.gov `co-est2020-alldata.csv` | Annual natural increase and net migration, 2010–2020 | Components of change, Table 2 |
 | Rural–Urban Continuum Codes 2013 and 2023 | USDA ERS | RUCC 1–9 per county | Urban–rural class and filter |
 
+**Credit for the historical population data** (cleared for use by the author, 26 Oct 2026; show in the About panel, README and CSV header): Schroeder, Jonathan P. (2016). Historical Population Estimates for 2010 U.S. States, Counties and Metro/Micro Areas, 1790–2010. Data Repository for the University of Minnesota (DRUM). [doi:10.13020/D6XW2H](https://doi.org/10.13020/D6XW2H).
+
 **Known issues, already verified (26 Oct 2026)**
 
 1. **Geography changes.** The workbook uses 2010 codes. Recode Shannon County SD `46113` → `46102` (Oglala Lakota), and add Bedford city VA `51515` into Bedford County `51019`. Drop Alaska, Hawaii and other non-conterminous rows. Result: exactly the 3,108 counties in the GeoPackage.
@@ -359,5 +361,5 @@ Build in five milestones; stop for author review after milestones 1, 3 and 5.
 
 - Confirm the working title (6.1) and edit the eight pathway blurbs (6.9).
 - Decide on the three low-contrast pathway pairs (section 7) after seeing the built map.
-- Confirm the credit line and licence for the Schroeder (2016) historical county data before the population counts are published.
+- Schroeder (2016) data cleared for use (26 Oct 2026); credit line in section 3.
 - Create the GitHub repository `landscape-of-loss` (section 8.3).
