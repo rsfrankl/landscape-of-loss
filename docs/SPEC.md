@@ -253,7 +253,7 @@ Ranks the 5 counties whose decade-by-decade population change most closely match
 
 ### 6.9 Zoom, URL state, explainer, downloads
 
-- **Zoom.** `d3-zoom`, scale 1–12, wheel and drag, double-click to zoom in, "Reset view" button. Selecting a county on the map or from the URL zooms only when its centre is off-screen or it is drawn smaller than 12 px; search and location always zoom. The zoom fits the county to about 30% of the map, within scale 1–12.
+- **Zoom.** `d3-zoom`, scale 1–12, wheel and drag, double-click to zoom in, "Reset view" button. `clickDistance` is 4 px, so a click that drifts slightly still selects. Map outlines (hover, selection, states) take no pointer events, so a press never lands on an element the zoom gesture removes. Selecting a county on the map or from the URL zooms only when its centre is off-screen or it is drawn smaller than 12 px; search and location always zoom. The zoom fits the county to about 30% of the map, within scale 1–12.
 - **URL state.** `?mode=context&decade=1990&county=01005&path=3,4&sim=any` — every state above round-trips, so views can be shared and cited. `decade` is the decade's start year. Default values are left out, so the default view has no query string. Opening or closing a county adds a history entry (Back returns to the previous county or the legend); other changes replace the current entry. `mode` is `change` (default), `context` or `pathways`. The retired `mode=recent` (the former "2010–20 vs. 70 years" tab) redirects to `mode=change&decade=2010`, keeping any other parameters.
 - **Explainer ("?" button, About modal).** Tabs: *How to read this* (A–D diagram redrawn from the paper's Figs. 2 and 4: a county and its neighbors in four quadrants; the eight pathways with one-line blurbs); *About* (full citation with DOI link, authors, data sources and credits); *Data notes* (2010 base, change classes, neighbor rule, Connecticut RUCC, sources and definitions of the profile indicators, validation summary). A first-visit intro card links to it; dismissal stored in `localStorage` inside try/catch.
 - **Downloads.** Client-side CSV: the selected county; the counties in the current filter; all counties. Columns: `geoid, county, state, pathway, seq, pop1950…pop2020, pct1950_60…pct2010_20, rucc2013, rucc2023`. Include a header comment line with the citation.
@@ -337,7 +337,7 @@ Build in five milestones; stop for author review after milestones 1, 3 and 5.
 - First meaningful map under 2.5 s on a 2020 laptop over a typical home connection.
 - Startup data under 2 MB gzipped; JavaScript bundle under 150 kB gzipped.
 - Mode or decade change repaints in under 50 ms; playback holds 30 fps or better.
-- Hover hit-testing by a hidden picking canvas (one colour per county), not by path search.
+- Hover hit-testing by a hidden picking canvas (one colour per county), not by path search. The pick pixel is only a hint: border pixels are anti-aliased blends that decode to an unrelated county, so the candidates in a 5 × 5 pixel window are confirmed with `isPointInPath`, nearest first. Hit-testing never relies on hover state, which a press clears.
 
 ### 8.2 Mobile readiness rules (desktop-first, built so mobile can follow)
 

@@ -148,3 +148,39 @@ test('use my location selects the county there, or says it is outside the study'
   await page.getByRole('button', { name: 'My location' }).click();
   await expect(page.getByRole('status')).toHaveText('Your location is outside the counties in this study.');
 });
+
+test('clicks select the county under the pointer, including near borders and with slight movement', async ({ page }) => {
+  test.setTimeout(120_000);
+  await page.goto('./');
+  const canvas = page.locator('canvas[role="img"]');
+  await page.waitForTimeout(500);
+  const box = (await canvas.boundingBox())!;
+  // Deterministic points whose press and release pixels (2 px apart) are both solid county fill.
+  const pts: [number, number][] = await canvas.evaluate((c: HTMLCanvasElement) => {
+    const d = c.getContext('2d')!.getImageData(0, 0, c.width, c.height).data;
+    const s = c.width / c.clientWidth;
+    const solid = (x: number, y: number) => d[(Math.floor(y * s) * c.width + Math.floor(x * s)) * 4 + 3] === 255;
+    const out: [number, number][] = [];
+    let seed = 11;
+    const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    while (out.length < 24) {
+      const x = rnd() * (c.clientWidth - 4);
+      const y = rnd() * c.clientHeight;
+      if (solid(x, y) && solid(x + 2, y)) out.push([x, y]);
+    }
+    return out;
+  });
+  const missed: string[] = [];
+  for (const [k, [x, y]] of pts.entries()) {
+    await page.goto('./');
+    await canvas.waitFor();
+    await page.waitForTimeout(200);
+    await page.mouse.move(box.x + x, box.y + y);
+    await page.mouse.down();
+    // Every other click drifts 2 px between press and release (d3-zoom clickDistance, 4 px).
+    if (k % 2) await page.mouse.move(box.x + x + 2, box.y + y);
+    await page.mouse.up();
+    await expect.poll(() => new URL(page.url()).searchParams.get('county'), { timeout: 2000 }).not.toBeNull().catch(() => missed.push(`${x},${y}`));
+  }
+  expect(missed).toEqual([]);
+});

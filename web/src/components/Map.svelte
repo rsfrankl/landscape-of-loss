@@ -17,7 +17,7 @@
   import type { StartupData } from '../lib/data';
   import { focus, selectCounty, ui } from '../lib/state.svelte';
   import { dataColor, hexToRgb, isDimmed, mix, palettes, type Rgb } from '../lib/colors';
-  import { decodePick, pickColor } from '../lib/picking';
+  import { PICK_RADIUS, pickCandidates, pickColor } from '../lib/picking';
   import { mapLabel } from '../lib/describe';
   import Tooltip from './Tooltip.svelte';
 
@@ -149,13 +149,23 @@
     }
   }
 
-  /** County under a point in CSS pixels, or -1. Anti-aliased edge pixels are checked exactly. */
+  /**
+   * County under a point in CSS pixels, or -1. The pick pixel is only a hint: border pixels are
+   * anti-aliased blends that decode to the wrong county, so nearby candidates are confirmed
+   * against the exact path. This must not depend on hover state, which a press clears.
+   */
   function hit(x: number, y: number): number {
     if (!pickCtx || x < 0 || y < 0 || x >= width || y >= height) return -1;
-    const [r, g, b] = pickCtx.getImageData(x | 0, y | 0, 1, 1).data;
-    const i = decodePick(r, g, b, n);
-    if (i >= 0 && pickCtx.isPointInPath(countyPaths[i], x, y)) return i;
-    if (ui.hovered >= 0 && pickCtx.isPointInPath(countyPaths[ui.hovered], x, y)) return ui.hovered;
+    const px = x | 0;
+    const py = y | 0;
+    const x0 = Math.max(0, px - PICK_RADIUS);
+    const y0 = Math.max(0, py - PICK_RADIUS);
+    const w = Math.min(width, px + PICK_RADIUS + 1) - x0;
+    const h = Math.min(height, py + PICK_RADIUS + 1) - y0;
+    const { data } = pickCtx.getImageData(x0, y0, w, h);
+    for (const i of pickCandidates(data, w, h, px - x0, py - y0, n)) {
+      if (pickCtx.isPointInPath(countyPaths[i], x, y)) return i;
+    }
     return -1;
   }
 
@@ -236,6 +246,8 @@
 
     zoomer = zoom<SVGSVGElement, unknown>()
       .scaleExtent([1, 12])
+      // A click that moves a few pixels is still a click (the default, 0, drops it).
+      .clickDistance(4)
       .on('start', () => {
         zooming = true;
         setHovered(-1);
@@ -344,7 +356,10 @@
   svg.hovering {
     cursor: pointer;
   }
+  /* Outlines never take pointer events: the hover outline is removed when a press starts a
+     zoom gesture, and a press on a removed element produces no click. The rect below gets them. */
   path {
+    pointer-events: none;
     fill: none;
     vector-effect: non-scaling-stroke;
     stroke-linejoin: round;

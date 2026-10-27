@@ -8,7 +8,7 @@ import { LAST_DECADE } from './types';
 import { changeClass, formatLag, formatPct, truncate1 } from './format';
 import { dataColor, hexToRgb, isDimmed, legendKey, mix, palettes } from './colors';
 import { legendCounts } from './counts';
-import { decodePick, pickColor } from './picking';
+import { decodePick, pickCandidates, pickColor } from './picking';
 import { alignCounties, type CountyTopology } from './data';
 import {
   contextLines,
@@ -326,5 +326,19 @@ describe('search and location (spec 6.8)', () => {
     expect(at(-89.4012, 43.0731)).toBe('55025'); // Madison, WI
     expect(at(-157.8583, 21.3069)).toBeNull(); // Honolulu
     expect(at(-30, 40)).toBeNull(); // Atlantic
+  });
+});
+
+describe('pick candidates', () => {
+  // A 3 × 3 window: county 5 at the centre, a blended border pixel (decodes to 9) beside it.
+  const px = (i: number) => [...(i < 0 ? [0, 0, 0] : [(i + 1) & 255, ((i + 1) >> 8) & 255, 0]), 255];
+  const data = [-1, 2, 2, 9, 5, 2, 5, 5, 2].flatMap(px);
+
+  it('lists the centre pixel first, then neighbors by distance, each county once', () => {
+    expect(pickCandidates(data, 3, 3, 1, 1, 3108)).toEqual([5, 2, 9]);
+  });
+
+  it('still offers the real county when the centre pixel is a blend', () => {
+    expect(pickCandidates(data, 3, 3, 0, 1, 3108)).toEqual([9, 5, 2]);
   });
 });
