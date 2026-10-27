@@ -146,7 +146,27 @@ test('use my location selects the county there, or says it is outside the study'
 
   await context.setGeolocation({ latitude: 21.3069, longitude: -157.8583 });
   await page.getByRole('button', { name: 'My location' }).click();
-  await expect(page.getByRole('status')).toHaveText('Your location is outside the counties in this study.');
+  const status = page.getByRole('status');
+  await expect(status).toHaveText(/^Your location is outside the counties in this study\./);
+  // On its own line under the header controls, clear of the panel title.
+  const [msg, panel] = [await status.boundingBox(), await page.locator('aside.panel').boundingBox()];
+  expect(msg!.y + msg!.height).toBeLessThanOrEqual(panel!.y);
+  await page.getByRole('button', { name: 'Dismiss message' }).click();
+  await expect(status).toBeHidden();
+
+  // The next click anywhere also clears it.
+  await page.getByRole('button', { name: 'My location' }).click();
+  await expect(status).toBeVisible();
+  await page.locator('footer, .footer').first().click();
+  await expect(status).toBeHidden();
+});
+
+test('a denied location request says how to allow it', async ({ page }) => {
+  await page.goto('./');
+  await page.getByRole('button', { name: 'My location' }).click();
+  await expect(page.getByRole('status')).toContainText(
+    'Check that location access is allowed for this site in your browser and in your computer’s privacy settings.',
+  );
 });
 
 test('clicks select the county under the pointer, including near borders and with slight movement', async ({ page }) => {

@@ -1,12 +1,28 @@
 <script lang="ts">
   import { MODES } from '../lib/types';
   import type { StartupData } from '../lib/data';
-  import { ui } from '../lib/state.svelte';
+  import { notice, ui } from '../lib/state.svelte';
   import Search from './Search.svelte';
   import LocateButton from './LocateButton.svelte';
 
   let { data }: { data: StartupData } = $props();
+
+  // The notice clears after 8 s, on the next click or key press (Tab and modifiers aside, so
+  // keyboard users can reach ×), or with ×.
+  $effect(() => {
+    if (!notice.text) return;
+    const timer = setTimeout(() => (notice.text = ''), 8000);
+    return () => clearTimeout(timer);
+  });
+
+  function dismissOnInteraction(event: Event): void {
+    if (!notice.text) return;
+    if (event instanceof KeyboardEvent && ['Tab', 'Shift', 'Alt', 'Control', 'Meta'].includes(event.key)) return;
+    notice.text = '';
+  }
 </script>
+
+<svelte:window onpointerdowncapture={dismissOnInteraction} onkeydowncapture={dismissOnInteraction} />
 
 <header>
   <h1>The Landscape of Loss: US County-Level Depopulation Pathways, 1950–2020</h1>
@@ -22,6 +38,12 @@
   <div class="tools">
     <Search counties={data.counties} />
     <LocateButton {data} />
+  </div>
+  <div class="notice" role="status">
+    {#if notice.text}
+      <p>{notice.text}</p>
+      <button type="button" class="dismiss" aria-label="Dismiss message" onclick={() => (notice.text = '')}>×</button>
+    {/if}
   </div>
 </header>
 
@@ -66,6 +88,31 @@
   label.active {
     background: var(--accent);
     color: var(--bg);
+  }
+  .notice {
+    display: flex;
+    flex: 1 1 100%;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
+  }
+  .notice:empty {
+    display: none;
+  }
+  .notice p {
+    margin: 0;
+    font-size: var(--size-small);
+  }
+  .dismiss {
+    flex: none;
+    width: 40px;
+    height: 40px;
+    margin: -10px -10px -10px 0;
+    border: 0;
+    background: none;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
   }
   .tools {
     display: flex;

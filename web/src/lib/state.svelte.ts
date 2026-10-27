@@ -32,6 +32,9 @@ export function selectCounty(i: number, force = false): void {
   focus.seq++;
 }
 
+/** A short status message on its own line under the header controls (e.g. location results). */
+export const notice = $state({ text: '' });
+
 /** Open state of the profile's collapsible blocks; kept across selections for the session. */
 export const profileOpen = $state({ acs: false, components: false });
 
