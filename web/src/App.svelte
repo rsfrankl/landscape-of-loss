@@ -8,7 +8,7 @@
   import MapView from './components/Map.svelte';
   import DecadeControl from './components/DecadeControl.svelte';
   import Legend from './components/Legend.svelte';
-  import CountyStub from './components/CountyStub.svelte';
+  import CountyProfile from './components/CountyProfile.svelte';
   import Footer from './components/Footer.svelte';
 
   // The URL sets the view before the map first paints (spec 6.9).
@@ -37,7 +37,7 @@
     {/if}
     <aside class="panel">
       {#if selected}
-        <CountyStub meta={data.meta} county={selected} />
+        <CountyProfile meta={data.meta} county={selected} />
       {:else}
         <Legend meta={data.meta} counties={data.counties} />
       {/if}

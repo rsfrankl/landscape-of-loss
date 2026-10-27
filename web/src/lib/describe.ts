@@ -1,6 +1,6 @@
 import type { AdCode, County, Meta, Mode } from './types';
 import { LAST_DECADE } from './types';
-import { formatLag, formatPct } from './format';
+import { formatCount, formatLag, formatPct, truncate1 } from './format';
 
 /** One line of tooltip or panel text: a label, an optional value (set in mono) and swatch. */
 export interface Line {
@@ -62,6 +62,52 @@ export function modeLines(meta: Meta, mode: Mode, c: County, decade: number): Li
     case 'change':
       return [changeLine(meta, c, decade)];
   }
+}
+
+/** A profile sentence: plain text with the numbers marked so they can be set in mono. */
+export type Segment = { text: string; num?: true };
+
+export function sentenceText(s: Segment[]): string {
+  return s.map((x) => x.text).join('');
+}
+
+/** An unsigned amount, truncated to 1 decimal; "less than 0.1%" when that truncates to zero. */
+function amount(x: number): Segment[] {
+  const t = Math.abs(truncate1(x));
+  return t === 0 ? [{ text: 'less than ' }, { text: '0.1%', num: true }] : [{ text: `${t.toFixed(1)}%`, num: true }];
+}
+
+/** "grew" or "lost", from the change class so it always agrees with the map. */
+function selfVerb(c: County, decade: number): string {
+  return c.cls[decade] >= 4 ? 'lost' : 'grew';
+}
+
+/**
+ * Profile block 4 (spec 6.5): "Newton County grew 1.7% while its neighboring counties together
+ * lost 0.6%." The neighbors' verb comes from the A–D letter (A and C: neighbors lost).
+ */
+export function decadeSentence(c: County, decade: number): Segment[] {
+  const self: Segment[] = [{ text: `${c.name} ${selfVerb(c, decade)} ` }, ...amount(c.pct[decade])];
+  if (c.lag === null) return [...self, { text: '; it has no neighboring counties.' }];
+  const letter = c.seq[decade];
+  const nb = letter === 'A' || letter === 'C' ? 'lost' : 'grew';
+  return [...self, { text: ` while its neighboring counties together ${nb} ` }, ...amount(c.lag[decade]), { text: '.' }];
+}
+
+/** Profile block 5: "Newton County lost 1.9%." */
+export function recentSentence(c: County): Segment[] {
+  return [{ text: `${c.name} ${selfVerb(c, LAST_DECADE)} ` }, ...amount(c.pct[LAST_DECADE]), { text: '.' }];
+}
+
+/** Sequence-strip cell explanation: "2000–10 · Self population loss, neighbor population growth". */
+export function stripCaption(meta: Meta, c: County, decade: number): string {
+  return `${meta.decades[decade].label} · ${contextLines(meta, c, decade)[0].label}`;
+}
+
+/** "21,291 people (2020) · Nonmetro" */
+export function populationLine(meta: Meta, c: County): string {
+  const year = meta.years[meta.years.length - 1];
+  return `${formatCount(c.pop[c.pop.length - 1])} people (${year}) · ${c.metro ? 'Metro' : 'Nonmetro'}`;
 }
 
 export function lineText(l: Line): string {

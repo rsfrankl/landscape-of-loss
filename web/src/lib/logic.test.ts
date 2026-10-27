@@ -9,7 +9,17 @@ import { dataColor, hexToRgb, isDimmed, legendKey, mix, palettes } from './color
 import { legendCounts } from './counts';
 import { decodePick, pickColor } from './picking';
 import { alignCounties, type CountyTopology } from './data';
-import { contextLines, lineText, modeLines } from './describe';
+import {
+  contextLines,
+  decadeSentence,
+  lineText,
+  modeLines,
+  populationLine,
+  recentSentence,
+  sentenceText,
+  stripCaption,
+  type Segment,
+} from './describe';
 import { DEFAULT_STATE, parseUrl, toSearch } from './url';
 
 const meta = metaJson as unknown as Meta;
@@ -227,5 +237,42 @@ describe('URL state', () => {
   it('ignores unknown values', () => {
     expect(parseUrl('?mode=nope&decade=1985&county=99999&path=0,9,x', meta, counties)).toEqual(DEFAULT_STATE);
     expect(parseUrl('?path=4,1,4', meta, counties).filter).toEqual([1, 4]);
+  });
+});
+
+describe('profile sentences (spec 6.5)', () => {
+  const text = (s: Segment[]) => sentenceText(s);
+
+  it('describe the decade on the map with grew/lost and truncated values', () => {
+    expect(text(decadeSentence(county('28101'), 3))).toBe(
+      'Newton County grew 1.7% while its neighboring counties together lost 0.6%.',
+    );
+    expect(text(recentSentence(county('28101')))).toBe('Newton County lost 1.9%.');
+    expect(populationLine(meta, county('28101'))).toBe('21,291 people (2020) · Nonmetro');
+  });
+
+  it('say "less than 0.1%" when a value truncates to zero', () => {
+    expect(text(recentSentence(county('48331')))).toBe('Milam County lost less than 0.1%.');
+  });
+
+  it('say so for the three counties with no neighbors', () => {
+    expect(text(decadeSentence(county('25007'), 3))).toBe('Dukes County grew 30.1%; it has no neighboring counties.');
+    for (const g of ['25007', '25019', '53055'])
+      for (let d = 0; d < 7; d++) expect(text(decadeSentence(county(g), d))).toMatch(/no neighboring counties\.$/);
+  });
+
+  it('agree with the A–D letter in every county-decade', () => {
+    for (const c of counties) {
+      for (let d = 0; d < 7; d++) {
+        const s = text(decadeSentence(c, d));
+        const self = s.startsWith(`${c.name} lost`) ? 'loss' : 'growth';
+        expect(self === 'loss', `${c.geoid} ${d}`).toBe('AB'.includes(c.seq[d]));
+        if (c.lag) expect(s.includes('neighboring counties together lost')).toBe('AC'.includes(c.seq[d]));
+      }
+    }
+  });
+
+  it('explain strip cells in the A–D words', () => {
+    expect(stripCaption(meta, county('01005'), 5)).toBe('2000–10 · Self population loss, neighbor population growth');
   });
 });

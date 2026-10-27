@@ -17,6 +17,9 @@ export const ui = $state({
   playing: false,
 });
 
+/** Open state of the profile's collapsible blocks; kept across selections for the session. */
+export const profileOpen = $state({ acs: false, components: false });
+
 export function toggleFilter(pathway: number): void {
   ui.filter = ui.filter.includes(pathway)
     ? ui.filter.filter((p) => p !== pathway)
