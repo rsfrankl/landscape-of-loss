@@ -1,0 +1,195 @@
+{
+  "years": [1950, 1960, 1970, 1980, 1990, 2000, 2010, 2020],
+  "decades": [
+    {
+      "start": 1950,
+      "end": 1960,
+      "label": "1950–60"
+    },
+    {
+      "start": 1960,
+      "end": 1970,
+      "label": "1960–70"
+    },
+    {
+      "start": 1970,
+      "end": 1980,
+      "label": "1970–80"
+    },
+    {
+      "start": 1980,
+      "end": 1990,
+      "label": "1980–90"
+    },
+    {
+      "start": 1990,
+      "end": 2000,
+      "label": "1990–2000"
+    },
+    {
+      "start": 2000,
+      "end": 2010,
+      "label": "2000–10"
+    },
+    {
+      "start": 2010,
+      "end": 2020,
+      "label": "2010–20"
+    }
+  ],
+  "pathways": [
+    {
+      "id": 1,
+      "name": "Emerging Localized Loss",
+      "group": "loss",
+      "n": 557,
+      "color": "#6388b4",
+      "blurb": "Decades of shared regional growth, turning to local loss by 2010–20, often at the edge of growing regions."
+    },
+    {
+      "id": 2,
+      "name": "Isolated Loss",
+      "group": "loss",
+      "n": 126,
+      "color": "#ffae34",
+      "blurb": "Losing population while neighbouring counties grow: islands of loss inside growing regions."
+    },
+    {
+      "id": 3,
+      "name": "Persistent Loss",
+      "group": "loss",
+      "n": 442,
+      "color": "#ef6f6a",
+      "blurb": "Loss shared with neighbours in most decades since 1950; concentrated in the Great Plains and central Appalachia."
+    },
+    {
+      "id": 4,
+      "name": "Punctuated Regionalized Loss",
+      "group": "loss",
+      "n": 512,
+      "color": "#00a86b",
+      "blurb": "Alternating growth and loss, with loss shared across the region since 2010."
+    },
+    {
+      "id": 5,
+      "name": "Constant Growth",
+      "group": "growth",
+      "n": 949,
+      "color": "#8cc2ca",
+      "blurb": "County and neighbours growing in nearly every decade."
+    },
+    {
+      "id": 6,
+      "name": "Localized Recovery and Regional Growth",
+      "group": "growth",
+      "n": 141,
+      "color": "#e5e522",
+      "blurb": "Growing regions where the county lost population for a time, then recovered after 1990."
+    },
+    {
+      "id": 7,
+      "name": "Punctuated Growth",
+      "group": "growth",
+      "n": 312,
+      "color": "#bb7693",
+      "blurb": "Cycles of growth and loss, ending in recent growth."
+    },
+    {
+      "id": 8,
+      "name": "Emerging Growth",
+      "group": "growth",
+      "n": 69,
+      "color": "#8cd17d",
+      "blurb": "Long-run loss turning to growth in the latest decades."
+    }
+  ],
+  "ad": [
+    {
+      "code": "A",
+      "label": "Self loss, neighbours loss",
+      "color": "#f7786b"
+    },
+    {
+      "code": "B",
+      "label": "Self loss, neighbours growth",
+      "color": "#f7cac9"
+    },
+    {
+      "code": "C",
+      "label": "Self growth, neighbours loss",
+      "color": "#92a8d1"
+    },
+    {
+      "code": "D",
+      "label": "Self growth, neighbours growth",
+      "color": "#214471"
+    }
+  ],
+  "change": [
+    {
+      "id": 1,
+      "label": "Growth 20% or more",
+      "min": 20,
+      "max": null,
+      "includeMin": true,
+      "includeMax": false,
+      "color": "#ea3991"
+    },
+    {
+      "id": 2,
+      "label": "+10% to 19.9%",
+      "min": 10,
+      "max": 20,
+      "includeMin": true,
+      "includeMax": false,
+      "color": "#c47a58"
+    },
+    {
+      "id": 3,
+      "label": "0% to 9.9%",
+      "min": 0,
+      "max": 10,
+      "includeMin": true,
+      "includeMax": false,
+      "color": "#d8bf98"
+    },
+    {
+      "id": 4,
+      "label": "−0.1% to −9.9%",
+      "min": -10,
+      "max": 0,
+      "includeMin": false,
+      "includeMax": false,
+      "color": "#98afb5"
+    },
+    {
+      "id": 5,
+      "label": "Decline 10% or more",
+      "min": null,
+      "max": -10,
+      "includeMin": false,
+      "includeMax": true,
+      "color": "#244e66"
+    }
+  ],
+  "citation": {
+    "authors": ["Park, G.", "Seymour, E.", "Franklin, R."],
+    "year": 2026,
+    "title": "Characterizing the Landscape of Loss: A Spatiotemporal Contextual Approach to Measuring U.S. County-Level Depopulation",
+    "journal": "Annals of the American Association of Geographers",
+    "doi": "10.1080/24694452.2026.2691208",
+    "url": "https://doi.org/10.1080/24694452.2026.2691208",
+    "text": "Park, G., Seymour, E., and Franklin, R. (2026). Characterizing the Landscape of Loss: A Spatiotemporal Contextual Approach to Measuring U.S. County-Level Depopulation. Annals of the American Association of Geographers. doi:10.1080/24694452.2026.2691208"
+  },
+  "notes": {
+    "geography": "3,108 conterminous U.S. counties in 2020 boundaries. Shannon County, SD (46113) is recoded to Oglala Lakota County (46102), and Bedford city, VA (51515) is counted in Bedford County (51019).",
+    "base2010": "The 2010 count is the Schroeder (2016) workbook value used by the paper's sequences. It differs slightly from the GeoPackage's 2010 field in 716 counties; the workbook value is used everywhere.",
+    "changeClasses": "Decadal change uses five classes with exact breaks: 20% or more; 10% to under 20%; 0% to under 10%; under 0% to above −10%; −10% or less. These colours differ from the published Figure 1, whose breaks at ±9.9% and 19.9% misplace some counties.",
+    "neighbours": "Neighbours are queen-contiguous counties. Neighbour change is population-weighted: the sum of neighbours' change over the sum of their starting populations. Dukes and Nantucket, MA, and San Juan, WA, have no neighbours and count as neighbours-growth.",
+    "rucc": "RUCC 2023 codes Connecticut by planning region, not county; the 2013 code is used for metro status."
+  },
+  "validation": {
+    "adCells": 21756,
+    "adMismatches": 0
+  }
+}
