@@ -9,7 +9,9 @@ test_that("counties.json has 3,108 complete records", {
   cs <- counties()
   expect_length(cs, 3108)
   expect_true(all(vapply(cs, function(r) length(r$pop) == 8 && length(r$pct) == 7 &&
-                           length(r$lgr) == 7 && nchar(r$seq) == 7, TRUE)))
+                           length(r$cls) == 7 && length(r$lgr) == 7 && nchar(r$seq) == 7, TRUE)))
+  expect_true(all(vapply(cs, function(r) all(unlist(r$cls) %in% 1:5), TRUE)))
+  expect_equal(vapply(cs, function(r) r$cls[[7]], 0), vapply(cs, `[[`, 0, "cat1020"), ignore_attr = TRUE)
   lag_ok <- vapply(cs, function(r) is.null(r$lag) || length(r$lag) == 7, TRUE)
   expect_true(all(lag_ok))
   expect_setequal(names(cs)[vapply(cs, function(r) is.null(r$lag), TRUE)], NO_NEIGHBOUR_GEOIDS)
@@ -27,7 +29,9 @@ test_that("pathway and 2010-20 counts match the paper", {
 test_that("Barbour County matches the spec's example record", {
   b <- counties()[["01005"]]
   expect_equal(unlist(b$pop), c(28892, 24700, 22543, 24756, 25417, 29038, 27457, 25223))
-  expect_equal(unlist(b$pct), c(-14.5, -8.7, 9.8, 2.7, 14.2, -5.4, -8.1))
+  expect_equal(round(unlist(b$pct), 1), c(-14.5, -8.7, 9.8, 2.7, 14.2, -5.4, -8.1))
+  expect_equal(unlist(b$pct), round(100 * diff(unlist(b$pop)) / head(unlist(b$pop), -1), 3))
+  expect_equal(unlist(b$cls), c(5, 4, 3, 3, 2, 4, 4))
   expect_equal(unlist(b$lgr), c(-0.1568, -0.0914, 0.0936, 0.0264, 0.1332, -0.0560, -0.0849))
   expect_equal(unlist(b$lag), c(1.3, 9.7, 0.1, 0.5, 3.7, 5.0, 1.9))
   expect_equal(b$seq, "BBDDDBB")
@@ -38,11 +42,15 @@ test_that("Barbour County matches the spec's example record", {
 
 test_that("known edge counties land where the spec says", {
   cs <- counties()
-  # Milam TX (-0.012%, so its 1-decimal pct reads 0.0) and Buena Vista VA lose population.
+  # Milam TX (-0.012%, so a 1-decimal pct would read 0.0) and Buena Vista VA lose population.
   for (g in c("48331", "51530")) {
     expect_equal(cs[[g]][c("group", "cat1020")], list(group = "loss", cat1020 = 4L), info = g)
+    expect_equal(cs[[g]]$cls[[7]], 4, info = g)
+    expect_lt(cs[[g]]$pct[[7]], 0)
   }
   expect_equal(cs[["31153"]]$cat1020, 2L)  # Sarpy NE
+  expect_equal(cs[["31153"]]$cls[[7]], 2)
+  expect_lt(cs[["31153"]]$pct[[7]], 20)
   # 2010 base is the workbook (Bedford County + city), not the GeoPackage's POP_201 (74,872).
   expect_equal(cs[["51019"]]$pop[[7]], 74898)
   expect_equal(cs[["35013"]]$name, "Doña Ana County")

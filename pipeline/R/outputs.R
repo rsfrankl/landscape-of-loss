@@ -92,7 +92,10 @@ build_counties <- function(info, typology, sequences, pop, pct, lgr, lag, rucc, 
     geoid = u, name = info$name, state = info$state, stusps = info$stusps,
     pathway = typology$pathway, group = ifelse(typology$pathway <= 4, "loss", "growth"),
     seq_group = s$group, seq = s$seq,
-    pop = I(rows(pop, 0)), pct = I(rows(pct, 1)), lgr = I(rows(lgr, 4)),
+    # pct keeps 3 decimals so the front end can truncate to 1 without crossing a break;
+    # cls is the change class per decade, binned on the unrounded values.
+    pop = I(rows(pop, 0)), pct = I(rows(pct, 3)), cls = I(rows(bin_change(pct), 0)),
+    lgr = I(rows(lgr, 4)),
     lag = I(lapply(seq_along(u), function(i) if (all(is.na(lag[i, ]))) NA else round(unname(lag[i, ]), 1))),
     pct1020 = pct[, ncol(pct)], cat1020 = bin_change(pct[, ncol(pct)]),
     rucc13 = rucc$rucc13, rucc23 = rucc$rucc23, metro = rucc$metro, rucc_note = rucc$rucc_note,
@@ -114,6 +117,9 @@ assert_counties <- function(counties) {
   by_id <- function(g) counties[counties$geoid == g, ]
   if (!all(by_id("48331")$pct1020 < 0, by_id("51530")$pct1020 < 0)) fail("Milam TX / Buena Vista VA must lose")
   if (by_id("31153")$cat1020 != 2) fail("Sarpy NE must be in the 10-19.9% class")
+  cls_ok <- vapply(counties$cls, function(x) length(x) == 7 && all(x %in% 1:5), TRUE)
+  if (!all(cls_ok)) fail("cls must hold 7 classes in 1-5 for every county")
+  if (any(vapply(counties$cls, `[`, 0, 7) != counties$cat1020)) fail("2010-20 cls disagrees with cat1020")
   no_nb <- vapply(counties$lag, function(x) length(x) == 1 && is.na(x), TRUE)
   if (!setequal(counties$geoid[no_nb], NO_NEIGHBOUR_GEOIDS)) fail("unexpected counties without neighbours")
   if (anyNA(counties$rucc13) || any(is.na(counties$rucc23) & is.na(counties$rucc_note))) fail("RUCC gaps without a note")
@@ -121,7 +127,7 @@ assert_counties <- function(counties) {
 }
 
 counties_json <- function(counties) {
-  keep <- c("geoid", "name", "state", "stusps", "pathway", "group", "seq", "pop", "pct", "lgr",
+  keep <- c("geoid", "name", "state", "stusps", "pathway", "group", "seq", "pop", "pct", "cls", "lgr",
             "lag", "cat1020", "rucc13", "rucc23", "metro", "rucc_note", "label", "bbox")
   lapply(seq_len(nrow(counties)), function(i) {
     lapply(setNames(keep, keep), function(k) {

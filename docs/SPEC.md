@@ -130,7 +130,8 @@ Five files in `web/public/data/`; the first three load at startup (target under 
   "pathway": 1, "group": "loss",
   "seq": "BBDDDBB",
   "pop": [28892, 24700, 22543, 24756, 25417, 29038, 27457, 25223],
-  "pct": [-14.5, -8.7, 9.8, 2.7, 14.2, -5.4, -8.1],
+  "pct": [-14.509, -8.733, 9.817, 2.67, 14.246, -5.445, -8.136],
+  "cls": [5, 4, 3, 3, 2, 4, 4],
   "lgr": [-0.1568, -0.0914, 0.0936, 0.0264, 0.1332, -0.0560, -0.0849],
   "lag": [1.3, 9.7, 0.1, 0.5, 3.7, 5.0, 1.9],
   "cat1020": 4,
@@ -139,7 +140,7 @@ Five files in `web/public/data/`; the first three load at startup (target under 
 }
 ```
 
-The `pop`, `pct`, `lgr` and `seq` values are Barbour County's real values (2010 base from the workbook); RUCC, `label` and `bbox` are placeholders; `lag` is the neighbours' population-weighted % change per decade (section 4 step 5), null for the three counties without neighbours. `pop` has one entry per year in `meta.years` (1950…2020); `pct`, `lgr` and `seq` have one entry per decade. Keep arrays indexed by `meta.years` so post-2020 years can be appended without a schema change. Round `pct` to 1 decimal and `lgr` to 4 decimals.
+The `pop`, `pct`, `cls`, `lgr` and `seq` values are Barbour County's real values (2010 base from the workbook); RUCC, `label` and `bbox` are placeholders; `lag` is the neighbours' population-weighted % change per decade (section 4 step 5), null for the three counties without neighbours. `cls` is the change class (1–5, section 4 step 4) per decade, binned on unrounded percentages; the last entry equals `cat1020`. `pop` has one entry per year in `meta.years` (1950…2020); `pct`, `cls`, `lgr` and `seq` have one entry per decade. Keep arrays indexed by `meta.years` so post-2020 years can be appended without a schema change. Round `pct` to 3 decimals and `lgr` to 4 decimals. The front end colours by `cls` and displays `pct` truncated to 1 decimal (section 6.2); it never classifies from `pct`, because a 1-decimal value misplaces 99 county-decades (e.g. Sarpy NE 2010–20 rounds to 20.0 but is in the 10–19.9% class).
 
 `meta.json` pathway entry: `{"id": 1, "name": "Emerging Localized Loss", "group": "loss", "n": 557, "color": "#6388b4", "blurb": "…"}`. `acs.json`: `{"indicators": [{"key": "age65", "label": "Aged 65+", "unit": "%"}…], "county": {"01005": {"age65": [19.6, 1.1]…}}, "pathway": {"1": {…}}, "us": {…}}`. `components.json`: `{"01005": {"natural": -312, "domestic": -1450, "international": 120, "net": -1330, "driver": "both"}}` (`driver` only for loss counties).
 
@@ -179,7 +180,7 @@ Working title: **Landscape of Loss: U.S. County Population Pathways, 1950–2020
 
 - Spatial context and Population change share one decade state; switching between them keeps the decade.
 - The 5 change classes are the same for every decade (≥ 20, 10 to < 20, 0 to < 10, −10 to < 0, ≤ −10), so decades are comparable and 2010–20 matches the corrected Fig. 1.
-- State boundaries draw on top of counties in every mode (`states` mesh, 0.75 px).
+- State boundaries draw on top of counties in every mode (`states` mesh, 0.9 px).
 - Mode changes recolour in place with a 300 ms fill transition; no re-projection. Displayed percentages are truncated toward zero to 1 decimal (19.997 → 19.9), never rounded, so a shown value always matches its class.
 
 ### 6.3 Decade control
