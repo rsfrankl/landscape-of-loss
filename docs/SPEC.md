@@ -1,10 +1,10 @@
 # Landscape of Loss dashboard — technical spec
 
-26 Oct 2026 · Rachel Franklin
+Oct 26, 2026 · @Rachel
 
 ## 1. Purpose and scope
 
-Build a static, desktop-first web dashboard that lets people explore the eight county population-change pathways (1950–2020) published in Park, Seymour and Franklin (2026). It visualizes the paper's findings only. No new analysis. The one derived product is a "similar counties" ranking computed from the paper's own decadal change data (section 6.7).
+Build a static, desktop-first web dashboard that lets people explore the eight county population-change pathways (1950–2020) published in Park, Seymour and Franklin (2026). It visualizes the paper's findings only. No new analysis. The one derived product is a "similar counties" ranking computed from the paper's own decadal change data (section 6.6).
 
 **Source paper.** Park, G., Seymour, E., and Franklin, R. (2026). Characterizing the Landscape of Loss: A Spatiotemporal Contextual Approach to Measuring U.S. County-Level Depopulation. *Annals of the American Association of Geographers*. [doi:10.1080/24694452.2026.2691208](https://doi.org/10.1080/24694452.2026.2691208). Cite and link it in the About panel and footer, not in the title area.
 
@@ -42,15 +42,15 @@ An R data pipeline writes static JSON and TopoJSON; a Svelte 5 + Vite + D3 front
 | Map and charts | D3 v7: `d3-geo` (`geoConicEqualArea`, Albers parameters), `d3-zoom`, `topojson-client` | Equal-area projection matching the paper's figures |
 | Rendering | Canvas for county fills; SVG overlay for state lines, hover outline, selection, labels | 3,108 fills recolour per frame without lag |
 | Hosting | GitHub Pages via a GitHub Actions workflow | Static, no backend |
-| Tests | `testthat` (pipeline), Vitest (logic), Playwright (smoke) | |
+| Tests | `testthat` (pipeline), Vitest (logic), Playwright (smoke) |  |
 
 No React, no MapLibre or Leaflet, no basemap tiles, no UI component library.
 
-**Repository layout.**
+**Repository layout.** The repo does not exist yet; the author will create it.
 
 ```
 /pipeline        R scripts (_targets.R), raw/ (gitignored), checks/
-/pipeline/raw    inputs listed in section 3 (never committed)
+/pipeline/raw    inputs listed in section 3 (not committed if > 50 MB)
 /web             Svelte app (src/, public/data/ ← pipeline outputs)
 /docs            this spec, data dictionary, validation report
 .github/workflows/deploy.yml
@@ -60,11 +60,11 @@ No React, no MapLibre or Leaflet, no basemap tiles, no UI component library.
 
 ## 3. Source data
 
-Five inputs come from the author and three are public downloads. Copy the author files into `pipeline/raw/`.
+Five inputs come from the author and three are public downloads. The author files are in the claude.ai project "depopulation dashboard"; copy them into `pipeline/raw/`.
 
 | Input | Source | Contents | Used for |
 | --- | --- | --- | --- |
-| `depopulation_data.gpkg` | Author | Layers `us_pop_change` (Fig. 1) and `us_counties_typologies` (Fig. 8): 3,108 county polygons in ESRI:102003 Albers, shoreline-clipped, ~200 MB per layer | Geometry, names, `POP_202` (2020 count) |
+| `depopulation_data.gpkg` | Author | Layers `us_pop_change` (Fig. 1) and `us_counties_typologies` (Fig. 8): 3,108 county polygons in ESRI:102003 Albers, shoreline-clipped, \~200 MB per layer | Geometry, names, `POP_202` (2020 count) |
 | `County_population_1790_to_2010.xlsx` | Author (Schroeder 2016, 2010 boundaries) | Sheet `c2010_hist_pops`: 3,143 counties, `epop1950`–`epop2000`, `pop2010` | Population 1950–2010 |
 | `sequence_loss.csv`, `sequence_growth.csv` | Author | 1,637 + 1,471 counties × A–D state for decades `60`…`20` | Sequence strip, A–D map |
 | `us_seq_typologies.xlsx` | Author | `GEO_FIPS`, `cluster` (name), `cluster2` ("Cluster 1"–"Cluster 8") | Pathway membership |
@@ -76,7 +76,7 @@ Five inputs come from the author and three are public downloads. Copy the author
 **Known issues, already verified (26 Oct 2026)**
 
 1. **Geography changes.** The workbook uses 2010 codes. Recode Shannon County SD `46113` → `46102` (Oglala Lakota), and add Bedford city VA `51515` into Bedford County `51019`. Drop Alaska, Hawaii and other non-conterminous rows. Result: exactly the 3,108 counties in the GeoPackage.
-2. **Two different 2010 counts.** `POP_201` in the GeoPackage differs from the workbook's `pop2010` in 717 counties (median 0, 99th percentile 0.2%). The A–D sequences use the workbook value. **Use the workbook `pop2010` as the 2010 base everywhere.** Ignore `POP_201`, `DIFF`, `PER_CHA`, `CHANGE_` and `CAT2`; recompute them.
+2. **Two different 2010 counts.** `POP_201` in the GeoPackage differs from the workbook's `pop2010` in 716 counties (median 0, 99th percentile 0.2%). The A–D sequences use the workbook value. **Use the workbook `pop2010` as the 2010 base everywhere.** Ignore `POP_201`, `DIFF`, `PER_CHA`, `CHANGE_` and `CAT2`; recompute them.
 3. **Two counties change direction** once item 2 is applied: Milam TX (`48331`) and Buena Vista city VA (`51530`) become 2010–20 losers, consistent with their loss pathways.
 4. **Figure 1 bins.** The published `CAT2` uses breaks at ±9.9 and 19.9, which misplaces 20 counties against their labels. Use exact breaks (section 4 step 4).
 5. **GeoPackage attribute tables** (`sequence_*`, `us_seq_typologies`) were imported with their header as row 1. Read the CSV/XLSX files instead.
@@ -90,13 +90,13 @@ The pipeline reproduces the paper's A–D codes exactly before writing anything;
 2. **Geometry.** Read `us_counties_typologies`; transform to EPSG:4326 (D3 projects lon/lat). With mapshaper: `-simplify weighted 3% keep-shapes`, `-clean`, `-o format=topojson quantization=1e5 id-field=GEOID`. Object `counties` holds properties `name` (e.g. "Autauga County"), `state` ("Alabama"), `stusps` ("AL"). Derive object `states` by dissolving on `STATEFP`. Target size under 1.2 MB; tune the percentage and record the value used.
 3. **Population.** Build a table of 8 counts per county: 1950–2000 from `epop*`, 2010 from the workbook `pop2010`, 2020 from `POP_202`.
 4. **Change measures.** For each decade d (1950–60 … 2010–20), with P₀ the start count and P₁ the end count:
-    - percent change = 100 × (P₁ − P₀) / P₀
-    - log growth rate = ln(P₁ / P₀), used only for similarity
-    - 2010–20 category (replaces Fig. 1 `CAT2`): ≥ 20 → "Growth 20% or more"; 10 to < 20 → "+10% to 19.9%"; 0 to < 10 → "0% to 9.9%"; > −10 to < 0 → "−0.1% to −9.9%"; ≤ −10 → "Decline 10% or more". Colours in section 7.
+   - percent change = 100 × (P₁ − P₀) / P₀
+   - log growth rate = ln(P₁ / P₀), used only for similarity
+   - 2010–20 category (replaces Fig. 1 `CAT2`): ≥ 20 → "Growth 20% or more"; 10 to < 20 → "+10% to 19.9%"; 0 to < 10 → "0% to 9.9%"; > −10 to < 0 → "−0.1% to −9.9%"; ≤ −10 → "Decline 10% or more". Colours in section 7.
 5. **Rebuild and verify A–D.** Queen neighbours from the **unsimplified** geometry (`sf::st_intersects`, excluding self). Neighbour change is population-weighted, not a mean of percentages (formula below). A county is "loss" if P₁ < P₀; neighbours are "loss" if the lag is < 0. A = self loss, neighbours loss; B = self loss, neighbours growth; C = self growth, neighbours loss; D = self growth, neighbours growth. Counties with no neighbours (Dukes MA `25007`, Nantucket MA `25019`, San Juan WA `53055`) count as neighbours-growth. **Assert 0 mismatches out of 21,756 cells** against the sequence files (verified 26 Oct 2026). The site displays the author's sequence files; the rebuild is only a check.
-6. **ACS 2016–2020 profile.** Fetch with `tidycensus::get_acs(geography = "county", year = 2020, survey = "acs5")`. Indicators match Table 1 rows: race/ethnicity shares (B03002); age 65+ (B01001); foreign-born (B05002); speaks English "not well" or "not at all", age 5+ (B16004); bachelor's degree or higher, age 25+ (B15003); below poverty (B17001); industry shares of employed civilians 16+ for agriculture/forestry/fishing/hunting/mining, manufacturing, and professional/scientific/management/administrative (C24050); owner- and renter-occupied (B25003). Keep estimates and MOEs. Compute pathway and U.S. values as pooled ratios (sum of numerators / sum of denominators).
-7. **Check Table 1.** Compare pooled pathway values with Table 1. Write differences to `docs/validation.md`. Tolerance ±0.5 points; a larger gap is reported, not fatal. If county means reproduce Table 1 better than pooled ratios, report that and use whichever matches.
-8. **Components of change.** From Vintage 2020 `co-est2020-alldata.csv` (SUMLEV 050), sum the annual columns April 2010–July 2020: natural increase (`NATURALINC*`), domestic (`DOMESTICMIG*`), international (`INTERNATIONALMIG*`), net migration (`NETMIG*`). For the 1,637 loss counties assign the Table 2 driver: net out-migration only; net out-migration + natural decrease; natural decrease only; "other" (estimates show growth). Check counts against Table 2 (e.g. persistent loss 114 / 299 / 23 / 6); report any difference.
+6. **ACS 2016–2020 profile.** Fetch with `tidycensus::get_acs(geography = "county", year = 2020, survey = "acs5")`. Indicators match Table 1 rows: race/ethnicity shares from the 2020 Census, not the ACS (PL 94-171 table P2 via tidycensus::get\_decennial; reproduces Table 1 within 0.1); age 65+ (B01001); foreign-born (B05002); speaks a language other than English at home, share of age 5+ (B16004; these are the measure behind Table 1's values, whose row label differs); bachelor's degree or higher, age 25+ (B15003); below poverty (B17001); industry shares of employed civilians 16+ for agriculture/forestry/fishing/hunting/mining, manufacturing, and professional/scientific/management/administrative (C24050); owner- and renter-occupied (B25003). Keep estimates and MOEs. Compute pathway and U.S. values as pooled ratios (sum of numerators / sum of denominators).
+7. **Check Table 1.** Compare pooled pathway values with Table 1. Write differences to `docs/validation.md`. Tolerance ±0.5 points; a larger gap is reported, not fatal. Expected and intended: the education row, because the dashboard uses bachelor's degree or higher while Table 1 uses bachelor's degree only; report it as an intentional difference. If county means reproduce Table 1 better than pooled ratios, report that and use whichever matches.
+8. **Components of change.** From Vintage 2020 `co-est2020-alldata.csv` (SUMLEV 050), sum the annual columns April 2010–July 2020: natural increase (`NATURALINC*`), domestic (`DOMESTICMIG*`), international (`INTERNATIONALMIG*`), net migration (`NETMIG*`). For the 1,637 loss counties assign the Table 2 driver by sign, counting natural change ≤ 0 as decrease (verified 26 Oct 2026: reproduces Table 2 in all 20 cells): net out-migration only; net out-migration + natural decrease; natural decrease only; "other" (net migration ≥ 0 and natural change > 0). Check counts against Table 2 (e.g. persistent loss 114 / 299 / 23 / 6); assert a 20/20 match.
 9. **Urban–rural.** Join RUCC 2013 and 2023. Metro = codes 1–3; nonmetro = 4–9. Use 2023 as primary. RUCC 2023 codes Connecticut by planning regions, not counties, so its 8 counties have no 2023 code: fall back to 2013 and set a `rucc_note`.
 10. **Write outputs** (section 5), then `docs/validation.md` summarising steps 5, 7 and 8.
 
@@ -137,9 +137,9 @@ Five files in `web/public/data/`; the first three load at startup (target under 
 }
 ```
 
-The `pop`, `pct`, `lgr` and `seq` values are Barbour County's real values (2010 base from the workbook); RUCC, `label` and `bbox` are placeholders; `lag` is the neighbours' population-weighted % change per decade (section 4 step 5), null for the three counties without neighbours. `pop` has one entry per year in `meta.years` (1950…2020); `pct`, `lgr`, `lag` and `seq` have one entry per decade. Keep arrays indexed by `meta.years` so post-2020 years can be appended without a schema change. Round `pct` and `lag` to 1 decimal and `lgr` to 4 decimals.
+The `pop`, `pct`, `lgr` and `seq` values are Barbour County's real values (2010 base from the workbook); RUCC, `label` and `bbox` are placeholders; `lag` is the neighbours' population-weighted % change per decade (section 4 step 5), null for the three counties without neighbours. `pop` has one entry per year in `meta.years` (1950…2020); `pct`, `lgr` and `seq` have one entry per decade. Keep arrays indexed by `meta.years` so post-2020 years can be appended without a schema change. Round `pct` to 1 decimal and `lgr` to 4 decimals.
 
-`meta.json` pathway entry: `{"id": 1, "name": "Emerging Localized Loss", "group": "loss", "n": 557, "color": "#6388b4", "blurb": "…"}`. `acs.json`: `{"indicators": [{"key": "age65", "label": "Aged 65+", "unit": "%"}…], "county": {"01005": {"age65": [19.6, 1.1]…}}, "pathway": {"1": {…}}, "us": {…}}`. `components.json`: `{"01005": {"natural": -312, "domestic": -1450, "international": 120, "net": -1330, "driver": "both"}}` (`driver` only for loss counties; values here are illustrative).
+`meta.json` pathway entry: `{"id": 1, "name": "Emerging Localized Loss", "group": "loss", "n": 557, "color": "#6388b4", "blurb": "…"}`. `acs.json`: `{"indicators": [{"key": "age65", "label": "Aged 65+", "unit": "%"}…], "county": {"01005": {"age65": [19.6, 1.1]…}}, "pathway": {"1": {…}}, "us": {…}}`. `components.json`: `{"01005": {"natural": -312, "domestic": -1450, "international": 120, "net": -1330, "driver": "both"}}` (`driver` only for loss counties).
 
 ## 6. Interface and interactions
 
@@ -178,7 +178,7 @@ Working title: **Landscape of Loss: U.S. County Population Pathways, 1950–2020
 - Spatial context and Population change share one decade state; switching between them keeps the decade.
 - The 5 change classes are the same for every decade (≥ 20, 10 to < 20, 0 to < 10, −10 to < 0, ≤ −10), so decades are comparable and 2010–20 matches the corrected Fig. 1.
 - State boundaries draw on top of counties in every mode (`states` mesh, 0.75 px).
-- Mode changes recolour in place with a 300 ms fill transition; no re-projection.
+- Mode changes recolour in place with a 300 ms fill transition; no re-projection. Displayed percentages are truncated toward zero to 1 decimal (19.997 → 19.9), never rounded, so a shown value always matches its class.
 
 ### 6.3 Decade control
 
@@ -194,7 +194,7 @@ Hovering a county outlines it (1.5 px, `#1A1210`) and shows a tooltip after 80 m
 - Line 2: pathway colour dot + pathway name
 - Line 3, by mode: Pathways → 2010–20 change; Spatial context → "2000–10: B · county −5.4%, neighbours +5.0%"; Population change → "2000–10: −5.4%"; 2010–20 → "−8.1%, 2010–20"
 
-The neighbour figure comes from `lag` in the `counties.json` record (section 5).
+To show the neighbour figure, add `lag` (7 values, percent, 1 decimal, from section 4 step 5) to the `counties.json` record.
 
 ### 6.5 County profile (side panel)
 
@@ -202,8 +202,8 @@ Clicking a county selects it: thick outline on the map, panel switches to its pr
 
 1. **Header.** County, state; pathway chip (colour + name) and "Loss pathway" or "Growth pathway"; "Nonmetro · RUCC 6 (2023)" with 2013 code in smaller type; `rucc_note` if present.
 2. **Sequence strip.** Seven cells coloured A–D, letter inside, decade labels under. The cell for the current decade is outlined in Spatial context and Population change modes. Hovering a cell explains it: "2000–10 · B: county lost population, neighbours gained."
-3. **Population, 1950–2020.** Line of the 8 counts (y = people, formatted 25k) with, beneath it, seven signed bars for decadal % change around a zero line, coloured with the 5-class change palette. Headline above: "25,223 in 2020 · −8.1% since 2010".
-4. **Who lives here (ACS 2016–20).** One row per indicator (14 rows from section 4 step 6). Each row: county dot with MOE whisker, a tick for the pathway value, a tick for the U.S. value, on a shared 0–100% axis per row; county value printed at right. Note under: "Pathway and U.S. values match Table 1 of the paper."
+3. **Population, 1950–2020.** Line of the 8 counts (y = people, formatted 25k) with, beneath it, seven signed bars for decadal % change around a zero line, coloured with the 5-class palette. Headline above: "25,223 in 2020 · −8.1% since 2010".
+4. **Who lives here (ACS 2016–20).** One row per indicator (14 rows from section 4 step 6). Each row: county dot with MOE whisker, a tick for the pathway value, a tick for the U.S. value, on a shared 0–100% axis per row; county value printed at right. Note under: "Race and ethnicity from the 2020 Census; other indicators from the ACS 2016–20. Education is bachelor's degree or higher, which differs from Table 1 of the paper (bachelor's degree only)."
 5. **Why it changed, 2010–20.** Horizontal bars about zero for natural change, domestic migration, international migration and net change (people). For loss counties, the Table 2 driver as a sentence, e.g. "Lost population through both net out-migration and natural decrease, like 50% of loss counties."
 6. **Similar counties** (6.7).
 
@@ -213,7 +213,7 @@ Footer of the panel: "Download this county (CSV)".
 
 This mode makes the paper's argument visible: one decade's binary story splits into eight histories.
 
-- Map: corrected Fig. 1 classes, in the section 7 change palette.
+- Map: corrected Fig. 1 classes.
 - Side panel (replaces the legend): two horizontal 100% bars, "Lost population 2010–20 (1,637)" split into the 4 loss pathways and "Gained (1,471)" split into the 4 growth pathways, with counts. Hovering a segment highlights those counties on the map (others dim to 20%); clicking pins the highlight.
 - One sentence above the bars: "The same 2010–20 loss can follow very different 70-year paths."
 - Clicking a county still opens its profile; a "Back to breakdown" link returns.
@@ -239,10 +239,10 @@ Ranks the 5 counties whose decade-by-decade population change most closely match
 
 - **Zoom.** `d3-zoom`, scale 1–12, wheel and drag, double-click to zoom in, "Reset view" button. Selecting a county zooms only when it is off-screen or smaller than 12 px.
 - **URL state.** `?mode=context&decade=1990&county=01005&path=3,4&sim=any` — every state above round-trips, so views can be shared and cited.
-- **Explainer ("?" button, About modal).** Tabs: *How to read this* (A–D diagram redrawn from the paper's Figs. 2 and 4: a county and its neighbours in four quadrants; the eight pathways with one-line blurbs); *About* (full citation with DOI link, authors, data sources and credits); *Data notes* (2010 base, change classes and their colours, neighbour rule, Connecticut RUCC, validation summary). A first-visit intro card links to it; dismissal stored in `localStorage` inside try/catch.
+- **Explainer ("?" button, About modal).** Tabs: *How to read this* (A–D diagram redrawn from the paper's Figs. 2 and 4: a county and its neighbours in four quadrants; the eight pathways with one-line blurbs); *About* (full citation with DOI link, authors, data sources and credits); *Data notes* (2010 base, change classes, neighbour rule, Connecticut RUCC, sources and definitions of the profile indicators, validation summary). A first-visit intro card links to it; dismissal stored in `localStorage` inside try/catch.
 - **Downloads.** Client-side CSV: the selected county; the counties in the current filter; all counties. Columns: `geoid, county, state, pathway, seq, pop1950…pop2020, pct1950_60…pct2010_20, rucc2013, rucc2023`. Include a header comment line with the citation.
 
-**Draft pathway blurbs** (author to edit; `meta.json` `blurb`):
+**Draft pathway blurbs** (author to edit; meta.json `blurb`):
 
 | # | Pathway | n | Blurb |
 | --- | --- | --- | --- |
@@ -283,7 +283,7 @@ Pathway and A–D colours come from the paper's data dictionary, unchanged; the 
 
 The change palette replaces the published Fig. 1 colours in both the Population change and 2010–20 modes. It is a diverging scheme: magenta for strong growth, through terracotta and a grey-beige near zero, to deep slate blue for strong decline. The growth half is sampled from a greige-to-magenta reference ramp the author chose; the loss half was added and tuned for colour-vision safety. State in Data notes that these colours differ from the published Figure 1.
 
-**Colour-vision check (run 26 Oct 2026, CIEDE2000, 100% severity).** A–D stays distinct for all three deficiency types (closest pair ΔE 20). The change palette also passes (closest pair ΔE 12.4); an earlier draft with a lighter loss end failed for protanopes (deep loss vs. strong growth ΔE 6), so do not lighten `#244e66`. Three pathway pairs fall below ΔE 10: Isolated Loss / Localized Recovery (8.8, deuteranomaly), Persistent Loss / Punctuated Regionalized Loss (9.4–9.5, deutan and protan), Constant Growth / Emerging Growth (5.6, tritanomaly). Mitigations in v1: the pathway filter, legend-hover isolation, and names in tooltips. Do not change the pathway palette without the author's approval.
+**Colour-vision check (run 26 Oct 2026, CIEDE2000, 100% severity).** A–D stays distinct for all three deficiency types (closest pair ΔE 20). The change palette also passes (closest pair ΔE 12.4); an earlier draft with a lighter loss end failed for protanopes (deep loss vs. strong growth ΔE 6), so do not lighten `#244e66`. Three pathway pairs fall below ΔE 10: Isolated Loss / Localized Recovery (8.8, deuteranomaly), Persistent Loss / Punctuated Regionalized Loss (9.4–9.5, deutan and protan), Constant Growth / Emerging Growth (5.6, tritanomaly). Mitigations in v1: the pathway filter, legend-hover isolation, and names in tooltips. Do not change the palette without the author's approval.
 
 **Interface (Northumberland v1.0)**
 
@@ -330,9 +330,8 @@ Build in five milestones; stop for author review after milestones 1, 3 and 5.
 ### 8.3 Deployment
 
 - GitHub Actions on push to `main`: install, run Vitest, build `web/`, deploy to GitHub Pages. The pipeline does not run in CI; its committed outputs do.
-- Set Vite `base` to `/landscape-of-loss/` (the repository name).
+- Set Vite `base` to `/landscape-of-loss/` (the repository name). A rough deploy at the end of milestone 2 is welcome, to surface deployment problems early.
 - Add a `README.md` (purpose, citation, how to run the pipeline and the site) and a `CITATION.cff` pointing to the Annals article.
-- A rough deploy at the end of milestone 2 is welcome, to surface deployment problems early.
 
 ### 8.4 Milestones
 
@@ -340,7 +339,7 @@ Build in five milestones; stop for author review after milestones 1, 3 and 5.
 2. **Map core.** Projection, canvas fills, state mesh, zoom, four modes, decade control, legend, hover.
 3. **County profile.** Sections 1–5 of 6.5, search, location, URL state.
 4. **Similar counties and the 2010–20 mode.** Sections 6.6 and 6.7.
-5. **Explainer, downloads, accessibility, polish.** Section 6.9, section 7 checks, final deploy.
+5. **Explainer, downloads, accessibility, polish.** Section 6.9, section 7 checks, deploy.
 
 ### 8.5 Acceptance criteria
 
