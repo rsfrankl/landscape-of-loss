@@ -1,0 +1,40 @@
+import type { Topology, GeometryCollection } from 'topojson-specification';
+import type { County, Meta } from './types';
+
+export type CountyTopology = Topology<{
+  counties: GeometryCollection<{ name: string; state: string; stusps: string }>;
+  states: GeometryCollection;
+}>;
+
+export interface StartupData {
+  meta: Meta;
+  topo: CountyTopology;
+  /** In TopoJSON geometry order, so an index means the same county everywhere. */
+  counties: County[];
+}
+
+async function getJson<T>(file: string): Promise<T> {
+  const res = await fetch(`${import.meta.env.BASE_URL}data/${file}`);
+  if (!res.ok) throw new Error(`could not load ${file} (${res.status})`);
+  return res.json() as Promise<T>;
+}
+
+export function alignCounties(topo: CountyTopology, records: County[]): County[] {
+  const byId = new Map(records.map((c) => [c.geoid, c]));
+  const out = topo.objects.counties.geometries.map((g) => {
+    const c = byId.get(String(g.id));
+    if (!c) throw new Error(`no counties.json record for ${g.id}`);
+    return c;
+  });
+  if (out.length !== records.length) throw new Error('counties.json and the TopoJSON disagree');
+  return out;
+}
+
+export async function loadStartup(): Promise<StartupData> {
+  const [meta, topo, records] = await Promise.all([
+    getJson<Meta>('meta.json'),
+    getJson<CountyTopology>('counties.topo.json'),
+    getJson<County[]>('counties.json'),
+  ]);
+  return { meta, topo, counties: alignCounties(topo, records) };
+}
