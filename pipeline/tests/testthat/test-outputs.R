@@ -69,6 +69,18 @@ test_that("meta.json carries the spec palettes and pathway definitions", {
                c("#ea3991", "#c47a58", "#d8bf98", "#98afb5", "#244e66"))
 })
 
+test_that("components.json drivers reproduce Table 2 exactly", {
+  comp <- read_web_json("components.json")
+  cs <- counties()
+  loss <- names(comp)[vapply(cs[names(comp)], `[[`, "", "group") == "loss"]
+  tab <- table(factor(vapply(cs[loss], `[[`, 0L, "pathway"), levels = 1:4),
+               factor(vapply(comp[loss], `[[`, "", "driver"), levels = DRIVER_KEYS))
+  got <- as.data.frame.matrix(tab)
+  got <- rbind(got, total = colSums(got))
+  paper <- read_paper_table2(file.path(pipeline_dir, "checks", "paper_table2.csv"))
+  expect_equal(as.matrix(got), as.matrix(paper), ignore_attr = TRUE)
+})
+
 test_that("acs.json and components.json cover every county", {
   acs <- read_web_json("acs.json")
   expect_length(acs$indicators, 14)

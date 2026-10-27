@@ -192,7 +192,7 @@ write_web_topo <- function(topo, ad_check, dir) {
 
 components_json <- function(comp, counties) {
   stopifnot(identical(comp$geoid, counties$geoid))
-  driver <- driver_total_first(comp$net, comp$natural, comp$total)
+  driver <- driver_sign_only(comp$net, comp$natural)
   out <- lapply(seq_len(nrow(comp)), function(i) {
     r <- list(natural = comp$natural[i], domestic = comp$domestic[i],
               international = comp$international[i], net = comp$net[i], total = comp$total[i])

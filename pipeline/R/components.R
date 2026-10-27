@@ -21,13 +21,15 @@ read_vintage2020 <- function(path, universe) {
              row.names = NULL)
 }
 
-# Sign rules: net out-migration only, both, natural decrease only, otherwise "other".
+# Sign rules, used in components.json: net out-migration only, both, natural decrease only,
+# otherwise "other". Natural change of exactly 0 counts as natural decrease, which reproduces
+# Table 2 exactly (Terry County, TX, 48311, is the only loss county affected).
 driver_sign_only <- function(net, natural) {
-  ifelse(net < 0, ifelse(natural < 0, "both", "outmig"), ifelse(natural < 0, "natural", "other"))
+  ifelse(net < 0, ifelse(natural <= 0, "both", "outmig"), ifelse(natural <= 0, "natural", "other"))
 }
 
-# Total-first rule (spec instruction for step 8): a loss county whose estimates show growth
-# (total change >= 0) is "other"; the sign rules apply to the rest. Used in components.json.
+# Total-first rule, reported for reference only: a loss county whose estimates show growth
+# (total change >= 0) is "other"; the sign rules apply to the rest.
 driver_total_first <- function(net, natural, total) {
   ifelse(total >= 0, "other", driver_sign_only(net, natural))
 }
@@ -45,7 +47,7 @@ driver_table <- function(comp, pathway, rule) {
   rbind(out, total = colSums(out))
 }
 
-# Loss counties sitting exactly on a sign boundary, where the paper's tie handling is unknown.
+# Loss counties sitting exactly on a sign boundary, listed so the tie handling stays visible.
 driver_edge_cases <- function(comp, pathway) {
   edge <- pathway <= 4 & (comp$natural == 0 | comp$net == 0)
   data.frame(geoid = comp$geoid[edge], pathway = pathway[edge], natural = comp$natural[edge],

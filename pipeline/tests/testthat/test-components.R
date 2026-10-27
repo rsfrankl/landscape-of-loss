@@ -1,7 +1,11 @@
-test_that("sign-only drivers", {
+test_that("sign-rule drivers", {
   net <- c(-5, -5, 5, 5)
   natural <- c(3, -3, -8, 2)
   expect_equal(driver_sign_only(net, natural), c("outmig", "both", "natural", "other"))
+})
+
+test_that("natural change of exactly 0 counts as natural decrease (Terry County, TX)", {
+  expect_equal(driver_sign_only(net = c(9, -4), natural = c(0, 0)), c("natural", "both"))
 })
 
 test_that("total-first rule makes estimated growth 'other' before the sign rules", {
