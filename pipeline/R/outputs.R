@@ -31,11 +31,11 @@ AD_STATES <- data.frame(
 # Bounds are percent change; `includeMin`/`includeMax` make the exact breaks explicit
 # (-10 itself falls in class 5).
 CHANGE_CLASSES <- list(
-  list(id = 1, label = "Growth 20% or more", min = 20, max = NA, includeMin = TRUE, includeMax = FALSE, color = "#ea3991"),
-  list(id = 2, label = "+10% to 19.9%", min = 10, max = 20, includeMin = TRUE, includeMax = FALSE, color = "#c47a58"),
-  list(id = 3, label = "0% to 9.9%", min = 0, max = 10, includeMin = TRUE, includeMax = FALSE, color = "#d8bf98"),
-  list(id = 4, label = "\u22120.1% to \u22129.9%", min = -10, max = 0, includeMin = FALSE, includeMax = FALSE, color = "#98afb5"),
-  list(id = 5, label = "Decline 10% or more", min = NA, max = -10, includeMin = FALSE, includeMax = TRUE, color = "#244e66"))
+  list(id = 1, label = "Growth 20% or more", min = 20, max = NA, includeMin = TRUE, includeMax = FALSE, color = "#2887a1"),
+  list(id = 2, label = "+10% to 19.9%", min = 10, max = 20, includeMin = TRUE, includeMax = FALSE, color = "#79a7ac"),
+  list(id = 3, label = "0% to 9.9%", min = 0, max = 10, includeMin = TRUE, includeMax = FALSE, color = "#b5c8b8"),
+  list(id = 4, label = "\u22120.1% to \u22129.9%", min = -10, max = 0, includeMin = FALSE, includeMax = FALSE, color = "#d6bd8d"),
+  list(id = 5, label = "Decline 10% or more", min = NA, max = -10, includeMin = FALSE, includeMax = TRUE, color = "#a16928"))
 
 CITATION <- list(
   authors = c("Park, G.", "Seymour, E.", "Franklin, R."),
@@ -163,7 +163,8 @@ build_meta <- function(counties, palette_check, pop_base_diff) {
       changeClasses = paste(
         "Decadal change uses five classes with exact breaks: 20% or more; 10% to under 20%;",
         "0% to under 10%; under 0% to above \u221210%; \u221210% or less. These colours differ from the",
-        "published Figure 1, whose breaks at ±9.9% and 19.9% misplace some counties."),
+        "published Figure 1, whose breaks at ±9.9% and 19.9% misplace some counties.",
+        "Change palette: CARTOColors Earth, CARTO, CC BY 4.0."),
       neighbours = paste(
         "Neighbours are queen-contiguous counties. Neighbour change is population-weighted: the sum of",
         "neighbours' change over the sum of their starting populations. Dukes and Nantucket, MA, and",

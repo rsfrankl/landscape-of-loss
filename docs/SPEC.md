@@ -279,15 +279,17 @@ Pathway and A–D colours come from the paper's data dictionary, unchanged; the 
 | A–D | B Self loss, neighbours growth | `#f7cac9` |
 | A–D | C Self growth, neighbours loss | `#92a8d1` |
 | A–D | D Self growth, neighbours growth | `#214471` |
-| Change | Growth 20% or more | `#ea3991` |
-| Change | +10% to 19.9% | `#c47a58` |
-| Change | 0% to 9.9% | `#d8bf98` |
-| Change | −0.1% to −9.9% | `#98afb5` |
-| Change | Decline 10% or more | `#244e66` |
+| Change | Growth 20% or more | `#2887a1` |
+| Change | +10% to 19.9% | `#79a7ac` |
+| Change | 0% to 9.9% | `#b5c8b8` |
+| Change | −0.1% to −9.9% | `#d6bd8d` |
+| Change | Decline 10% or more | `#a16928` |
 
-The change palette replaces the published Fig. 1 colours in both the Population change and 2010–20 modes. It is a diverging scheme: magenta for strong growth, through terracotta and a grey-beige near zero, to deep slate blue for strong decline. The growth half is sampled from a greige-to-magenta reference ramp the author chose; the loss half was added and tuned for colour-vision safety. State in Data notes that these colours differ from the published Figure 1.
+The change palette replaces the published Fig. 1 colours in both the Population change and 2010–20 modes. It is CARTOColors Earth, a diverging scheme: blue for growth and brown for loss, through a pale grey-green (0% to 9.9%) and a pale tan (−0.1% to −9.9%) either side of zero. State in Data notes that these colours differ from the published Figure 1, and credit the palette: "Change palette: CARTOColors Earth, CARTO, CC BY 4.0."
 
-**Colour-vision check (run 26 Oct 2026, CIEDE2000, 100% severity).** A–D stays distinct for all three deficiency types (closest pair ΔE 20). The change palette also passes (closest pair ΔE 12.4); an earlier draft with a lighter loss end failed for protanopes (deep loss vs. strong growth ΔE 6), so do not lighten `#244e66`. Three pathway pairs fall below ΔE 10: Isolated Loss / Localized Recovery (8.8, deuteranomaly), Persistent Loss / Punctuated Regionalized Loss (9.4–9.5, deutan and protan), Constant Growth / Emerging Growth (5.6, tritanomaly). Mitigations in v1: the pathway filter, legend-hover isolation, and names in tooltips. Do not change the palette without the author's approval.
+**Colour-vision check (run 26 Oct 2026, CIEDE2000, 100% severity).** A–D stays distinct for all three deficiency types (closest pair ΔE 20). Three pathway pairs fall below ΔE 10: Isolated Loss / Localized Recovery (8.8, deuteranomaly), Persistent Loss / Punctuated Regionalized Loss (9.4–9.5, deutan and protan), Constant Growth / Emerging Growth (5.6, tritanomaly). Mitigations in v1: the pathway filter, legend-hover isolation, and names in tooltips. Do not change the palette without the author's approval.
+
+**Change palette re-check (27 Oct 2026, CARTOColors Earth).** Run with R `colorspace` simulation (Machado 2009, severity 1) and `farver` CIEDE2000. This method does not exactly reproduce the 26 Oct figures (it gives A–D 18.3, not 20), so compare palettes only within one method. Closest pair: ΔE 14.4 with normal vision; 13.5 deutan (0% to 9.9% vs. −0.1% to −9.9%); 11.6 protan (the same near-zero pair); 11.6 tritan (≥ 20% vs. +10% to 19.9%). The previous change palette scored 10.7 by the same method, so Earth is at least as distinct. Its weakest pair under protanopia is the two classes either side of zero.
 
 **Interface (Northumberland v1.0)**
 

@@ -74,7 +74,7 @@ test_that("meta.json carries the spec palettes and pathway definitions", {
   expect_equal(vapply(meta$pathways, `[[`, 0L, "n"), EXPECTED_PATHWAY_N)
   expect_equal(vapply(meta$ad, `[[`, "", "color"), AD_STATES$color)
   expect_equal(vapply(meta$change, `[[`, "", "color"),
-               c("#ea3991", "#c47a58", "#d8bf98", "#98afb5", "#244e66"))
+               c("#2887a1", "#79a7ac", "#b5c8b8", "#d6bd8d", "#a16928"))
 })
 
 test_that("components.json drivers reproduce Table 2 exactly", {
