@@ -4,7 +4,7 @@
 </script>
 
 <header>
-  <h1>Landscape of Loss: U.S. County Population Pathways, 1950–2020</h1>
+  <h1>The Landscape of Loss: US County-Level Depopulation Pathways, 1950–2020</h1>
   <fieldset class="modes">
     <legend class="visually-hidden">Map mode</legend>
     {#each MODES as m (m.id)}

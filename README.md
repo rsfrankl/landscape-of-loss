@@ -1,4 +1,4 @@
-# Landscape of Loss: U.S. County Population Pathways, 1950–2020
+# The Landscape of Loss: US County-Level Depopulation Pathways, 1950–2020
 
 A static web dashboard for exploring the eight county population-change pathways
 (1950–2020) published in:

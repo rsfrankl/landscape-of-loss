@@ -168,7 +168,7 @@ One screen: a full-height map on the left, a 380 px side panel on the right, a h
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
-Working title: **Landscape of Loss: U.S. County Population Pathways, 1950–2020**. No institutional logo.
+Title: **The Landscape of Loss: US County-Level Depopulation Pathways, 1950–2020**. No institutional logo.
 
 ### 6.2 Map modes (segmented control in the header)
 
@@ -363,7 +363,7 @@ Build in five milestones; stop for author review after milestones 1, 3 and 5.
 
 ### 8.6 Open items for the author
 
-- Confirm the working title (6.1) and edit the eight pathway blurbs (6.9).
+- Edit the eight pathway blurbs (6.9). (Title confirmed 27 Oct 2026; section 6.1.)
 - Decide on the three low-contrast pathway pairs (section 7) after seeing the built map.
 - Schroeder (2016) data cleared for use (26 Oct 2026); credit line in section 3.
 - Create the GitHub repository `landscape-of-loss` (section 8.3).
