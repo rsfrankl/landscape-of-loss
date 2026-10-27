@@ -3,6 +3,7 @@
   import { MODES } from './lib/types';
   import { ui } from './lib/state.svelte';
   import { countyTitle } from './lib/describe';
+  import { startUrlSync } from './lib/urlSync.svelte';
   import Header from './components/Header.svelte';
   import MapView from './components/Map.svelte';
   import DecadeControl from './components/DecadeControl.svelte';
@@ -10,7 +11,11 @@
   import CountyStub from './components/CountyStub.svelte';
   import Footer from './components/Footer.svelte';
 
-  const loading = loadStartup();
+  // The URL sets the view before the map first paints (spec 6.9).
+  const loading = loadStartup().then((data) => {
+    startUrlSync(data.meta, data.counties);
+    return data;
+  });
   const usesDecade = $derived(MODES.find((m) => m.id === ui.mode)!.usesDecade);
 
   function onKeydown(event: KeyboardEvent): void {

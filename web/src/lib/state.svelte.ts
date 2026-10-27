@@ -1,8 +1,8 @@
 import type { Mode } from './types';
 import { LAST_DECADE } from './types';
 
-// Shared view state. Names follow the URL keys in spec 6.9 (mode, decade, county, path) so
-// milestone 3 can round-trip them.
+// Shared view state. lib/urlSync.svelte.ts round-trips mode, decade, selected and filter
+// through the URL keys of spec 6.9 (mode, decade, county, path).
 export const ui = $state({
   mode: 'change' as Mode,
   /** Decade index 0–6, shared by Spatial context and Population change. */

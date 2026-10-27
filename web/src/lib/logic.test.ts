@@ -10,6 +10,7 @@ import { legendCounts } from './counts';
 import { decodePick, pickColor } from './picking';
 import { alignCounties, type CountyTopology } from './data';
 import { contextLines, lineText, modeLines } from './describe';
+import { DEFAULT_STATE, parseUrl, toSearch } from './url';
 
 const meta = metaJson as unknown as Meta;
 const counties = alignCounties(topoJson as unknown as CountyTopology, countiesJson as unknown as County[]);
@@ -190,5 +191,41 @@ describe('US spelling', () => {
   it('meta.json visible text has no British spellings', () => {
     const visible = JSON.stringify([meta.pathways, meta.ad, meta.change, meta.notes]);
     expect(visible).not.toMatch(/neighbour|colour|behaviour|centre|licence/i);
+  });
+});
+
+describe('URL state', () => {
+  const idx = (g: string) => counties.findIndex((c) => c.geoid === g);
+
+  it('leaves the default view out of the URL', () => {
+    expect(toSearch(DEFAULT_STATE, meta, counties)).toBe('');
+    expect(parseUrl('', meta, counties)).toEqual(DEFAULT_STATE);
+  });
+
+  it('round-trips every key', () => {
+    const state = { mode: 'context' as const, decade: 4, selected: idx('01005'), filter: [3, 4] };
+    const search = toSearch(state, meta, counties);
+    expect(search).toBe('?mode=context&decade=1990&county=01005&path=3,4');
+    expect(parseUrl(search, meta, counties)).toEqual(state);
+    for (const mode of ['change', 'context', 'pathways'] as const) {
+      for (let decade = 0; decade < 7; decade++) {
+        const s = { mode, decade, selected: idx('28101'), filter: [] };
+        expect(parseUrl(toSearch(s, meta, counties), meta, counties)).toEqual(s);
+      }
+    }
+  });
+
+  it('redirects the retired mode=recent to Decadal population change at 2010–20', () => {
+    expect(parseUrl('?mode=recent&decade=1970&county=28101&path=2', meta, counties)).toEqual({
+      mode: 'change',
+      decade: LAST_DECADE,
+      selected: idx('28101'),
+      filter: [2],
+    });
+  });
+
+  it('ignores unknown values', () => {
+    expect(parseUrl('?mode=nope&decade=1985&county=99999&path=0,9,x', meta, counties)).toEqual(DEFAULT_STATE);
+    expect(parseUrl('?path=4,1,4', meta, counties).filter).toEqual([1, 4]);
   });
 });
