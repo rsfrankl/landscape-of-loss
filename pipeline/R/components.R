@@ -21,27 +21,17 @@ read_vintage2020 <- function(path, universe) {
              row.names = NULL)
 }
 
-# Sign rules, used in components.json: net out-migration only, both, natural decrease only,
-# otherwise "other". Natural change of exactly 0 counts as natural decrease, which reproduces
-# Table 2 exactly (Terry County, TX, 48311, is the only loss county affected).
-driver_sign_only <- function(net, natural) {
+# Table 2 drivers by sign: net out-migration only, both, natural decrease only, otherwise
+# "other". Natural change <= 0 counts as decrease, which reproduces Table 2 exactly (Terry
+# County, TX, 48311, is the only loss county with natural change of exactly 0).
+driver_by_sign <- function(net, natural) {
   ifelse(net < 0, ifelse(natural <= 0, "both", "outmig"), ifelse(natural <= 0, "natural", "other"))
 }
 
-# Total-first rule, reported for reference only: a loss county whose estimates show growth
-# (total change >= 0) is "other"; the sign rules apply to the rest.
-driver_total_first <- function(net, natural, total) {
-  ifelse(total >= 0, "other", driver_sign_only(net, natural))
-}
-
-# Counts by pathway for both rules, laid out like paper_table2.csv.
-driver_table <- function(comp, pathway, rule) {
+# Counts by pathway for the loss counties, laid out like paper_table2.csv.
+driver_table <- function(comp, pathway) {
   loss <- pathway <= 4
-  d <- if (rule == "total_first") {
-    driver_total_first(comp$net, comp$natural, comp$total)
-  } else {
-    driver_sign_only(comp$net, comp$natural)
-  }
+  d <- driver_by_sign(comp$net, comp$natural)
   tab <- table(factor(pathway[loss], levels = 1:4), factor(d[loss], levels = DRIVER_KEYS))
   out <- as.data.frame.matrix(tab)
   rbind(out, total = colSums(out))
@@ -52,8 +42,7 @@ driver_edge_cases <- function(comp, pathway) {
   edge <- pathway <= 4 & (comp$natural == 0 | comp$net == 0)
   data.frame(geoid = comp$geoid[edge], pathway = pathway[edge], natural = comp$natural[edge],
              net = comp$net[edge], total = comp$total[edge],
-             sign_only = driver_sign_only(comp$net, comp$natural)[edge],
-             total_first = driver_total_first(comp$net, comp$natural, comp$total)[edge])
+             driver = driver_by_sign(comp$net, comp$natural)[edge])
 }
 
 TABLE2_COLS <- c(outmig = "net_outmigration_only", both = "net_outmigration_and_natural_decrease",
@@ -68,12 +57,14 @@ read_paper_table2 <- function(path) {
   out
 }
 
-compare_table2 <- function(comp, pathway, paper) {
-  rules <- c("total_first", "sign_only")
-  res <- lapply(rules, function(r) {
-    got <- driver_table(comp, pathway, r)
-    list(counts = got, diff = got - paper, abs_diff = sum(abs(as.matrix(got - paper))))
-  })
-  names(res) <- rules
-  res
+# Table 2 must match in all 20 cells; any difference fails the build.
+check_table2 <- function(comp, pathway, paper) {
+  got <- driver_table(comp, pathway)
+  diff <- got - paper
+  bad <- sum(as.matrix(diff) != 0)
+  if (bad) {
+    stop("Table 2 drivers: ", bad, " of 20 cells differ from the paper\n",
+         paste(capture.output(print(diff)), collapse = "\n"))
+  }
+  list(counts = got, cells = length(as.matrix(got)), mismatches = 0L)
 }

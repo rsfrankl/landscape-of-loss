@@ -162,7 +162,16 @@ build_meta <- function(counties, palette_check, pop_base_diff) {
         "Neighbours are queen-contiguous counties. Neighbour change is population-weighted: the sum of",
         "neighbours' change over the sum of their starting populations. Dukes and Nantucket, MA, and",
         "San Juan, WA, have no neighbours and count as neighbours-growth."),
-      rucc = CT_RUCC_NOTE),
+      rucc = CT_RUCC_NOTE,
+      profile = paste(
+        "Race and ethnicity are from the 2020 Census (PL 94-171, table P2); the other profile indicators",
+        "are ACS 2016–20 5-year estimates. Language is the share of people aged 5+ who speak a language",
+        "other than English at home. Education is bachelor's degree or higher (age 25+), which differs",
+        "from Table 1 of the paper (bachelor's degree only)."),
+      components = paste(
+        "Components of change, April 2010 to July 2020, are from the Census Bureau's Vintage 2020",
+        "estimates. Loss counties are grouped by sign, as in Table 2 of the paper, with natural change",
+        "of zero counted as natural decrease.")),
     validation = list(adCells = 21756L, adMismatches = 0L))
 }
 
@@ -190,9 +199,10 @@ write_web_topo <- function(topo, ad_check, dir) {
   dest
 }
 
-components_json <- function(comp, counties) {
-  stopifnot(identical(comp$geoid, counties$geoid))
-  driver <- driver_sign_only(comp$net, comp$natural)
+# Drivers are only written once the Table 2 check has passed.
+components_json <- function(comp, counties, table2) {
+  stopifnot(identical(comp$geoid, counties$geoid), identical(table2$mismatches, 0L))
+  driver <- driver_by_sign(comp$net, comp$natural)
   out <- lapply(seq_len(nrow(comp)), function(i) {
     r <- list(natural = comp$natural[i], domestic = comp$domestic[i],
               international = comp$international[i], net = comp$net[i], total = comp$total[i])

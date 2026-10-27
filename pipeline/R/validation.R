@@ -1,10 +1,13 @@
 # docs/validation.md: a generated record of every check in spec §4 (steps 5, 7, 8 and more).
 
-md_table <- function(df, digits = 1) {
+# `fixed = TRUE` prints every number with `digits` decimals (for tables of percentages);
+# otherwise whole numbers print as integers with thousands separators.
+md_table <- function(df, digits = 1, fixed = FALSE) {
   df <- as.data.frame(df, check.names = FALSE, stringsAsFactors = FALSE)
   fmt <- lapply(df, function(x) {
     if (is.numeric(x)) {
-      whole <- abs(x - round(x)) < 1e-9
+      x[!is.na(x) & round(x, digits) == 0] <- 0  # no "-0.0"
+      whole <- !fixed & abs(x - round(x)) < 1e-9
       ifelse(is.na(x), "", ifelse(whole, formatC(round(x), format = "d", big.mark = ","),
                                   formatC(x, format = "f", digits = digits)))
     } else {
@@ -33,42 +36,41 @@ gzip_bytes <- function(path) as.numeric(system2("sh", c("-c", shQuote(sprintf("g
 status <- function(ok) if (isTRUE(ok)) "pass" else "**gap**"
 
 render_validation <- function(path, ad_check, raw_hashes, provenance, base2010, cat_counts, cat2,
-                              topo, t1, t1_context, t1_diag, t2, t2_edges, rucc, web_files) {
+                              topo, t1, t1_context, education_alt, t2, t2_edges, rucc, web_files) {
   require_ad_pass(ad_check)
   sizes <- data.frame(file = basename(web_files), bytes = file.size(web_files),
                       gzip_bytes = vapply(web_files, gzip_bytes, 0), row.names = NULL)
   startup <- sizes$file %in% c("counties.topo.json", "meta.json", "counties.json")
   startup_gz <- sum(sizes$gzip_bytes[startup])
-  t2_best <- names(which.min(vapply(t2, function(r) r$abs_diff, 0)))
   fallback <- sum(!is.na(rucc$rucc_note))
+  n_intended <- length(t1$intended)
 
   summary <- data.frame(
     check = c("Study counties", "A–D cells matching the sequence files", "2010–20 class counts (1–5)",
-              "TopoJSON size", "Startup data, gzipped", "Table 1 cells within ±0.5 pt",
-              "Table 2 cells matching (sign rule, used)", "Table 2 cells matching (total-first rule, reference)"),
+              "TopoJSON size", "Startup data, gzipped",
+              sprintf("Table 1 cells within ±0.5 pt (excluding %d intended-difference row)", n_intended),
+              "Table 2 cells matching"),
     expected = c("3,108", "21,756 / 21,756", paste(format(EXPECTED_CAT1020_COUNTS, big.mark = ",", trim = TRUE), collapse = " / "),
-                 "< 1.2 MB", "< 2 MB", sprintf("%d / %d", t1$n_cells, t1$n_cells), "20 / 20", "20 / 20"),
+                 "< 1.2 MB", "< 2 MB", sprintf("%d / %d", t1$n_cells, t1$n_cells), "20 / 20"),
     result = c(format(ad_check$counties, big.mark = ","),
                sprintf("%s / %s", format(ad_check$cells - ad_check$mismatches, big.mark = ","),
                        format(ad_check$cells, big.mark = ",")),
                paste(format(cat_counts, big.mark = ",", trim = TRUE), collapse = " / "),
                sprintf("%.2f MB", topo$bytes / 1e6), sprintf("%.2f MB", startup_gz / 1e6),
                sprintf("%d / %d", t1$n_cells - t1$n_outside, t1$n_cells),
-               sprintf("%d / 20", sum(as.matrix(t2$sign_only$diff) == 0)),
-               sprintf("%d / 20", sum(as.matrix(t2$total_first$diff) == 0))),
+               sprintf("%d / %d", t2$cells - t2$mismatches, t2$cells)),
     status = c(status(ad_check$counties == 3108), status(ad_check$mismatches == 0),
                status(identical(cat_counts, EXPECTED_CAT1020_COUNTS)), status(topo$bytes < 1.2e6),
-               status(startup_gz < 2e6), status(t1$n_outside == 0),
-               status(t2$sign_only$abs_diff == 0), "reference"))
+               status(startup_gz < 2e6), status(t1$n_outside == 0), status(t2$mismatches == 0)))
 
   prov <- do.call(rbind, lapply(provenance, function(p) {
     data.frame(file = p$file, url = p$url, downloaded = p$downloaded, sha256 = p$sha256)
   }))
-  diag <- do.call(rbind, lapply(t1_diag, function(d) {
-    data.frame(row = d$row, alternative = d$alternative, max_abs_diff = d$max_abs_diff)
-  }))
+  t1_source <- data.frame(indicator = rownames(t1$ours), table1_row = t1$paper_row,
+                          source = unname(SOURCE_LABELS[t1$source]))
   t1_ours <- with_rownames(round(t1$ours, 1), "indicator")
   t1_diff <- with_rownames(round(t1$diff, 1), "indicator")
+  t1_diff$note <- ifelse(t1_diff$indicator %in% t1$intended, "intended difference", "")
   ctx_ours <- with_rownames(round(t1_context$ours, 2), "row")
   ctx_diff <- with_rownames(round(t1_context$diff, 2), "row")
 
@@ -81,8 +83,8 @@ render_validation <- function(path, ad_check, raw_hashes, provenance, base2010, 
     "",
     md_table(summary),
     "",
-    "Table 1 and Table 2 gaps are reported, not fatal (spec §4 steps 7–8). Every other row above is",
-    "enforced by an assertion in the pipeline, so the build fails before writing outputs if it does not hold.",
+    "Table 1 gaps are reported, not fatal (spec §4 step 7). Every other row above is enforced by an",
+    "assertion in the pipeline, so the build fails before writing outputs if it does not hold.",
     "",
     "## Inputs",
     "",
@@ -119,7 +121,7 @@ render_validation <- function(path, ad_check, raw_hashes, provenance, base2010, 
     "",
     "## Step 3: Population and the 2010 base",
     "",
-    sprintf("The workbook `pop2010` is the 2010 base everywhere. The GeoPackage's `POP_201` differs from it in **%s counties** (median %.2f%%, 99th percentile %.2f%%, max %.2f%%). The spec (§3 issue 2) records 717; the difference is reported here and not adjusted.",
+    sprintf("The workbook `pop2010` is the 2010 base everywhere (spec §3 issue 2). The GeoPackage's `POP_201` differs from it in **%s counties** (median %.2f%%, 99th percentile %.2f%%, max %.2f%%).",
             format(base2010$n_diff, big.mark = ","), base2010$median_pct, base2010$p99_pct, base2010$max_pct),
     "",
     "## Step 4: 2010–20 change classes",
@@ -129,7 +131,7 @@ render_validation <- function(path, ad_check, raw_hashes, provenance, base2010, 
     "",
     md_table(with_rownames(cat2, "published CAT2")),
     "",
-    "Sarpy County, NE (`31153`) changed by 19.997%: class 2, although its rounded `pct` displays as 20.0.",
+    "Sarpy County, NE (`31153`) changed by 19.997%: class 2. Its `pct` in `counties.json` is rounded to 20.0; the front end truncates toward zero for display (19.9, spec §6.2) so the shown value matches its class. Likewise Milam County, TX (`48331`, −0.012%) is stored as −0 and is in class 4.",
     "",
     "## Step 5: Spatial context (A–D)",
     "",
@@ -141,25 +143,27 @@ render_validation <- function(path, ad_check, raw_hashes, provenance, base2010, 
     sprintf("Counties without neighbours (neighbours-growth): %s.", paste(NO_NEIGHBOUR_GEOIDS, collapse = ", ")),
     "Also asserted: sequence-file group = sign of 2010–20 change (1,637 losing, 1,471 gaining); pathways 1–4 are all loss and 5–8 all growth; Milam TX and Buena Vista VA lose; Sarpy NE is in class 2.",
     "",
-    "## Steps 6–7: ACS 2016–20 and Table 1",
+    "## Steps 6–7: County profile and Table 1",
     "",
-    sprintf("Pathway values are **%s** (mean absolute gap over the 13 single-definition rows: pooled %.2f, county means %.2f). The English row uses the **%s** denominator (mean absolute gap: all age 5+ %.2f; non-English speakers %.2f).",
+    "Indicator sources. Race and ethnicity come from the 2020 Census; the rest from the ACS 2016–20 5-year estimates. The language row is the share of people aged 5+ who speak a language other than English at home, the measure behind Table 1's values (whose row is labelled differently).",
+    "",
+    md_table(t1_source),
+    "",
+    sprintf("Pathway values are **%s** (mean absolute gap over the rows meant to match Table 1: pooled %.2f, county means %.2f).",
             if (t1$method == "pooled") "pooled ratios" else "county means",
-            t1$method_mad[["pooled"]], t1$method_mad[["county_mean"]],
-            if (t1$english == "age5") "all people aged 5+" else "people aged 5+ who speak another language",
-            t1$english_mad[["age5"]], t1$english_mad[["lote"]]),
+            t1$method_mad[["pooled"]], t1$method_mad[["county_mean"]]),
     "",
-    sprintf("%d of %d cells are outside ±0.5 points. Rebuilt values:", t1$n_outside, t1$n_cells),
+    sprintf("%d of %d cells are outside ±0.5 points, not counting the intended difference below. Rebuilt values:",
+            t1$n_outside, t1$n_cells),
     "",
-    md_table(t1_ours),
+    md_table(t1_ours, fixed = TRUE),
     "",
     "Difference from the paper (rebuilt − paper):",
     "",
-    md_table(t1_diff),
+    md_table(t1_diff, fixed = TRUE),
     "",
-    "**Explaining the gaps.** These alternative definitions were computed from the same data, with the largest absolute difference from the paper across the 8 pathways. They are reported only; `acs.json` keeps the spec's definitions.",
-    "",
-    md_table(diag),
+    sprintf("**Intended difference: education.** The dashboard reports bachelor's degree or higher (B15003_022–025). Table 1 reports bachelor's degree only: computing that from the same data reproduces Table 1 to within %.1f points, so the gap above is definitional, not an error.",
+            education_alt$max_abs_diff),
     "",
     "Table 1 context rows (county counts, 2020 population, metro shares). The metro rows use the RUCC join from step 9, with Connecticut on its 2013 codes:",
     "",
@@ -171,26 +175,12 @@ render_validation <- function(path, ad_check, raw_hashes, provenance, base2010, 
     "",
     "Vintage 2020 components summed over April 2010–July 2020; total change = `POPESTIMATE2020 − ESTIMATESBASE2010`.",
     "",
-    "- **Sign rule** (used in `components.json`): net migration < 0 is out-migration; natural change ≤ 0 is natural decrease (a natural change of exactly 0 counts as decrease); `other` when net migration ≥ 0 and natural change > 0.",
-    "- **Total-first rule** (reference only): `other` when total change ≥ 0, otherwise the sign rule.",
+    "Loss counties are assigned a driver by sign: net migration < 0 is out-migration; natural change ≤ 0 is natural decrease; `other` when net migration ≥ 0 and natural change > 0.",
     "",
-    sprintf("Closest to Table 2: **%s** rule.", if (t2_best == "sign_only") "sign" else "total-first"),
+    sprintf("**%d of %d cells match Table 2** (asserted; any difference fails the build). Counts:",
+            t2$cells - t2$mismatches, t2$cells),
     "",
-    "Sign rule, counts:",
-    "",
-    md_table(with_rownames(t2$sign_only$counts, "pathway")),
-    "",
-    "Sign rule, difference from Table 2:",
-    "",
-    md_table(with_rownames(t2$sign_only$diff, "pathway")),
-    "",
-    "Total-first rule, counts:",
-    "",
-    md_table(with_rownames(t2$total_first$counts, "pathway")),
-    "",
-    "Total-first rule, difference from Table 2:",
-    "",
-    md_table(with_rownames(t2$total_first$diff, "pathway")),
+    md_table(with_rownames(t2$counts, "pathway")),
     "",
     if (nrow(t2_edges)) c("Loss counties exactly on a sign boundary:", "",
                           md_table(t2_edges)) else "No loss county has zero net migration or zero natural change.",

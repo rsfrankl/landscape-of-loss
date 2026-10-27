@@ -61,17 +61,17 @@ list(
 
   # Steps 8-9: components and urban-rural ---------------------------------------
   tar_target(components, read_vintage2020(vintage_files[1], universe)),
-  tar_target(table2, compare_table2(components, typology$pathway, read_paper_table2(table2_file))),
+  tar_target(table2, check_table2(components, typology$pathway, read_paper_table2(table2_file))),
   tar_target(table2_edges, driver_edge_cases(components, typology$pathway)),
   tar_target(rucc, build_rucc(rucc13_files[1], rucc23_files[1], county_info, universe)),
 
-  # Steps 6-7: ACS and Table 1 ---------------------------------------------------
+  # Steps 6-7: profile indicators (2020 Census race, ACS 2016-20 rest) and Table 1 ---
   tar_target(paper_table1, read_paper_table1(table1_file)),
   tar_target(acs_raw, fetch_acs(universe)),
-  tar_target(acs_parts, acs_components(acs_raw)),
-  tar_target(table1, compare_table1(acs_parts, typology$pathway, paper_table1)),
   tar_target(decennial_race, fetch_decennial_race(universe)),
-  tar_target(table1_diag, table1_diagnostics(acs_raw, decennial_race, typology$pathway, paper_table1)),
+  tar_target(acs_parts, acs_components(acs_raw, decennial_race)),
+  tar_target(table1, compare_table1(acs_parts, typology$pathway, paper_table1)),
+  tar_target(education_alt, education_bachelor_only(acs_raw, typology$pathway, paper_table1)),
   tar_target(table1_context, compare_table1_context(typology$pathway, pop[, "2020"], rucc, paper_table1)),
 
   # County table and palette check ----------------------------------------------
@@ -89,15 +89,15 @@ list(
   tar_target(web_meta, write_web_json(build_meta(counties, palette_check, base2010$n_diff), "meta.json",
                                       ad_check, WEB_DATA, pretty = TRUE),
              format = "file"),
-  tar_target(web_acs, write_web_json(acs_payload(acs_parts, table1, typology$pathway, universe), "acs.json",
+  tar_target(web_acs, write_web_json(acs_payload(acs_parts, table1, universe), "acs.json",
                                      ad_check, WEB_DATA),
              format = "file"),
-  tar_target(web_components, write_web_json(components_json(components, counties), "components.json",
+  tar_target(web_components, write_web_json(components_json(components, counties, table2), "components.json",
                                             ad_check, WEB_DATA),
              format = "file"),
   tar_target(validation_md, render_validation(
     VALIDATION_MD, ad_check, raw_hashes, provenance, base2010, cat_counts, cat2, topo, table1,
-    table1_context, table1_diag, table2, table2_edges, rucc,
+    table1_context, education_alt, table2, table2_edges, rucc,
     c(web_topo, web_meta, web_counties, web_acs, web_components)),
     format = "file")
 )

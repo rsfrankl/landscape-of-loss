@@ -81,9 +81,29 @@ test_that("components.json drivers reproduce Table 2 exactly", {
   expect_equal(as.matrix(got), as.matrix(paper), ignore_attr = TRUE)
 })
 
+test_that("acs.json uses the agreed sources, labels and Table 1 values", {
+  acs <- read_web_json("acs.json")
+  ind <- setNames(acs$indicators, vapply(acs$indicators, `[[`, "", "key"))
+  expect_length(ind, 14)
+  expect_equal(unname(vapply(ind[c("white_nh", "black_nh", "asian_nh", "hispanic")], `[[`, "", "source")),
+               rep("census2020", 4))
+  expect_true(all(vapply(ind[setdiff(names(ind), c("white_nh", "black_nh", "asian_nh", "hispanic"))],
+                         `[[`, "", "source") == "acs"))
+  expect_equal(ind$language_other_than_english$label, "Speaks a language other than English at home")
+  expect_equal(ind$bachelors_plus_age25$label, "Bachelor’s degree or higher (age 25+)")
+  # Every row except the intended education difference reproduces Table 1 within 0.5 points.
+  paper <- read_paper_table1(file.path(pipeline_dir, "checks", "paper_table1.csv"))
+  for (k in setdiff(names(ind), "bachelors_plus_age25")) {
+    row <- if (k == "language_other_than_english") "english_not_well_or_not_at_all" else k
+    ours <- vapply(as.character(1:8), function(p) acs$pathway[[p]][[k]], 0)
+    expect_lte(max(abs(ours - paper[row, ])), 0.5 + 1e-9, label = k)
+  }
+  # Census counts have no sampling error: estimate with a null MOE.
+  expect_null(acs$county[["01005"]]$white_nh[[2]])
+})
+
 test_that("acs.json and components.json cover every county", {
   acs <- read_web_json("acs.json")
-  expect_length(acs$indicators, 14)
   expect_length(acs$county, 3108)
   expect_setequal(names(acs$pathway), as.character(1:8))
   comp <- read_web_json("components.json")
