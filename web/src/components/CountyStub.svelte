@@ -4,14 +4,20 @@
   import type { County, Meta } from '../lib/types';
   import { LAST_DECADE } from '../lib/types';
   import { ui } from '../lib/state.svelte';
-  import { contextLine, countyTitle } from '../lib/describe';
-  import { formatCount, formatPct } from '../lib/format';
+  import { changeLine, contextLines, countyTitle, recentLine, type Line } from '../lib/describe';
+  import { formatCount } from '../lib/format';
 
   let { meta, county }: { meta: Meta; county: County } = $props();
 
   const pathway = $derived(meta.pathways[county.pathway - 1]);
+  // Trajectories mode hides the slider, so it describes 2010–20.
   const decade = $derived(ui.mode === 'pathways' ? LAST_DECADE : ui.decade);
-  const last = LAST_DECADE;
+  const lines: Line[] = $derived([
+    recentLine(meta, county),
+    ...(decade === LAST_DECADE ? [] : [changeLine(meta, county, decade)]),
+    ...contextLines(meta, county, decade),
+    { label: `Population (${meta.years[meta.years.length - 1]})`, value: formatCount(county.pop[county.pop.length - 1]) },
+  ]);
 </script>
 
 <section class="stub" aria-labelledby="stub-title">
@@ -23,16 +29,14 @@
     <span class="dot" style:background={pathway.color}></span>
     {pathway.name} · {pathway.group === 'loss' ? 'Loss pathway' : 'Growth pathway'}
   </p>
-  <dl>
-    <dt>{meta.decades[last].label} change</dt>
-    <dd class="num">{formatPct(county.pct[last], county.cls[last])}</dd>
-    <dt>{meta.decades[decade].label} change</dt>
-    <dd class="num">{formatPct(county.pct[decade], county.cls[decade])}</dd>
-    <dt>Spatial context</dt>
-    <dd class="num">{contextLine(meta, county, decade)}</dd>
-    <dt>Population, {meta.years[meta.years.length - 1]}</dt>
-    <dd class="num">{formatCount(county.pop[county.pop.length - 1])}</dd>
-  </dl>
+  <ul>
+    {#each lines as line (line.label)}
+      <li>
+        {#if line.color}<span class="swatch" style:background={line.color}></span>{/if}
+        <span>{line.label}{#if line.value !== undefined}: <span class="num">{line.value}</span>{/if}</span>
+      </li>
+    {/each}
+  </ul>
   <p class="note">The full county profile arrives in the next milestone.</p>
 </section>
 
@@ -72,18 +76,23 @@
     height: 12px;
     border-radius: 50%;
   }
-  dl {
-    display: grid;
-    grid-template-columns: max-content 1fr;
-    gap: 6px 14px;
+  ul {
+    list-style: none;
     margin: 0;
+    padding: 0;
   }
-  dt {
-    color: var(--muted);
+  li {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 4px 0;
   }
-  dd {
-    margin: 0;
-    font-size: 13px;
+  .swatch {
+    flex: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    align-self: center;
   }
   .note {
     margin-top: 18px;

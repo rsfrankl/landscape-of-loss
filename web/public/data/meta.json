@@ -52,7 +52,7 @@
       "group": "loss",
       "n": 126,
       "color": "#ffae34",
-      "blurb": "Losing population while neighbouring counties grow: islands of loss inside growing regions."
+      "blurb": "Losing population while neighboring counties grow: islands of loss inside growing regions."
     },
     {
       "id": 3,
@@ -60,7 +60,7 @@
       "group": "loss",
       "n": 442,
       "color": "#ef6f6a",
-      "blurb": "Loss shared with neighbours in most decades since 1950; concentrated in the Great Plains and central Appalachia."
+      "blurb": "Loss shared with neighbors in most decades since 1950; concentrated in the Great Plains and central Appalachia."
     },
     {
       "id": 4,
@@ -76,7 +76,7 @@
       "group": "growth",
       "n": 949,
       "color": "#8cc2ca",
-      "blurb": "County and neighbours growing in nearly every decade."
+      "blurb": "County and neighbors growing in nearly every decade."
     },
     {
       "id": 6,
@@ -106,22 +106,22 @@
   "ad": [
     {
       "code": "A",
-      "label": "Self loss, neighbours loss",
+      "label": "Self population loss, average neighbor population loss",
       "color": "#f7786b"
     },
     {
       "code": "B",
-      "label": "Self loss, neighbours growth",
+      "label": "Self population loss, average neighbor population growth",
       "color": "#f7cac9"
     },
     {
       "code": "C",
-      "label": "Self growth, neighbours loss",
+      "label": "Self population growth, average neighbor population loss",
       "color": "#92a8d1"
     },
     {
       "code": "D",
-      "label": "Self growth, neighbours growth",
+      "label": "Self population growth, average neighbor population growth",
       "color": "#214471"
     }
   ],
@@ -184,8 +184,8 @@
   "notes": {
     "geography": "3,108 conterminous U.S. counties in 2020 boundaries. Shannon County, SD (46113) is recoded to Oglala Lakota County (46102), and Bedford city, VA (51515) is counted in Bedford County (51019).",
     "base2010": "The 2010 count is the Schroeder (2016) workbook value used by the paper's sequences. It differs slightly from the GeoPackage's 2010 field in 716 counties; the workbook value is used everywhere.",
-    "changeClasses": "Decadal change uses five classes with exact breaks: 20% or more; 10% to under 20%; 0% to under 10%; under 0% to above −10%; −10% or less. These colours differ from the published Figure 1, whose breaks at ±9.9% and 19.9% misplace some counties. Change palette: CARTOColors Earth, CARTO, CC BY 4.0.",
-    "neighbours": "Neighbours are queen-contiguous counties. Neighbour change is population-weighted: the sum of neighbours' change over the sum of their starting populations. Dukes and Nantucket, MA, and San Juan, WA, have no neighbours and count as neighbours-growth.",
+    "changeClasses": "Decadal change uses five classes with exact breaks: 20% or more; 10% to under 20%; 0% to under 10%; under 0% to above −10%; −10% or less. These colors differ from the published Figure 1, whose breaks at ±9.9% and 19.9% misplace some counties. Change palette: CARTOColors Earth, CARTO, CC BY 4.0.",
+    "neighbors": "Neighbors are queen-contiguous counties. Neighbor change is population-weighted: the sum of neighbors' change over the sum of their starting populations. Dukes and Nantucket, MA, and San Juan, WA, have no neighbors and count as neighbor growth.",
     "rucc": "RUCC 2023 codes Connecticut by planning region, not county; the 2013 code is used for metro status.",
     "profile": "Race and ethnicity are from the 2020 Census (PL 94-171, table P2); the other profile indicators are ACS 2016–20 5-year estimates. Language is the share of people aged 5+ who speak a language other than English at home. Education is bachelor's degree or higher (age 25+), which differs from Table 1 of the paper (bachelor's degree only).",
     "components": "Components of change, April 2010 to July 2020, are from the Census Bureau's Vintage 2020 estimates. Loss counties are grouped by sign, as in Table 2 of the paper, with natural change of zero counted as natural decrease."

@@ -9,7 +9,7 @@ import { dataColor, hexToRgb, isDimmed, legendKey, mix, palettes } from './color
 import { legendCounts } from './counts';
 import { decodePick, pickColor } from './picking';
 import { alignCounties, type CountyTopology } from './data';
-import { contextLine, modeLine } from './describe';
+import { contextLines, lineText, modeLines } from './describe';
 
 const meta = metaJson as unknown as Meta;
 const counties = alignCounties(topoJson as unknown as CountyTopology, countiesJson as unknown as County[]);
@@ -138,11 +138,40 @@ describe('picking', () => {
 });
 
 describe('tooltip lines', () => {
+  const text = (lines: ReturnType<typeof modeLines>) => lines.map(lineText);
+
   it('follow spec 6.4', () => {
     const barbour = county('01005');
-    expect(modeLine(meta, 'context', barbour, 5)).toBe('2000–10: B · county −5.4%, neighbours +5.0%');
-    expect(modeLine(meta, 'change', barbour, 5)).toBe('2000–10: −5.4%');
-    expect(modeLine(meta, 'pathways', barbour, 0)).toBe('2010–20 change: −8.1%');
-    expect(contextLine(meta, county('25007'), 6)).toMatch(/no neighbours$/);
+    expect(text(modeLines(meta, 'pathways', barbour, 3))).toEqual(['Recent population change (2010–20): −8.1%']);
+    expect(text(modeLines(meta, 'change', barbour, 5))).toEqual(['Population change (2000–10): −5.4%']);
+    expect(text(modeLines(meta, 'context', barbour, 5))).toEqual([
+      'Self population loss, average neighbor population growth',
+      'Neighboring counties’ population change (2000–10): +5.0%',
+    ]);
+  });
+
+  it('never show the county’s own change in spatial context mode', () => {
+    const barbour = county('01005');
+    expect(text(modeLines(meta, 'context', barbour, 5)).join(' ')).not.toContain('5.4');
+  });
+
+  it('say so when a county has no neighbors', () => {
+    expect(lineText(contextLines(meta, county('25007'), 6)[1])).toMatch(/: no neighboring counties$/);
+  });
+
+  it('label A–D in words', () => {
+    expect(meta.ad.map((a) => a.label)).toEqual([
+      'Self population loss, average neighbor population loss',
+      'Self population loss, average neighbor population growth',
+      'Self population growth, average neighbor population loss',
+      'Self population growth, average neighbor population growth',
+    ]);
+  });
+});
+
+describe('US spelling', () => {
+  it('meta.json visible text has no British spellings', () => {
+    const visible = JSON.stringify([meta.pathways, meta.ad, meta.change, meta.notes]);
+    expect(visible).not.toMatch(/neighbour|colour|behaviour|centre|licence/i);
   });
 });

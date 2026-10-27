@@ -10,10 +10,10 @@ PATHWAYS <- data.frame(
   color = c("#6388b4", "#ffae34", "#ef6f6a", "#00a86b", "#8cc2ca", "#e5e522", "#bb7693", "#8cd17d"),
   blurb = c(
     "Decades of shared regional growth, turning to local loss by 2010\u201320, often at the edge of growing regions.",
-    "Losing population while neighbouring counties grow: islands of loss inside growing regions.",
-    "Loss shared with neighbours in most decades since 1950; concentrated in the Great Plains and central Appalachia.",
+    "Losing population while neighboring counties grow: islands of loss inside growing regions.",
+    "Loss shared with neighbors in most decades since 1950; concentrated in the Great Plains and central Appalachia.",
     "Alternating growth and loss, with loss shared across the region since 2010.",
-    "County and neighbours growing in nearly every decade.",
+    "County and neighbors growing in nearly every decade.",
     "Growing regions where the county lost population for a time, then recovered after 1990.",
     "Cycles of growth and loss, ending in recent growth.",
     "Long-run loss turning to growth in the latest decades."),
@@ -23,8 +23,10 @@ EXPECTED_PATHWAY_N <- c(557L, 126L, 442L, 512L, 949L, 141L, 312L, 69L)
 
 AD_STATES <- data.frame(
   code = c("A", "B", "C", "D"),
-  label = c("Self loss, neighbours loss", "Self loss, neighbours growth",
-            "Self growth, neighbours loss", "Self growth, neighbours growth"),
+  label = c("Self population loss, average neighbor population loss",
+            "Self population loss, average neighbor population growth",
+            "Self population growth, average neighbor population loss",
+            "Self population growth, average neighbor population growth"),
   color = c("#f7786b", "#f7cac9", "#92a8d1", "#214471"),
   stringsAsFactors = FALSE)
 
@@ -162,13 +164,13 @@ build_meta <- function(counties, palette_check, pop_base_diff) {
         " counties; the workbook value is used everywhere."),
       changeClasses = paste(
         "Decadal change uses five classes with exact breaks: 20% or more; 10% to under 20%;",
-        "0% to under 10%; under 0% to above \u221210%; \u221210% or less. These colours differ from the",
+        "0% to under 10%; under 0% to above \u221210%; \u221210% or less. These colors differ from the",
         "published Figure 1, whose breaks at ±9.9% and 19.9% misplace some counties.",
         "Change palette: CARTOColors Earth, CARTO, CC BY 4.0."),
-      neighbours = paste(
-        "Neighbours are queen-contiguous counties. Neighbour change is population-weighted: the sum of",
-        "neighbours' change over the sum of their starting populations. Dukes and Nantucket, MA, and",
-        "San Juan, WA, have no neighbours and count as neighbours-growth."),
+      neighbors = paste(
+        "Neighbors are queen-contiguous counties. Neighbor change is population-weighted: the sum of",
+        "neighbors' change over the sum of their starting populations. Dukes and Nantucket, MA, and",
+        "San Juan, WA, have no neighbors and count as neighbor growth."),
       rucc = CT_RUCC_NOTE,
       profile = paste(
         "Race and ethnicity are from the 2020 Census (PL 94-171, table P2); the other profile indicators",

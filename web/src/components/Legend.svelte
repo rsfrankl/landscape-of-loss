@@ -49,8 +49,8 @@
       </ul>
     {/each}
   {:else if ui.mode === 'context'}
-    <h2>Spatial context, {meta.decades[decade].label}</h2>
-    <p class="hint">Did the county and its neighbours lose or gain population?</p>
+    <h2>Population change in spatial context, {meta.decades[decade].label}</h2>
+    <p class="hint">Did the county and its neighboring counties lose or gain population?</p>
     <ul>
       {#each meta.ad as a (a.code)}
         <li>

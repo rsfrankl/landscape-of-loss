@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { County, Meta } from '../lib/types';
   import { ui } from '../lib/state.svelte';
-  import { countyTitle, modeLine } from '../lib/describe';
+  import { countyTitle, modeLines } from '../lib/describe';
 
   let {
     meta,
@@ -25,7 +25,12 @@
   <div class="pathway">
     <span class="dot" style:background={pathway.color}></span>{pathway.name}
   </div>
-  <div class="num">{modeLine(meta, ui.mode, county, ui.decade)}</div>
+  {#each modeLines(meta, ui.mode, county, ui.decade) as line (line.label)}
+    <div class="line">
+      {#if line.color}<span class="dot square" style:background={line.color}></span>{/if}
+      <span>{line.label}{#if line.value !== undefined}: <span class="num">{line.value}</span>{/if}</span>
+    </div>
+  {/each}
 </div>
 
 <style>
@@ -33,7 +38,9 @@
     position: absolute;
     pointer-events: none;
     z-index: 5;
-    max-width: 300px;
+    /* Natural width, so the card flips left near the edge instead of shrinking. */
+    width: max-content;
+    max-width: 340px;
     padding: 8px 10px;
     background: var(--bg);
     border: 1px solid var(--hairline);
@@ -46,15 +53,23 @@
     font-size: 13px;
     color: var(--heading);
   }
-  .pathway {
+  .pathway,
+  .line {
     display: flex;
     align-items: center;
     gap: 6px;
+  }
+  .line {
+    align-items: baseline;
   }
   .dot {
     width: 10px;
     height: 10px;
     border-radius: 50%;
     flex: none;
+  }
+  .square {
+    border-radius: 2px;
+    align-self: center;
   }
 </style>
