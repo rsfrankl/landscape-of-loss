@@ -38,7 +38,8 @@ An R data pipeline writes static JSON and TopoJSON; a Svelte 5 + Vite + D3 front
 | --- | --- | --- |
 | Data prep | R 4.4+: `sf`, `dplyr`, `readxl`, `tidycensus`, `jsonlite`, `targets` | Author can audit it; matches the paper's toolchain |
 | Geometry | mapshaper CLI (npm) | Best simplification that keeps shared county borders |
-| Front end | Svelte 5 (runes) + Vite + TypeScript | Reactive shared state with a small bundle |
+| Front end | Svelte 5 (runes) + Vite + TypeScript, with `@sveltejs/vite-plugin-svelte`, `svelte-check` and `@types/*` packages for D3 and TopoJSON | Reactive shared state with a small bundle |
+| Fonts | `@fontsource/jost` (weights 400 and 800) and `@fontsource/ibm-plex-mono` (400), latin subset only, imported in the app's entry file; Futura stays local-only (no file shipped) | Self-hosted woff2 with `font-display: swap` (section 7) |
 | Map and charts | D3 v7: `d3-geo` (`geoConicEqualArea`, Albers parameters), `d3-zoom`, `topojson-client` | Equal-area projection matching the paper's figures |
 | Rendering | Canvas for county fills; SVG overlay for state lines, hover outline, selection, labels | 3,108 fills recolour per frame without lag |
 | Hosting | GitHub Pages via a GitHub Actions workflow | Static, no backend |
@@ -301,7 +302,7 @@ The change palette replaces the published Fig. 1 colours in both the Population 
 - Body and UI: `"Jost", "Helvetica Neue", Helvetica, sans-serif`, weight 400.
 - Numbers in tables and tooltips: `"IBM Plex Mono"`, tabular figures.
 - Citation and long-form text in the About modal: `Palatino, "Palatino Linotype", "Book Antiqua", serif`.
-- Self-host Jost and IBM Plex Mono as woff2 in `web/public/fonts` with `font-display: swap`, so a missing web font never falls back to the system sans (Arial on Windows).
+- Self-host Jost and IBM Plex Mono as woff2 via the `@fontsource` packages (section 2), bundled by Vite with `font-display: swap`, so a missing web font never falls back to the system sans (Arial on Windows).
 - Sizes: title 22 px, panel headings 15 px, body 14 px, tooltip and axis labels 12 px minimum.
 
 **Accessibility**
