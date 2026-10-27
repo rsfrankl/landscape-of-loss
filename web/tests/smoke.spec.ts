@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 test('map loads, paints, switches modes and never uses Arial', async ({ page }) => {
   const errors: string[] = [];
@@ -65,4 +65,86 @@ test('the three mode tabs fit on one line at 1024 px', async ({ page }) => {
   expect(new Set(tops).size).toBe(1);
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   expect(overflow).toBeLessThanOrEqual(0);
+});
+
+const profileTitle = (page: Page) => page.locator('#profile-title');
+
+test('mode=recent redirects to Decadal population change at 2010–20, keeping the county', async ({ page }) => {
+  await page.goto('./?mode=recent&decade=1970&county=28101');
+  await expect(profileTitle(page)).toHaveText('Newton County, MS');
+  await expect(page).toHaveURL(/\?county=28101$/);
+  await expect(page.getByLabel('Decadal population change', { exact: true })).toBeChecked();
+  await expect(page.getByRole('heading', { name: 'Most recent decade, 2010–20 (decade on the map)' })).toBeVisible();
+});
+
+test('URL state round-trips and the profile follows the map decade', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  const search = '?mode=context&decade=1980&county=28101&path=3,4';
+  await page.goto(`./${search}`);
+  await expect(profileTitle(page)).toHaveText('Newton County, MS');
+  await expect(page.getByLabel('Decadal population change in spatial context', { exact: true })).toBeChecked();
+  await expect(page.locator('input[type="range"]')).toHaveValue('3');
+  await expect(page.getByText('21,291 people (2020) · Nonmetro')).toBeVisible();
+  await expect(page.getByRole('heading', { name: '1980–90 (decade on the map)' })).toBeVisible();
+  await expect(page.locator('.sentence').first()).toHaveText(
+    'Newton County grew 1.7% while its neighboring counties together lost 0.6%.',
+  );
+  await expect(page.locator('.sentence').nth(1)).toHaveText('Newton County lost 1.9%.');
+  expect(new URL(page.url()).search).toBe(search);
+
+  // Trajectories mode has no decade: blocks 4 and 5 merge, and the decade stays in the URL.
+  await page.getByLabel('Population change trajectories', { exact: true }).check({ force: true });
+  await expect(page.getByRole('heading', { name: 'Most recent decade, 2010–20', exact: true })).toBeVisible();
+  await expect(page.locator('.sentence')).toHaveCount(1);
+  await expect(page).toHaveURL(/mode=pathways&decade=1980&county=28101&path=3,4/);
+  await page.reload();
+  await expect(page.getByLabel('Population change trajectories', { exact: true })).toBeChecked();
+  await expect(profileTitle(page)).toHaveText('Newton County, MS');
+
+  // Closing adds a history entry; Back reopens the county.
+  await page.getByRole('button', { name: 'Close county profile' }).click();
+  await expect(profileTitle(page)).toHaveCount(0);
+  await page.goBack();
+  await expect(profileTitle(page)).toHaveText('Newton County, MS');
+
+  // The detail blocks load on demand and open on click.
+  await page.getByRole('button', { name: 'Who lives here (ACS 2016–20)' }).click();
+  await expect(page.getByText('White, non-Hispanic')).toBeVisible();
+  await page.getByRole('button', { name: 'Why it changed, 2010–20' }).click();
+  await expect(page.getByText(/like \d+% of loss counties\.$/)).toBeVisible();
+  const arial = await page.evaluate(() =>
+    [...document.querySelectorAll('*')].map((el) => getComputedStyle(el).fontFamily).filter((f) => /arial/i.test(f)),
+  );
+  expect(arial).toEqual([]);
+  expect(errors).toEqual([]);
+});
+
+test('keyboard path: search → select → read profile → close', async ({ page }) => {
+  await page.goto('./');
+  const box = page.getByRole('combobox', { name: 'Search for a county' });
+  await box.focus();
+  await page.keyboard.type('dona ana');
+  await expect(page.getByRole('option').first()).toHaveText('Doña Ana County, NM');
+  await page.keyboard.press('Enter');
+  await expect(profileTitle(page)).toHaveText('Doña Ana County, NM');
+  await expect(page).toHaveURL(/county=35013/);
+  // The strip explains a decade on focus, not only on hover.
+  await page.getByRole('button', { name: /^1950–60 · / }).focus();
+  await expect(page.locator('.caption')).toHaveText(/^1950–60 · Self population growth, neighbor population growth$/);
+  await page.keyboard.press('Escape');
+  await expect(profileTitle(page)).toHaveCount(0);
+  await expect(page).toHaveURL(/\/landscape-of-loss\/$/);
+});
+
+test('use my location selects the county there, or says it is outside the study', async ({ page, context }) => {
+  await context.grantPermissions(['geolocation']);
+  await context.setGeolocation({ latitude: 32.32, longitude: -89.12 });
+  await page.goto('./');
+  await page.getByRole('button', { name: 'My location' }).click();
+  await expect(profileTitle(page)).toHaveText('Newton County, MS');
+
+  await context.setGeolocation({ latitude: 21.3069, longitude: -157.8583 });
+  await page.getByRole('button', { name: 'My location' }).click();
+  await expect(page.getByRole('status')).toHaveText('Your location is outside the counties in this study.');
 });

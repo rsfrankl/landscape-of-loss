@@ -21,6 +21,6 @@ export function countyAt(topo: CountyTopology, counties: County[], lon: number, 
 export function currentPosition(): Promise<GeolocationPosition> {
   return new Promise((resolve, reject) => {
     if (!('geolocation' in navigator)) reject(new Error('unsupported'));
-    else navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 15000, maximumAge: 600000 });
+    else navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 15000, maximumAge: 0 });
   });
 }
