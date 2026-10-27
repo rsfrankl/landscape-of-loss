@@ -24,8 +24,6 @@ export function modeLine(meta: Meta, mode: Mode, c: County, decade: number): str
       return contextLine(meta, c, decade);
     case 'change':
       return `${meta.decades[decade].label}: ${formatPct(c.pct[decade], c.cls[decade])}`;
-    case 'recent':
-      return `${formatPct(c.pct[LAST_DECADE], c.cls[LAST_DECADE])}, ${last}`;
   }
 }
 
@@ -38,7 +36,5 @@ export function mapLabel(meta: Meta, mode: Mode, decade: number): string {
       return `Map of U.S. counties coloured by spatial context of population change, ${d}`;
     case 'change':
       return `Map of U.S. counties coloured by population change, ${d}`;
-    case 'recent':
-      return `Map of U.S. counties coloured by population change, ${meta.decades[LAST_DECADE].label}`;
   }
 }

@@ -14,9 +14,8 @@ Build a static, desktop-first web dashboard that lets people explore the eight c
 
 **In scope**
 
-- Typology map (8 pathways) and decade-by-decade A–D map with a slider
-- Decadal % population change map with its own slider
-- "2010–20 change only" view linked to the typology
+- Three map modes (section 6.2): decadal % population change and the decade-by-decade A–D map, sharing one decade slider, and the typology map (8 pathways)
+- A 2010–20 breakdown linking that decade's loss and growth to the 8 pathways (section 6.6)
 - County profile panel with the sequence strip, population history, ACS profile, components of change, urban–rural class
 - Similar counties (5), search, "use my location", pathway filter, explainer, CSV download
 
@@ -153,7 +152,7 @@ One screen: a full-height map on the left, a 380 px side panel on the right, a h
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
-│ Title                    [Pathways|Spatial context|Change|2010–20]  │
+│ Title                         [Change|In spatial context|Trajectories]│
 │                          [ search county…      ] (◎ my location) (?)│
 ├───────────────────────────────────────────────┬──────────────────────┤
 │                                               │ Side panel           │
@@ -172,14 +171,16 @@ Title: **The Landscape of Loss: US County-Level Depopulation Pathways, 1950–20
 
 ### 6.2 Map modes (segmented control in the header)
 
-| Mode | Map colour | Decade control | Legend |
-| --- | --- | --- | --- |
-| Pathways (default) | 8 pathways (Fig. 8) | Hidden | 8 pathways, grouped Loss / Growth, with county counts |
-| Spatial context | A–D state for the chosen decade | Shown | A–D with counts for that decade |
-| Population change | Decadal % change, 5 classes | Shown | 5 classes with counts for that decade |
-| 2010–20 vs. 70 years | 2010–20 % change, 5 classes (corrected Fig. 1) | Hidden | Linked pathway breakdown (6.6) |
+Three tabs, in this order, in sentence case. Tab names only: "pathway" stays the word everywhere else (legend, blurbs, profile chip, Data notes). The URL `mode` values (6.9) keep their short ids. All three tabs fit on one line at 1024 px wide.
 
-- Spatial context and Population change share one decade state; switching between them keeps the decade.
+| Tab (URL `mode`) | Map colour | Decade control | Legend |
+| --- | --- | --- | --- |
+| Decadal population change (`change`, default at 2010–20) | Decadal % change, 5 classes | Shown | 5 classes with counts for that decade; at 2010–20 the pathway breakdown (6.6) follows below the legend |
+| Decadal population change in spatial context (`context`) | A–D state for the chosen decade | Shown | A–D with counts for that decade |
+| Population change trajectories (`pathways`) | 8 pathways (Fig. 8) | Hidden | 8 pathways, grouped Loss / Growth, with county counts |
+
+- The site opens in Decadal population change at 2010–20, which is the corrected Fig. 1.
+- The two decade modes share one decade state; switching between them keeps the decade.
 - The 5 change classes are the same for every decade (≥ 20, 10 to < 20, 0 to < 10, −10 to < 0, ≤ −10), so decades are comparable and 2010–20 matches the corrected Fig. 1.
 - State boundaries draw on top of counties in every mode (`states` mesh, 0.9 px).
 - Mode changes recolour in place with a 300 ms fill transition; no re-projection. Displayed percentages are truncated toward zero to 1 decimal (19.997 → 19.9), never rounded, so a shown value always matches its class.
@@ -196,7 +197,7 @@ Hovering a county outlines it (1.5 px, `#1A1210`) and shows a tooltip after 80 m
 
 - Line 1: "Barbour County, AL"
 - Line 2: pathway colour dot + pathway name
-- Line 3, by mode: Pathways → 2010–20 change; Spatial context → "2000–10: B · county −5.4%, neighbours +5.0%"; Population change → "2000–10: −5.4%"; 2010–20 → "−8.1%, 2010–20"
+- Line 3, by mode: Population change trajectories → 2010–20 change; Decadal population change in spatial context → "2000–10: B · county −5.4%, neighbours +5.0%"; Decadal population change → "2000–10: −5.4%"
 
 To show the neighbour figure, add `lag` (7 values, percent, 1 decimal, from section 4 step 5) to the `counties.json` record.
 
@@ -205,7 +206,7 @@ To show the neighbour figure, add `lag` (7 values, percent, 1 decimal, from sect
 Clicking a county selects it: thick outline on the map, panel switches to its profile, URL updates. Esc or × closes the profile and returns to the legend. Sections 1–3 always show; 4–6 are collapsed by default and remember their open/closed state for the session.
 
 1. **Header.** County, state; pathway chip (colour + name) and "Loss pathway" or "Growth pathway"; "Nonmetro · RUCC 6 (2023)" with 2013 code in smaller type; `rucc_note` if present.
-2. **Sequence strip.** Seven cells coloured A–D, letter inside, decade labels under. The cell for the current decade is outlined in Spatial context and Population change modes. Hovering a cell explains it: "2000–10 · B: county lost population, neighbours gained."
+2. **Sequence strip.** Seven cells coloured A–D, letter inside, decade labels under. The cell for the current decade is outlined in the two decade modes. Hovering a cell explains it: "2000–10 · B: county lost population, neighbours gained."
 3. **Population, 1950–2020.** Line of the 8 counts (y = people, formatted 25k) with, beneath it, seven signed bars for decadal % change around a zero line, coloured with the 5-class palette. Headline above: "25,223 in 2020 · −8.1% since 2010".
 4. **Who lives here (ACS 2016–20).** One row per indicator (14 rows from section 4 step 6). Each row: county dot with MOE whisker, a tick for the pathway value, a tick for the U.S. value, on a shared 0–100% axis per row; county value printed at right. Note under: "Race and ethnicity from the 2020 Census; other indicators from the ACS 2016–20. Education is bachelor's degree or higher, which differs from Table 1 of the paper (bachelor's degree only)."
 5. **Why it changed, 2010–20.** Horizontal bars about zero for natural change, domestic migration, international migration and net change (people). For loss counties, the Table 2 driver as a sentence, e.g. "Lost population through both net out-migration and natural decrease, like 50% of loss counties."
@@ -213,12 +214,11 @@ Clicking a county selects it: thick outline on the map, panel switches to its pr
 
 Footer of the panel: "Download this county (CSV)".
 
-### 6.6 The 2010–20 vs. 70 years mode
+### 6.6 The 2010–20 breakdown
 
-This mode makes the paper's argument visible: one decade's binary story splits into eight histories.
+This block makes the paper's argument visible: one decade's binary story splits into eight histories. It is not a separate mode. It appears in Decadal population change mode only when the decade is 2010–20, as a block in the side panel below the legend (the map then shows the corrected Fig. 1 classes). It disappears when the slider moves to another decade or another tab is chosen.
 
-- Map: corrected Fig. 1 classes.
-- Side panel (replaces the legend): two horizontal 100% bars, "Lost population 2010–20 (1,637)" split into the 4 loss pathways and "Gained (1,471)" split into the 4 growth pathways, with counts. Hovering a segment highlights those counties on the map (others dim to 20%); clicking pins the highlight.
+- Two horizontal 100% bars, "Lost population 2010–20 (1,637)" split into the 4 loss pathways and "Gained (1,471)" split into the 4 growth pathways, with counts. Hovering a segment highlights those counties on the map (others dim to 20%); clicking pins the highlight.
 - One sentence above the bars: "The same 2010–20 loss can follow very different 70-year paths."
 - Clicking a county still opens its profile; a "Back to breakdown" link returns.
 
@@ -237,12 +237,12 @@ Ranks the 5 counties whose decade-by-decade population change most closely match
 
 - **Search.** Autocomplete over "County name, ST", accent- and case-insensitive ("dona ana" finds Doña Ana County, NM), top 8 matches, ↑↓ Enter. Selecting zooms to the county's `bbox` and opens its profile.
 - **Use my location.** Browser geolocation; find the county with `d3.geoContains`; select it. Outside the conterminous U.S. → "Your location is outside the counties in this study." Denied → a short message. The location is never stored or sent anywhere.
-- **Pathway filter.** Legend items in Pathways mode are toggles (multi-select). The filter persists across modes: non-selected counties draw in a neutral grey at 25% opacity. "Clear filter" link when active.
+- **Pathway filter.** Legend items in Population change trajectories mode are toggles (multi-select). The filter persists across modes: non-selected counties draw in a neutral grey at 25% opacity. "Clear filter" link when active.
 
 ### 6.9 Zoom, URL state, explainer, downloads
 
 - **Zoom.** `d3-zoom`, scale 1–12, wheel and drag, double-click to zoom in, "Reset view" button. Selecting a county zooms only when it is off-screen or smaller than 12 px.
-- **URL state.** `?mode=context&decade=1990&county=01005&path=3,4&sim=any` — every state above round-trips, so views can be shared and cited.
+- **URL state.** `?mode=context&decade=1990&county=01005&path=3,4&sim=any` — every state above round-trips, so views can be shared and cited. `mode` is `change` (default), `context` or `pathways`. The retired `mode=recent` (the former "2010–20 vs. 70 years" tab) redirects to `mode=change&decade=2010`, keeping any other parameters.
 - **Explainer ("?" button, About modal).** Tabs: *How to read this* (A–D diagram redrawn from the paper's Figs. 2 and 4: a county and its neighbours in four quadrants; the eight pathways with one-line blurbs); *About* (full citation with DOI link, authors, data sources and credits); *Data notes* (2010 base, change classes, neighbour rule, Connecticut RUCC, sources and definitions of the profile indicators, validation summary). A first-visit intro card links to it; dismissal stored in `localStorage` inside try/catch.
 - **Downloads.** Client-side CSV: the selected county; the counties in the current filter; all counties. Columns: `geoid, county, state, pathway, seq, pop1950…pop2020, pct1950_60…pct2010_20, rucc2013, rucc2023`. Include a header comment line with the citation.
 
@@ -285,7 +285,7 @@ Pathway and A–D colours come from the paper's data dictionary, unchanged; the 
 | Change | −0.1% to −9.9% | `#d6bd8d` |
 | Change | Decline 10% or more | `#a16928` |
 
-The change palette replaces the published Fig. 1 colours in both the Population change and 2010–20 modes. It is CARTOColors Earth, a diverging scheme: blue for growth and brown for loss, through a pale grey-green (0% to 9.9%) and a pale tan (−0.1% to −9.9%) either side of zero. State in Data notes that these colours differ from the published Figure 1, and credit the palette: "Change palette: CARTOColors Earth, CARTO, CC BY 4.0."
+The change palette replaces the published Fig. 1 colours in Decadal population change mode, at every decade including 2010–20. It is CARTOColors Earth, a diverging scheme: blue for growth and brown for loss, through a pale grey-green (0% to 9.9%) and a pale tan (−0.1% to −9.9%) either side of zero. State in Data notes that these colours differ from the published Figure 1, and credit the palette: "Change palette: CARTOColors Earth, CARTO, CC BY 4.0."
 
 **Colour-vision check (run 26 Oct 2026, CIEDE2000, 100% severity).** A–D stays distinct for all three deficiency types (closest pair ΔE 20). Three pathway pairs fall below ΔE 10: Isolated Loss / Localized Recovery (8.8, deuteranomaly), Persistent Loss / Punctuated Regionalized Loss (9.4–9.5, deutan and protan), Constant Growth / Emerging Growth (5.6, tritanomaly). Mitigations in v1: the pathway filter, legend-hover isolation, and names in tooltips. Do not change the palette without the author's approval.
 
@@ -344,7 +344,7 @@ Build in five milestones; stop for author review after milestones 1, 3 and 5.
 1. **Pipeline and validation.** Steps 1–10 of section 4; `docs/validation.md` showing 0 A–D mismatches and the Table 1 and Table 2 comparisons.
 2. **Map core.** Projection, canvas fills, state mesh, zoom, four modes, decade control, legend, hover.
 3. **County profile.** Sections 1–5 of 6.5, search, location, URL state.
-4. **Similar counties and the 2010–20 mode.** Sections 6.6 and 6.7.
+4. **Similar counties and the 2010–20 breakdown.** Sections 6.6 and 6.7.
 5. **Explainer, downloads, accessibility, polish.** Section 6.9, section 7 checks, deploy.
 
 ### 8.5 Acceptance criteria
@@ -352,7 +352,7 @@ Build in five milestones; stop for author review after milestones 1, 3 and 5.
 - [ ] Pipeline rebuilds A–D with 0 mismatches out of 21,756 cells
 - [ ] Exactly 3,108 counties, each with pathway, sequence, 8 population counts and RUCC (or a note)
 - [ ] Pathway counts on screen match the paper: 557, 126, 442, 512, 949, 141, 312, 69
-- [ ] 2010–20 vs. 70 years shows 1,637 losing and 1,471 gaining counties
+- [ ] The 2010–20 breakdown (Decadal population change at 2010–20) shows 1,637 losing and 1,471 gaining counties
 - [ ] Milam TX and Buena Vista VA show as 2010–20 losers; Sarpy NE shows as 10–19.9%
 - [ ] Table 1 and Table 2 comparisons written to `docs/validation.md`, gaps explained
 - [ ] Similar counties returns 5 results (or a note) in under 5 ms; same-pathway default respected

@@ -80,13 +80,14 @@ export interface County {
   bbox: [number, number, number, number];
 }
 
-export type Mode = 'pathways' | 'context' | 'change' | 'recent';
+/** Map modes; the ids are the URL `mode` values (spec 6.9). */
+export type Mode = 'change' | 'context' | 'pathways';
 
+/** In tab order (spec 6.2). */
 export const MODES: { id: Mode; label: string; usesDecade: boolean }[] = [
-  { id: 'pathways', label: 'Pathways', usesDecade: false },
-  { id: 'context', label: 'Spatial context', usesDecade: true },
-  { id: 'change', label: 'Population change', usesDecade: true },
-  { id: 'recent', label: '2010–20 vs. 70 years', usesDecade: false },
+  { id: 'change', label: 'Decadal population change', usesDecade: true },
+  { id: 'context', label: 'Decadal population change in spatial context', usesDecade: true },
+  { id: 'pathways', label: 'Population change trajectories', usesDecade: false },
 ];
 
 /** Index of 2010–20 in the decade arrays. */

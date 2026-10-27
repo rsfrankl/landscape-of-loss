@@ -33,7 +33,7 @@
   }
   .modes {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     margin: 0;
     padding: 0;
     border: 1px solid var(--hairline);
@@ -56,6 +56,12 @@
   label.active {
     background: var(--accent);
     color: var(--bg);
+  }
+  /* The tabs stay on one line at 1024 px and wider (spec 6.2); narrower screens may wrap them. */
+  @media (max-width: 1023px) {
+    .modes {
+      flex-wrap: wrap;
+    }
   }
   input {
     position: absolute;

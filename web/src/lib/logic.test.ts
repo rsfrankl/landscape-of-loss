@@ -88,7 +88,7 @@ describe('legend counts', () => {
   });
 
   it('2010–20 splits 1,637 losing and 1,471 gaining', () => {
-    const n = legendCounts(counties, 'recent', 0);
+    const n = legendCounts(counties, 'change', LAST_DECADE);
     const lost = (n.get('c4') ?? 0) + (n.get('c5') ?? 0);
     expect(lost).toBe(1637);
     expect(counties.length - lost).toBe(1471);
@@ -109,7 +109,7 @@ describe('colours', () => {
     const barbour = county('01005');
     expect(dataColor(p, 'pathways', barbour, 0)).toEqual(hexToRgb(meta.pathways[0].color));
     expect(dataColor(p, 'context', barbour, 5)).toEqual(hexToRgb(meta.ad[1].color)); // B
-    expect(dataColor(p, 'recent', barbour, 0)).toEqual(hexToRgb(meta.change[3].color));
+    expect(dataColor(p, 'change', barbour, LAST_DECADE)).toEqual(hexToRgb(meta.change[3].color));
     expect(legendKey('change', barbour, 4)).toBe('c2');
   });
 
@@ -142,7 +142,6 @@ describe('tooltip lines', () => {
     const barbour = county('01005');
     expect(modeLine(meta, 'context', barbour, 5)).toBe('2000–10: B · county −5.4%, neighbours +5.0%');
     expect(modeLine(meta, 'change', barbour, 5)).toBe('2000–10: −5.4%');
-    expect(modeLine(meta, 'recent', barbour, 0)).toBe('−8.1%, 2010–20');
     expect(modeLine(meta, 'pathways', barbour, 0)).toBe('2010–20 change: −8.1%');
     expect(contextLine(meta, county('25007'), 6)).toMatch(/no neighbours$/);
   });

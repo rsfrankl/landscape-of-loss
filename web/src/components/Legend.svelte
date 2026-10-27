@@ -1,6 +1,5 @@
 <script lang="ts">
   import type { County, Meta } from '../lib/types';
-  import { LAST_DECADE } from '../lib/types';
   import { toggleFilter, ui } from '../lib/state.svelte';
   import { legendCounts } from '../lib/counts';
   import { formatCount } from '../lib/format';
@@ -8,7 +7,7 @@
 
   let { meta, counties }: { meta: Meta; counties: County[] } = $props();
 
-  const decade = $derived(ui.mode === 'recent' ? LAST_DECADE : ui.decade);
+  const decade = $derived(ui.decade);
   const counts = $derived(legendCounts(counties, ui.mode, decade));
   const groups = $derived([
     { title: 'Loss pathways', items: meta.pathways.filter((p) => p.group === 'loss') },

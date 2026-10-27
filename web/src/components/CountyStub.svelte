@@ -10,7 +10,7 @@
   let { meta, county }: { meta: Meta; county: County } = $props();
 
   const pathway = $derived(meta.pathways[county.pathway - 1]);
-  const decade = $derived(ui.mode === 'context' || ui.mode === 'change' ? ui.decade : LAST_DECADE);
+  const decade = $derived(ui.mode === 'pathways' ? LAST_DECADE : ui.decade);
   const last = LAST_DECADE;
 </script>
 

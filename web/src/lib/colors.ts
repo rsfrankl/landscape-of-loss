@@ -1,5 +1,4 @@
 import type { AdCode, County, Meta, Mode } from './types';
-import { LAST_DECADE } from './types';
 
 export type Rgb = [number, number, number];
 
@@ -45,8 +44,6 @@ export function legendKey(mode: Mode, county: County, decade: number): string {
       return county.seq[decade];
     case 'change':
       return `c${county.cls[decade]}`;
-    case 'recent':
-      return `c${county.cls[LAST_DECADE]}`;
   }
 }
 
@@ -58,8 +55,6 @@ export function dataColor(p: Palettes, mode: Mode, county: County, decade: numbe
       return p.ad.get(county.seq[decade] as AdCode)!;
     case 'change':
       return p.change.get(county.cls[decade])!;
-    case 'recent':
-      return p.change.get(county.cls[LAST_DECADE])!;
   }
 }
 

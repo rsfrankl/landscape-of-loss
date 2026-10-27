@@ -4,7 +4,7 @@ import { LAST_DECADE } from './types';
 // Shared view state. Names follow the URL keys in spec 6.9 (mode, decade, county, path) so
 // milestone 3 can round-trip them.
 export const ui = $state({
-  mode: 'pathways' as Mode,
+  mode: 'change' as Mode,
   /** Decade index 0–6, shared by Spatial context and Population change. */
   decade: LAST_DECADE,
   /** Pathway ids kept by the legend filter; empty keeps all. Persists across modes. */
