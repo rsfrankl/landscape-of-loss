@@ -222,10 +222,13 @@
     untrack(recolour);
   });
 
-  // Redraw and re-pick on resize; keep the zoom inside the map.
+  // Resize the backing store here, not with template attributes: setting a canvas's size clears
+  // it, and the attribute update is not guaranteed to land before this effect's redraw.
   $effect(() => {
     void [width, height, base];
     untrack(() => {
+      canvas.width = Math.round(width * dpr);
+      canvas.height = Math.round(height * dpr);
       zoomer?.extent([[0, 0], [width, height]]).translateExtent([[0, 0], [width, height]]);
       draw();
       drawPick();
@@ -243,8 +246,6 @@
   <!-- svelte-ignore a11y_no_interactive_element_to_noninteractive_role (spec 7: the canvas is an image) -->
   <canvas
     bind:this={canvas}
-    width={Math.round(width * dpr)}
-    height={Math.round(height * dpr)}
     style:width="{width}px"
     style:height="{height}px"
     role="img"
