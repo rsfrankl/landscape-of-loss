@@ -199,7 +199,7 @@ Hovering a county outlines it (cased: 1.5 px `#2E2420` over a 3.5 px `#FBFBFB` h
 - Line 2: pathway color dot + pathway name
 - Then, by mode (values in IBM Plex Mono; the decade comes from the slider):
   - Decadal population change: "Population change (1980–90): −4.2%"
-  - Decadal population change in spatial context: the A–D category in words with its color swatch ("Self population loss, average neighbor population growth"), then only the neighbors' population-weighted change: "Neighboring counties’ population change (1980–90): +1.3%". The county's own % is not shown in this mode. For the three counties without neighbors: "Neighboring counties’ population change (2010–20): no neighboring counties".
+  - Decadal population change in spatial context: the A–D category in words with its color swatch ("Self population loss, neighbor population growth"), then only the neighbors' population-weighted change: "Neighboring counties’ population change (1980–90): +1.3%". The county's own % is not shown in this mode. For the three counties without neighbors (25007, 25019, 53055), one line replaces both: "Self population growth; no neighboring counties (counted as neighbor growth)", or "Self population loss; …" when the county lost population that decade.
   - Population change trajectories: "Recent population change (2010–20): −8.1%"
 - The same wording is used in the county panel and the full profile (6.5).
 
@@ -210,7 +210,7 @@ To show the neighbour figure, add `lag` (7 values, percent, 1 decimal, from sect
 Clicking a county selects it: thick outline on the map, panel switches to its profile, URL updates. Esc or × closes the profile and returns to the legend. Sections 1–3 always show; 4–6 are collapsed by default and remember their open/closed state for the session.
 
 1. **Header.** County, state; pathway chip (colour + name) and "Loss pathway" or "Growth pathway"; "Nonmetro · RUCC 6 (2023)" with 2013 code in smaller type; `rucc_note` if present.
-2. **Sequence strip.** Seven cells coloured A–D, letter inside, decade labels under. The cell for the current decade is outlined in the two decade modes. Hovering a cell explains it in the A–D words: "2000–10 · Self population loss, average neighbor population growth."
+2. **Sequence strip.** Seven cells coloured A–D, letter inside, decade labels under. The cell for the current decade is outlined in the two decade modes. Hovering a cell explains it in the A–D words: "2000–10 · Self population loss, neighbor population growth." For the three counties without neighbors it uses the no-neighbor wording from 6.4.
 3. **Population, 1950–2020.** Line of the 8 counts (y = people, formatted 25k) with, beneath it, seven signed bars for decadal % change around a zero line, coloured with the 5-class palette. Headline above: "25,223 in 2020 · −8.1% since 2010".
 4. **Who lives here (ACS 2016–20).** One row per indicator (14 rows from section 4 step 6). Each row: county dot with MOE whisker, a tick for the pathway value, a tick for the U.S. value, on a shared 0–100% axis per row; county value printed at right. Note under: "Race and ethnicity from the 2020 Census; other indicators from the ACS 2016–20. Education is bachelor's degree or higher, which differs from Table 1 of the paper (bachelor's degree only)."
 5. **Why it changed, 2010–20.** Horizontal bars about zero for natural change, domestic migration, international migration and net change (people). For loss counties, the Table 2 driver as a sentence, e.g. "Lost population through both net out-migration and natural decrease, like 50% of loss counties."
@@ -279,10 +279,10 @@ Pathway and A–D colours come from the paper's data dictionary, unchanged; the 
 | Pathways | 6 Localized Recovery and Regional Growth | `#e5e522` |
 | Pathways | 7 Punctuated Growth | `#bb7693` |
 | Pathways | 8 Emerging Growth | `#8cd17d` |
-| A–D | A Self population loss, average neighbor population loss | `#f7786b` |
-| A–D | B Self population loss, average neighbor population growth | `#f7cac9` |
-| A–D | C Self population growth, average neighbor population loss | `#92a8d1` |
-| A–D | D Self population growth, average neighbor population growth | `#214471` |
+| A–D | A Self population loss, neighbor population loss | `#f7786b` |
+| A–D | B Self population loss, neighbor population growth | `#f7cac9` |
+| A–D | C Self population growth, neighbor population loss | `#92a8d1` |
+| A–D | D Self population growth, neighbor population growth | `#214471` |
 | Change | Growth 20% or more | `#2887a1` |
 | Change | +10% to 19.9% | `#79a7ac` |
 | Change | 0% to 9.9% | `#b5c8b8` |

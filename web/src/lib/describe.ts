@@ -31,15 +31,24 @@ export function changeLine(meta: Meta, c: County, decade: number): Line {
 
 /**
  * The A–D category in words, then only the neighbors' population-weighted change; the county's
- * own % is not shown in this mode.
+ * own % is not shown in this mode. Counties with no neighbors (always B or D) get one line saying
+ * so instead of the standard label.
  */
 export function contextLines(meta: Meta, c: County, decade: number): Line[] {
   const letter = c.seq[decade] as AdCode;
   const state = meta.ad.find((a) => a.code === letter)!;
-  const label = `Neighboring counties’ population change (${meta.decades[decade].label})`;
+  if (c.lag === null) {
+    const self = letter === 'B' ? 'loss' : 'growth';
+    return [
+      { label: `Self population ${self}; no neighboring counties (counted as neighbor growth)`, color: state.color },
+    ];
+  }
   return [
     { label: state.label, color: state.color },
-    c.lag === null ? { label, value: 'no neighboring counties' } : { label, value: formatLag(c.lag[decade], letter) },
+    {
+      label: `Neighboring counties’ population change (${meta.decades[decade].label})`,
+      value: formatLag(c.lag[decade], letter),
+    },
   ];
 }
 

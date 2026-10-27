@@ -145,7 +145,7 @@ describe('tooltip lines', () => {
     expect(text(modeLines(meta, 'pathways', barbour, 3))).toEqual(['Recent population change (2010–20): −8.1%']);
     expect(text(modeLines(meta, 'change', barbour, 5))).toEqual(['Population change (2000–10): −5.4%']);
     expect(text(modeLines(meta, 'context', barbour, 5))).toEqual([
-      'Self population loss, average neighbor population growth',
+      'Self population loss, neighbor population growth',
       'Neighboring counties’ population change (2000–10): +5.0%',
     ]);
   });
@@ -155,16 +155,25 @@ describe('tooltip lines', () => {
     expect(text(modeLines(meta, 'context', barbour, 5)).join(' ')).not.toContain('5.4');
   });
 
-  it('say so when a county has no neighbors', () => {
-    expect(lineText(contextLines(meta, county('25007'), 6)[1])).toMatch(/: no neighboring counties$/);
+  it('replace the standard label for the three counties with no neighbors', () => {
+    for (const g of ['25007', '25019', '53055']) {
+      const c = county(g);
+      for (let d = 0; d < 7; d++) {
+        const self = c.seq[d] === 'B' ? 'loss' : 'growth';
+        expect(contextLines(meta, c, d).map(lineText), `${g} decade ${d}`).toEqual([
+          `Self population ${self}; no neighboring counties (counted as neighbor growth)`,
+        ]);
+      }
+    }
+    expect(new Set(['25007', '25019', '53055'].flatMap((g) => [...county(g).seq]))).toEqual(new Set(['B', 'D']));
   });
 
   it('label A–D in words', () => {
     expect(meta.ad.map((a) => a.label)).toEqual([
-      'Self population loss, average neighbor population loss',
-      'Self population loss, average neighbor population growth',
-      'Self population growth, average neighbor population loss',
-      'Self population growth, average neighbor population growth',
+      'Self population loss, neighbor population loss',
+      'Self population loss, neighbor population growth',
+      'Self population growth, neighbor population loss',
+      'Self population growth, neighbor population growth',
     ]);
   });
 });

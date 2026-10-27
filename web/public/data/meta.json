@@ -106,22 +106,22 @@
   "ad": [
     {
       "code": "A",
-      "label": "Self population loss, average neighbor population loss",
+      "label": "Self population loss, neighbor population loss",
       "color": "#f7786b"
     },
     {
       "code": "B",
-      "label": "Self population loss, average neighbor population growth",
+      "label": "Self population loss, neighbor population growth",
       "color": "#f7cac9"
     },
     {
       "code": "C",
-      "label": "Self population growth, average neighbor population loss",
+      "label": "Self population growth, neighbor population loss",
       "color": "#92a8d1"
     },
     {
       "code": "D",
-      "label": "Self population growth, average neighbor population growth",
+      "label": "Self population growth, neighbor population growth",
       "color": "#214471"
     }
   ],

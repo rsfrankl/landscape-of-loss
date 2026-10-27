@@ -23,10 +23,10 @@ EXPECTED_PATHWAY_N <- c(557L, 126L, 442L, 512L, 949L, 141L, 312L, 69L)
 
 AD_STATES <- data.frame(
   code = c("A", "B", "C", "D"),
-  label = c("Self population loss, average neighbor population loss",
-            "Self population loss, average neighbor population growth",
-            "Self population growth, average neighbor population loss",
-            "Self population growth, average neighbor population growth"),
+  label = c("Self population loss, neighbor population loss",
+            "Self population loss, neighbor population growth",
+            "Self population growth, neighbor population loss",
+            "Self population growth, neighbor population growth"),
   color = c("#f7786b", "#f7cac9", "#92a8d1", "#214471"),
   stringsAsFactors = FALSE)
 
