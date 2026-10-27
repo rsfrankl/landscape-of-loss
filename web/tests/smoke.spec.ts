@@ -234,4 +234,10 @@ test('the profile panel shows no A–D letters', async ({ page }) => {
   await expect(panel.locator('.cell').first()).toHaveText('');
   await expect(panel.locator('.key tbody td')).toHaveText([/Regional loss/, /Localized loss/, /Localized growth/, /Regional growth/]);
   await expect(panel).not.toContainText(/\bA–D\b|\b[ABCD]\b(?!\.)/);
+  const note = /^\s*grew,\s+lost\. First arrow: the county’s population change that decade\. Second: its neighbors’ change \(population-weighted average\)\.\s*$/;
+  await expect(panel.locator('.hint').last()).toHaveText(note);
+  await expect(panel.locator('.hint').last().locator('svg')).toHaveCount(2);
+  await page.getByRole('button', { name: 'Close county profile' }).click();
+  await expect(panel.locator('.hint')).toHaveText(note);
+  await expect(panel.locator('.hint svg')).toHaveCount(2);
 });

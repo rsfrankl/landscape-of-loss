@@ -5,6 +5,7 @@
   import { formatCount } from '../lib/format';
   import { isDark } from '../lib/colors';
   import Arrows from './Arrows.svelte';
+  import ArrowNote from './ArrowNote.svelte';
 
   let { meta, counties }: { meta: Meta; counties: County[] } = $props();
 
@@ -51,7 +52,7 @@
     {/each}
   {:else if ui.mode === 'context'}
     <h2>Population change in spatial context, {meta.decades[decade].label}</h2>
-    <p class="hint">Did the county and its neighboring counties lose or gain population? First arrow: the county. Second: its neighbors combined.</p>
+    <p class="hint"><ArrowNote /></p>
     <ul>
       {#each meta.ad as a (a.code)}
         <li>

@@ -9,6 +9,7 @@
   import { isDark } from '../lib/colors';
   import { stripCaption, stripCaptionText } from '../lib/describe';
   import Arrows from './Arrows.svelte';
+  import ArrowNote from './ArrowNote.svelte';
 
   let { meta, county }: { meta: Meta; county: County } = $props();
 
@@ -102,7 +103,7 @@
     {/each}
   </tbody>
 </table>
-<p class="hint">First arrow: the county. Second: its neighbors combined. Point to a decade for details.</p>
+<p class="hint"><ArrowNote /></p>
 
 <style>
   .strip {
