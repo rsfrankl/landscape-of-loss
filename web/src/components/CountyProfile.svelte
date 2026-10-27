@@ -7,6 +7,7 @@
   import { countyTitle, decadeSentence, populationLine, recentSentence, type Segment } from '../lib/describe';
   import ProfileBlock from './ProfileBlock.svelte';
   import SequenceStrip from './SequenceStrip.svelte';
+  import PopulationChart from './PopulationChart.svelte';
 
   let { meta, county }: { meta: Meta; county: County } = $props();
 
@@ -57,6 +58,10 @@
       {@render sentence(recentSentence(county))}
     </ProfileBlock>
   {/if}
+
+  <ProfileBlock title="Population, {first}–{last}">
+    <PopulationChart {meta} {county} />
+  </ProfileBlock>
 </section>
 
 <style>
