@@ -1,6 +1,10 @@
 # Raw inputs from the author (never committed; the GeoPackage alone is 411 MB)
 pipeline/raw/
 
+# Pipeline scratch: public downloads and per-step audit files (outputs live in web/public/data/)
+pipeline/downloads/
+pipeline/out/
+
 # R
 .Rhistory
 .RData

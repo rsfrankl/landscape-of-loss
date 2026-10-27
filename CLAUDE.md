@@ -47,4 +47,8 @@ starting any task. If the spec and an instruction here disagree, stop and ask.
 
 ## Commands
 
+- `make data` runs the `targets` pipeline (from `pipeline/`); writes `web/public/data/` and
+  `docs/validation.md`. Needs `CENSUS_API_KEY` and `npm install` in `pipeline/` (mapshaper).
+- `make test` runs the pipeline's `testthat` suite (unit + output contract + A–D gate).
+
 <!-- Fill in as they are created: make data, npm run dev, npm test, etc. -->

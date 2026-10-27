@@ -1,0 +1,8 @@
+{
+  "name": "landscape-of-loss-pipeline",
+  "private": true,
+  "description": "Node tooling for the R pipeline (mapshaper for TopoJSON simplification)",
+  "devDependencies": {
+    "mapshaper": "0.7.98"
+  }
+}
