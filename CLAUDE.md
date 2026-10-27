@@ -10,6 +10,9 @@ starting any task. If the spec and an instruction here disagree, stop and ask.
 
 - Build one milestone at a time (spec section 8.4). Start each milestone in plan mode:
   propose the plan, wait for approval, then build.
+- Any change to behaviour, data or design updates docs/SPEC.md in the same commit. At
+  the start of each milestone plan, check the spec against what is built and list any
+  gaps.
 - Stop for my review after milestones 1, 3 and 5. Do not start the next milestone
   until I say so.
 - Visualize the paper's findings only. No new analysis, no re-clustering. The one
