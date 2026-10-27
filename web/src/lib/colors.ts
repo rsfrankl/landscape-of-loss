@@ -13,6 +13,15 @@ export function mix(base: Rgb, top: Rgb, alpha: number): Rgb {
   return base.map((b, i) => Math.round(b * (1 - alpha) + top[i] * alpha)) as Rgb;
 }
 
+/** True when light text reads better than dark text on this colour (WCAG relative luminance). */
+export function isDark(hex: string): boolean {
+  const [r, g, b] = hexToRgb(hex).map((v) => {
+    const s = v / 255;
+    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b < 0.18;
+}
+
 export interface Palettes {
   pathway: Map<number, Rgb>;
   ad: Map<AdCode, Rgb>;

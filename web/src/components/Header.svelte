@@ -1,0 +1,72 @@
+<script lang="ts">
+  import { MODES } from '../lib/types';
+  import { ui } from '../lib/state.svelte';
+</script>
+
+<header>
+  <h1>Landscape of Loss: U.S. County Population Pathways, 1950–2020</h1>
+  <fieldset class="modes">
+    <legend class="visually-hidden">Map mode</legend>
+    {#each MODES as m (m.id)}
+      <label class:active={ui.mode === m.id}>
+        <input type="radio" name="mode" value={m.id} bind:group={ui.mode} />
+        {m.label}
+      </label>
+    {/each}
+  </fieldset>
+</header>
+
+<style>
+  header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px 24px;
+    padding: 12px var(--gutter);
+    border-bottom: 1px solid var(--hairline);
+  }
+  h1 {
+    font-size: var(--size-title);
+    font-weight: 800;
+    line-height: 1.2;
+  }
+  .modes {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--hairline);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  label {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-height: 40px;
+    padding: 0 14px;
+    cursor: pointer;
+    border-left: 1px solid var(--hairline);
+    white-space: nowrap;
+  }
+  label:first-of-type {
+    border-left: 0;
+  }
+  label.active {
+    background: var(--accent);
+    color: var(--bg);
+  }
+  input {
+    position: absolute;
+    opacity: 0;
+    inset: 0;
+    margin: 0;
+    cursor: pointer;
+  }
+  label:has(input:focus-visible) {
+    outline: 2px solid var(--accent);
+    outline-offset: -4px;
+    box-shadow: inset 0 0 0 4px var(--bg);
+  }
+</style>
