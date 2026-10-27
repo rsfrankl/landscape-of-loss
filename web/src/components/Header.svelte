@@ -1,6 +1,11 @@
 <script lang="ts">
   import { MODES } from '../lib/types';
+  import type { StartupData } from '../lib/data';
   import { ui } from '../lib/state.svelte';
+  import Search from './Search.svelte';
+  import LocateButton from './LocateButton.svelte';
+
+  let { data }: { data: StartupData } = $props();
 </script>
 
 <header>
@@ -14,6 +19,10 @@
       </label>
     {/each}
   </fieldset>
+  <div class="tools">
+    <Search counties={data.counties} />
+    <LocateButton {data} />
+  </div>
 </header>
 
 <style>
@@ -27,6 +36,7 @@
     border-bottom: 1px solid var(--hairline);
   }
   h1 {
+    flex: 1 1 100%;
     font-size: var(--size-title);
     font-weight: 800;
     line-height: 1.2;
@@ -56,6 +66,11 @@
   label.active {
     background: var(--accent);
     color: var(--bg);
+  }
+  .tools {
+    display: flex;
+    gap: 8px;
+    margin-left: auto;
   }
   /* The tabs stay on one line at 1024 px and wider (spec 6.2); narrower screens may wrap them. */
   @media (max-width: 1023px) {

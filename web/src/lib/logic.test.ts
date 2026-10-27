@@ -23,6 +23,8 @@ import {
 } from './describe';
 import { DEFAULT_STATE, parseUrl, toSearch } from './url';
 import { axisEnd, driverSentence, driverShares } from './profile';
+import { buildIndex, search } from './search';
+import { countyAt } from './locate';
 
 const meta = metaJson as unknown as Meta;
 const counties = alignCounties(topoJson as unknown as CountyTopology, countiesJson as unknown as County[]);
@@ -295,5 +297,34 @@ describe('profile detail blocks', () => {
       'Lost population through both net out-migration and natural decrease, like 50% of loss counties.',
     );
     expect([...shares.values()].reduce((a, b) => a + b)).toBeCloseTo(1);
+  });
+});
+
+describe('search and location (spec 6.8)', () => {
+  const index = buildIndex(counties);
+  const titles = (q: string) => search(index, q).map((i) => `${counties[i].name}, ${counties[i].stusps}`);
+
+  it('is accent- and case-insensitive', () => {
+    expect(titles('dona ana')[0]).toBe('Doña Ana County, NM');
+    expect(titles('DOÑA')[0]).toBe('Doña Ana County, NM');
+  });
+
+  it('matches "County name, ST" and keeps the top 8', () => {
+    expect(titles('newton, ms')).toEqual(['Newton County, MS']);
+    expect(titles('newton ms')).toEqual(['Newton County, MS']);
+    expect(titles('washington')).toHaveLength(8);
+    expect(titles('')).toEqual([]);
+  });
+
+  it('finds the county under a point', () => {
+    const topo = topoJson as unknown as CountyTopology;
+    const at = (lon: number, lat: number) => {
+      const i = countyAt(topo, counties, lon, lat);
+      return i < 0 ? null : counties[i].geoid;
+    };
+    expect(at(...county('28101').label)).toBe('28101');
+    expect(at(-89.4012, 43.0731)).toBe('55025'); // Madison, WI
+    expect(at(-157.8583, 21.3069)).toBeNull(); // Honolulu
+    expect(at(-30, 40)).toBeNull(); // Atlantic
   });
 });

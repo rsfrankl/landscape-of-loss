@@ -1,7 +1,7 @@
 <script lang="ts">
   import { loadStartup } from './lib/data';
   import { MODES } from './lib/types';
-  import { ui } from './lib/state.svelte';
+  import { selectCounty, ui } from './lib/state.svelte';
   import { countyTitle } from './lib/describe';
   import { startUrlSync } from './lib/urlSync.svelte';
   import Header from './components/Header.svelte';
@@ -19,7 +19,7 @@
   const usesDecade = $derived(MODES.find((m) => m.id === ui.mode)!.usesDecade);
 
   function onKeydown(event: KeyboardEvent): void {
-    if (event.key === 'Escape' && ui.selected >= 0) ui.selected = -1;
+    if (event.key === 'Escape' && ui.selected >= 0) selectCounty(-1);
   }
 </script>
 
@@ -30,7 +30,7 @@
 {:then data}
   {@const selected = ui.selected >= 0 ? data.counties[ui.selected] : null}
   <div class="app" class:with-decades={usesDecade}>
-    <div class="header"><Header /></div>
+    <div class="header"><Header {data} /></div>
     <div class="map"><MapView {data} /></div>
     {#if usesDecade}
       <div class="decade"><DecadeControl meta={data.meta} /></div>

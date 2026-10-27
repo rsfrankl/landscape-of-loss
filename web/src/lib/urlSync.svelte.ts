@@ -1,12 +1,12 @@
 import type { County, Meta } from './types';
-import { ui } from './state.svelte';
+import { selectCounty, ui } from './state.svelte';
 import { parseUrl, toSearch, type UrlState } from './url';
 
 function apply(s: UrlState): void {
   ui.mode = s.mode;
   ui.decade = s.decade;
-  ui.selected = s.selected;
   ui.filter = s.filter;
+  if (s.selected !== ui.selected) selectCounty(s.selected);
 }
 
 /**

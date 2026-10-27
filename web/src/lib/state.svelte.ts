@@ -17,6 +17,21 @@ export const ui = $state({
   playing: false,
 });
 
+/**
+ * Asks the map to bring a county into view. `force` (search, location) always zooms to it;
+ * otherwise the map zooms only when the county is off-screen or under 12 px (spec 6.9).
+ */
+export const focus = $state({ county: -1, force: false, seq: 0 });
+
+/** Selects a county (or -1 to close) and asks the map to bring it into view. */
+export function selectCounty(i: number, force = false): void {
+  ui.selected = i;
+  if (i < 0) return;
+  focus.county = i;
+  focus.force = force;
+  focus.seq++;
+}
+
 /** Open state of the profile's collapsible blocks; kept across selections for the session. */
 export const profileOpen = $state({ acs: false, components: false });
 

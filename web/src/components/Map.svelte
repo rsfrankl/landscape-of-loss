@@ -15,7 +15,7 @@
   } from 'd3';
   import { feature, mesh } from 'topojson-client';
   import type { StartupData } from '../lib/data';
-  import { ui } from '../lib/state.svelte';
+  import { focus, selectCounty, ui } from '../lib/state.svelte';
   import { dataColor, hexToRgb, isDimmed, mix, palettes, type Rgb } from '../lib/colors';
   import { decodePick, pickColor } from '../lib/picking';
   import { mapLabel } from '../lib/describe';
@@ -182,7 +182,7 @@
   function onClick(event: MouseEvent): void {
     const [x, y] = pointer(event, svg);
     const i = hit(x, y);
-    if (i >= 0) ui.selected = i;
+    if (i >= 0) selectCounty(i);
   }
 
   // ---- Zoom -------------------------------------------------------------------------------
@@ -191,6 +191,43 @@
   export function resetView(): void {
     select(svg).transition().duration(500).call(zoomer.transform, zoomIdentity);
   }
+
+  /** A county's bounds in the zoomable layer's coordinates (before the zoom transform). */
+  function layerBounds(i: number): [[number, number], [number, number]] {
+    const [[x0, y0], [x1, y1]] = toPath.bounds(fc.features[i]);
+    return [
+      [base.x + x0 * base.s, base.y + y0 * base.s],
+      [base.x + x1 * base.s, base.y + y1 * base.s],
+    ];
+  }
+
+  /**
+   * Brings a county into view (spec 6.9). Unless forced, only when its centre is off-screen or
+   * it is drawn smaller than 12 px; then it zooms to fit the county with room around it.
+   */
+  function zoomToCounty(i: number, force: boolean): void {
+    const [[u0, v0], [u1, v1]] = layerBounds(i);
+    if (!force) {
+      const [cx, cy] = transform.apply([(u0 + u1) / 2, (v0 + v1) / 2]);
+      const size = Math.max(u1 - u0, v1 - v0) * transform.k;
+      const onScreen = cx >= 0 && cx <= width && cy >= 0 && cy <= height;
+      if (onScreen && size >= 12) return;
+    }
+    const k = Math.max(1, Math.min(12, 0.3 * Math.min(width / (u1 - u0), height / (v1 - v0))));
+    const next = zoomIdentity
+      .translate(width / 2 - (k * (u0 + u1)) / 2, height / 2 - (k * (v0 + v1)) / 2)
+      .scale(k);
+    select(svg).transition().duration(600).call(zoomer.transform, next);
+  }
+
+  // Selections from search, location, the URL and map clicks ask for a county to be in view.
+  let handledFocus = 0;
+  $effect(() => {
+    const seq = focus.seq;
+    if (!zoomer || width === 0 || height === 0 || seq === handledFocus) return;
+    handledFocus = seq;
+    untrack(() => zoomToCounty(focus.county, focus.force));
+  });
 
   onMount(() => {
     const css = getComputedStyle(container);
