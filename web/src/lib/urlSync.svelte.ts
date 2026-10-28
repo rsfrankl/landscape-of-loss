@@ -2,13 +2,14 @@ import type { County, Meta } from './types';
 import { selectCounty, ui } from './state.svelte';
 import { parseUrl, toSearch, type UrlState } from './url';
 
-function apply(s: UrlState): void {
+/** Applies a URL state. `zoom` frames the county on the map (the page load; not Back/Forward). */
+function apply(s: UrlState, zoom = false): void {
   ui.mode = s.mode;
   ui.decade = s.decade;
   ui.filter = s.filter;
   ui.pinned = s.pinned;
   ui.similar = s.similar;
-  if (s.selected !== ui.selected) selectCounty(s.selected);
+  if (s.selected !== ui.selected) selectCounty(s.selected, zoom);
 }
 
 /**
@@ -17,7 +18,7 @@ function apply(s: UrlState): void {
  * change replaces the current entry. Call once, after the startup data has loaded.
  */
 export function startUrlSync(meta: Meta, counties: County[]): () => void {
-  apply(parseUrl(location.search, meta, counties));
+  apply(parseUrl(location.search, meta, counties), true);
 
   const current = () => toSearch(parseUrl(location.search, meta, counties), meta, counties);
   const write = (search: string, push: boolean) => {

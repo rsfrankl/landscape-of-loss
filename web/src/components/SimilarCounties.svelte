@@ -1,7 +1,8 @@
 <script lang="ts">
   // Profile block 9 (spec 6.7): the 5 counties whose decade-by-decade log growth rates lie
   // closest to this county's, as small multiples of indexed population (first year = 100).
-  // Mounted only while the block is open, so the map rings the matches only while they show.
+  // Mounted only while the block is open, so the map outlines the matches only while they show.
+  // Pointing at a row outlines its county on the map; pointing at a match on the map marks its row.
   import { line, scaleLinear } from 'd3';
   import type { County, Meta } from '../lib/types';
   import { openSimilar, showCounties, ui } from '../lib/state.svelte';
@@ -17,6 +18,7 @@
     ui.matches = matches.map((m) => m.index);
     return () => {
       ui.matches = [];
+      ui.matchHover = -1;
     };
   });
 
@@ -64,17 +66,21 @@
     Population indexed, {first} = 100. <span class="swatch-line own" aria-hidden="true"></span>Gray: {county.name}.
   </p>
   <ol>
-    {#each matches as m, rank (m.index)}
+    {#each matches as m (m.index)}
       {@const c = counties[m.index]}
       {@const p = meta.pathways[c.pathway - 1]}
       <li>
         <button
           type="button"
           class="match"
-          aria-label="{rank + 1}. {countyTitle(c)}, {p.name} pathway, open profile"
+          class:linked={ui.matchHover === m.index || ui.hovered === m.index}
+          aria-label="{countyTitle(c)}, {p.name} pathway, open profile"
           onclick={() => openSimilar(m.index)}
+          onpointerenter={() => (ui.matchHover = m.index)}
+          onpointerleave={() => (ui.matchHover = -1)}
+          onfocus={() => (ui.matchHover = m.index)}
+          onblur={() => (ui.matchHover = -1)}
         >
-          <span class="badge num" aria-hidden="true">{rank + 1}</span>
           <svg width={W} height={H} aria-hidden="true">
             <line class="base" x1={x(0)} x2={x(meta.years.length - 1)} y1={y(100)} y2={y(100)} />
             <path class="own" d={path(own)} />
@@ -175,9 +181,9 @@
   }
   .match {
     display: grid;
-    grid-template-columns: auto auto 1fr;
+    grid-template-columns: auto 1fr;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     width: 100%;
     padding: 6px;
     border: 1px solid transparent;
@@ -189,17 +195,9 @@
   .match:hover {
     border-color: var(--hairline);
   }
-  /* The same rank badge as on the map (spec 6.7). */
-  .badge {
-    display: grid;
-    place-items: center;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: var(--heading);
-    color: var(--bg);
-    font-size: 11px;
-    line-height: 1;
+  /* Linked with the map: this row's county is outlined there, or under the pointer there. */
+  .match.linked {
+    border-color: var(--muted);
   }
   svg {
     display: block;

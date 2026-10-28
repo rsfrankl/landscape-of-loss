@@ -189,17 +189,39 @@ test('similar counties: 5 matches ringed on the map, settings in the URL, back l
   await page.getByRole('button', { name: 'Similar counties' }).click();
   const matches = page.locator('button.match');
   await expect(matches).toHaveCount(5);
-  await expect(matches.first()).toHaveAccessibleName('1. Barton County, MO, Emerging Localized Loss pathway, open profile');
-  await expect(matches.locator('.badge')).toHaveText(['1', '2', '3', '4', '5']);
-  // On the map: a thin solid outline and a rank badge per match; the selected outline stays heavier.
+  await expect(matches.first()).toHaveAccessibleName('Barton County, MO, Emerging Localized Loss pathway, open profile');
+  // On the map: a thin solid outline per match; the selected outline stays heavier. No badges.
   await expect(page.locator('path.line.match')).toHaveCount(5);
-  // Rank 1 draws last, so it sits on top where badges still overlap.
-  await expect(page.locator('svg g.badge text')).toHaveText(['5', '4', '3', '2', '1']);
+  await expect(page.locator('svg .badge')).toHaveCount(0);
   const strokes = await page.evaluate(() => {
     const css = (sel: string) => getComputedStyle(document.querySelector(sel)!);
     return { match: css('path.line.match').strokeWidth, dash: css('path.line.match').strokeDasharray, selected: css('path.line.selected').strokeWidth };
   });
   expect(strokes).toEqual({ match: '1.25px', dash: 'none', selected: '2px' });
+
+  // Hovering a row outlines its county like the selection and adds a locator ring; the map stays put.
+  const view = () => page.locator('svg > g').first().getAttribute('transform');
+  await page.waitForTimeout(800); // the URL load's zoom transition
+  const before = await view();
+  await matches.nth(1).hover();
+  await expect(page.locator('path.line.linked')).toHaveCount(1);
+  await expect(page.locator('circle.locator')).toHaveCount(2);
+  expect(await page.locator('path.line.linked').evaluate((el) => getComputedStyle(el).strokeWidth)).toBe('2px');
+  expect(await view()).toBe(before);
+  await page.mouse.move(0, 0);
+  await expect(page.locator('circle.locator')).toHaveCount(0);
+  // Focus does the same as hover.
+  await matches.first().focus();
+  await expect(page.locator('circle.locator')).toHaveCount(2);
+  await matches.first().blur();
+
+  // Hovering a matched county on the map marks its row (at full extent, so the match is on screen).
+  await page.getByRole('button', { name: 'Reset view' }).click();
+  await page.waitForTimeout(700);
+  const ring = (await page.locator('path.line.match').first().boundingBox())!;
+  await page.mouse.move(ring.x + ring.width / 2, ring.y + ring.height / 2);
+  await expect(page.locator('button.match.linked')).toHaveCount(1);
+  await page.mouse.move(0, 0);
   await expect(page.getByText('Not part of the paper\'s analysis.', { exact: false })).toBeVisible();
   // The page itself never scrolls; only the panel does.
   expect(await page.evaluate(() => document.scrollingElement!.scrollHeight - window.innerHeight)).toBeLessThanOrEqual(0);
@@ -226,11 +248,47 @@ test('similar counties: 5 matches ringed on the map, settings in the URL, back l
   // Closing the profile removes the rings; a pool with no matches says so.
   await page.getByRole('button', { name: 'Close county profile' }).click();
   await expect(page.locator('path.line.match')).toHaveCount(0);
-  await expect(page.locator('svg g.badge')).toHaveCount(0);
   await page.goto('./?county=06037&sim=size,metro');
   await page.getByRole('button', { name: 'Similar counties' }).click();
   await expect(page.getByText('No counties match these settings.', { exact: false })).toBeVisible();
   expect(errors).toEqual([]);
+});
+
+test('map clicks never zoom; search and URL loads frame the county in its region', async ({ page }) => {
+  const scale = async () => {
+    const t = (await page.locator('svg > g').first().getAttribute('transform'))!;
+    return Number(/scale\(([\d.]+)\)/.exec(t)![1]);
+  };
+  // A URL load frames a small county at up to 4×.
+  await page.goto('./?county=51580');
+  await expect.poll(scale).toBeCloseTo(4, 1);
+
+  // A map click selects without moving the map.
+  await page.goto('./');
+  await page.waitForTimeout(300);
+  const box = (await page.locator('canvas[role="img"]').boundingBox())!;
+  await page.mouse.click(box.x + box.width * 0.55, box.y + box.height * 0.5);
+  await expect.poll(() => new URL(page.url()).searchParams.get('county')).not.toBeNull();
+  await page.waitForTimeout(700);
+  expect(await scale()).toBe(1);
+
+  // Search zooms in from the full view, but not beyond a closer view (it only pans).
+  const search = page.getByRole('combobox', { name: 'Search for a county' });
+  await search.fill('newton ms');
+  await page.keyboard.press('Enter');
+  await expect.poll(scale).toBeGreaterThan(1);
+  const regional = await scale();
+  expect(regional).toBeLessThanOrEqual(4);
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  for (let i = 0; i < 6; i++) await page.mouse.wheel(0, -300);
+  await page.waitForTimeout(500);
+  const closer = await scale();
+  expect(closer).toBeGreaterThan(regional);
+  await search.fill('dona ana');
+  await page.keyboard.press('Enter');
+  await expect(profileTitle(page)).toHaveText('Doña Ana County, NM');
+  await page.waitForTimeout(800);
+  expect(await scale()).toBeCloseTo(closer, 5);
 });
 
 test('keyboard path: search → select → read profile → close', async ({ page }) => {

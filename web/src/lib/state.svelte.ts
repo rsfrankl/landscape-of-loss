@@ -22,28 +22,30 @@ export const ui = $state({
   playing: false,
   /** Similar-counties settings (spec 6.7); kept across selections. */
   similar: { ...DEFAULT_SIMILAR } as SimilarOptions,
-  /** Similar counties ringed on the map, while profile block 9 is open. */
+  /** Similar counties outlined on the map, while profile block 9 is open. */
   matches: [] as number[],
+  /** Similar county whose row is under the pointer or focus; -1 for none. */
+  matchHover: -1,
   /** Counties to go back to after following a similar county ("← Back to …"). */
   trail: [] as number[],
 });
 
 /**
- * Asks the map to bring a county into view. `force` (search, location) always zooms to it;
- * otherwise the map zooms only when the county is off-screen or under 12 px (spec 6.9).
+ * Asks the map to frame a county in its region (search, location, URL loads; spec 6.9), or with
+ * `counties` set, to fit a set ("Show on map").
  */
-export const focus = $state({ county: -1, force: false, seq: 0, counties: [] as number[] });
+export const focus = $state({ county: -1, seq: 0, counties: [] as number[] });
 
 /**
- * Selects a county (or -1 to close) and asks the map to bring it into view. Clears the trail
- * of similar counties followed; openSimilar and goBack keep it.
+ * Selects a county (or -1 to close). Only `zoom` (search, location, URL loads) moves the map;
+ * map clicks never do. Clears the trail of similar counties followed; openSimilar and goBack
+ * keep it.
  */
-export function selectCounty(i: number, force = false): void {
+export function selectCounty(i: number, zoom = false): void {
   ui.selected = i;
   ui.trail = [];
-  if (i < 0) return;
+  if (i < 0 || !zoom) return;
   focus.county = i;
-  focus.force = force;
   focus.counties = [];
   focus.seq++;
 }
@@ -65,7 +67,6 @@ export function goBack(): void {
 /** Asks the map to zoom so that all these counties are in view ("Show on map"). */
 export function showCounties(list: number[]): void {
   focus.counties = list;
-  focus.force = true;
   focus.seq++;
 }
 

@@ -19,7 +19,7 @@
   import { dataColor, emphasis, hexToRgb, mix, palettes, type Rgb } from '../lib/colors';
   import { PICK_RADIUS, pickCandidates, pickColor } from '../lib/picking';
   import { mapLabel } from '../lib/describe';
-  import { BADGE_RADIUS, placeBadges } from '../lib/badges';
+  import { regionalScale } from '../lib/zoom';
   import Tooltip from './Tooltip.svelte';
 
   let { data }: { data: StartupData } = $props();
@@ -204,6 +204,8 @@
 
   // ---- Zoom -------------------------------------------------------------------------------
   let zoomer: ZoomBehavior<SVGSVGElement, unknown>;
+  // Set once the zoom behaviour exists, so a selection made before then (a URL load) still zooms.
+  let zoomReady = $state(false);
 
   export function resetView(): void {
     select(svg).transition().duration(500).call(zoomer.transform, zoomIdentity);
@@ -219,18 +221,12 @@
   }
 
   /**
-   * Brings a county into view (spec 6.9). Unless forced, only when its centre is off-screen or
-   * it is drawn smaller than 12 px; then it zooms to fit the county with room around it.
+   * Centres a county in its regional context (spec 6.9): its bounding box spans about 1/20 of
+   * the map width, at most 4×; a closer view keeps its zoom and only pans.
    */
-  function zoomToCounty(i: number, force: boolean): void {
+  function zoomToCounty(i: number): void {
     const [[u0, v0], [u1, v1]] = layerBounds(i);
-    if (!force) {
-      const [cx, cy] = transform.apply([(u0 + u1) / 2, (v0 + v1) / 2]);
-      const size = Math.max(u1 - u0, v1 - v0) * transform.k;
-      const onScreen = cx >= 0 && cx <= width && cy >= 0 && cy <= height;
-      if (onScreen && size >= 12) return;
-    }
-    const k = Math.max(1, Math.min(12, 0.3 * Math.min(width / (u1 - u0), height / (v1 - v0))));
+    const k = regionalScale(u1 - u0, v1 - v0, width, transform.k);
     const next = zoomIdentity
       .translate(width / 2 - (k * (u0 + u1)) / 2, height / 2 - (k * (v0 + v1)) / 2)
       .scale(k);
@@ -238,13 +234,10 @@
   }
 
   /** A county's label point in screen pixels, under the current zoom. */
-  function badgeXY(i: number): [number, number] {
+  function screenXY(i: number): [number, number] {
     const [u, v] = projection(counties[i].label) ?? [0, 0];
     return transform.apply([base.x + u * base.s, base.y + v * base.s]);
   }
-
-  // Recomputed on every zoom step, synchronously, so the badges never animate apart.
-  const badges = $derived(placeBadges(ui.matches.map(badgeXY)));
 
   /** Fits a set of counties (e.g. similar counties and the selected one) to ~80% of the map. */
   function zoomToCounties(list: number[]): void {
@@ -260,14 +253,14 @@
     select(svg).transition().duration(600).call(zoomer.transform, next);
   }
 
-  // Selections from search, location, the URL and map clicks ask for a county to be in view;
-  // "Show on map" asks for a set.
+  // Search, location and URL loads ask for a county to be framed; "Show on map" asks for a set.
+  // Map clicks and hovering never move the map.
   let handledFocus = 0;
   $effect(() => {
     const seq = focus.seq;
-    if (!zoomer || width === 0 || height === 0 || seq === handledFocus) return;
+    if (!zoomReady || width === 0 || height === 0 || seq === handledFocus) return;
     handledFocus = seq;
-    untrack(() => (focus.counties.length ? zoomToCounties(focus.counties) : zoomToCounty(focus.county, focus.force)));
+    untrack(() => (focus.counties.length ? zoomToCounties(focus.counties) : zoomToCounty(focus.county)));
   });
 
   onMount(() => {
@@ -290,6 +283,7 @@
         drawPick();
       });
     select(svg).call(zoomer);
+    zoomReady = true;
   });
 
   onDestroy(() => {
@@ -306,7 +300,7 @@
   // Resize the backing store here, not with template attributes: setting a canvas's size clears
   // it, and the attribute update is not guaranteed to land before this effect's redraw.
   $effect(() => {
-    void [width, height, base];
+    void [width, height, base, zoomReady];
     untrack(() => {
       canvas.width = Math.round(width * dpr);
       canvas.height = Math.round(height * dpr);
@@ -358,25 +352,23 @@
           <path class="halo selected" d={countyD[ui.selected]} />
           <path class="line selected" d={countyD[ui.selected]} />
         {/if}
+        <!-- The match row under the pointer or focus, outlined like the selection. -->
+        {#if ui.matchHover >= 0}
+          <path class="halo selected linked" d={countyD[ui.matchHover]} />
+          <path class="line selected linked" d={countyD[ui.matchHover]} />
+        {/if}
         {#if ui.hovered >= 0}
           <path class="halo hover" d={countyD[ui.hovered]} />
           <path class="line hover" d={countyD[ui.hovered]} />
         {/if}
       </g>
     </g>
-    <!-- Similar-county rank badges, a fixed size on screen, nudged apart where they collide;
-         a leader line points back to a moved badge's label point. Rank 1 draws last, on top. -->
-    {#each badges as b, rank (rank)}
-      {#if b.leader}
-        <line class="leader" x1={b.ax} y1={b.ay} x2={b.x} y2={b.y} />
-      {/if}
-    {/each}
-    {#each badges.map((b, rank) => ({ b, rank })).reverse() as { b, rank } (rank)}
-      <g class="badge" transform="translate({b.x},{b.y})">
-        <circle r={BADGE_RADIUS} />
-        <text dy="0.35em" text-anchor="middle">{rank + 1}</text>
-      </g>
-    {/each}
+    <!-- Locator ring for the match row under the pointer or focus, a fixed size on screen. -->
+    {#if ui.matchHover >= 0}
+      {@const [lx, ly] = screenXY(ui.matchHover)}
+      <circle class="locator halo" cx={lx} cy={ly} r="9" />
+      <circle class="locator line" cx={lx} cy={ly} r="9" />
+    {/if}
   </svg>
   {#if tooltipFor >= 0}
     <Tooltip {meta} county={counties[tooltipFor]} x={pointerXY[0]} y={pointerXY[1]} bounds={{ width, height }} />
@@ -438,23 +430,15 @@
   .line.match {
     stroke-width: 1.25px;
   }
-  .badge,
-  .leader {
+  .locator {
+    fill: none;
     pointer-events: none;
   }
-  .leader {
-    stroke: var(--heading);
-    stroke-width: 1px;
+  .locator.halo {
+    stroke-width: 4px;
   }
-  .badge circle {
-    fill: var(--heading);
-    stroke: var(--bg);
+  .locator.line {
     stroke-width: 1.5px;
-  }
-  .badge text {
-    font-family: var(--font-mono);
-    font-size: 11px;
-    fill: var(--bg);
   }
   .halo.hover {
     stroke-width: 3.5px;
