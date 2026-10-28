@@ -1,7 +1,7 @@
 <script lang="ts">
   import { loadStartup } from './lib/data';
   import { MODES, showsBreakdown } from './lib/types';
-  import { selectCounty, ui } from './lib/state.svelte';
+  import { about, selectCounty, ui } from './lib/state.svelte';
   import { countyTitle } from './lib/describe';
   import { startUrlSync } from './lib/urlSync.svelte';
   import Header from './components/Header.svelte';
@@ -11,6 +11,8 @@
   import CountyProfile from './components/CountyProfile.svelte';
   import Footer from './components/Footer.svelte';
   import Notice from './components/Notice.svelte';
+  import About from './components/About.svelte';
+  import IntroCard from './components/IntroCard.svelte';
 
   // The URL sets the view before the map first paints (spec 6.9).
   const loading = loadStartup().then((data) => {
@@ -28,7 +30,8 @@
   });
 
   function onKeydown(event: KeyboardEvent): void {
-    if (event.key !== 'Escape') return;
+    // Esc in the explainer closes only the explainer.
+    if (event.key !== 'Escape' || about.open) return;
     if (ui.selected >= 0) selectCounty(-1);
     else if (ui.pinned !== null) ui.pinned = null;
   }
@@ -45,6 +48,7 @@
     <div class="map">
       <MapView {data} />
       <Notice />
+      <IntroCard />
     </div>
     <!-- The decade row is reserved in every mode, so switching modes never resizes the map. -->
     <div class="decade">
@@ -63,6 +67,7 @@
     </aside>
     <div class="footer"><Footer meta={data.meta} counties={data.counties} /></div>
   </div>
+  <About meta={data.meta} />
   <div class="visually-hidden" aria-live="polite">
     {#if selected}
       Selected {countyTitle(selected)}: {data.meta.pathways[selected.pathway - 1].name} pathway.

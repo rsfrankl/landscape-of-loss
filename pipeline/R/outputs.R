@@ -139,7 +139,23 @@ counties_json <- function(counties) {
   })
 }
 
-build_meta <- function(counties, palette_check, pop_base_diff) {
+# Data sources for the About tab (spec 6.9).
+DATA_SOURCES <- list(
+  list(label = "Pathways, decade-by-decade states and county boundaries",
+       text = "Park, Seymour and Franklin (2026), from the authors' data: 2020 county boundaries, conterminous U.S."),
+  list(label = "Population, 1950–2010",
+       text = paste("Schroeder, Jonathan P. (2016). Historical Population Estimates for 2010 U.S. States, Counties",
+                    "and Metro/Micro Areas, 1790–2010. Data Repository for the University of Minnesota (DRUM)."),
+       url = "https://doi.org/10.13020/D6XW2H"),
+  list(label = "Population, 2020", text = "2020 Census, from the authors' data."),
+  list(label = "Race and ethnicity", text = "2020 Census (PL 94-171, table P2), via the tidycensus R package."),
+  list(label = "Other profile indicators", text = "ACS 2016–20 5-year estimates, via the tidycensus R package."),
+  list(label = "Components of change", text = "U.S. Census Bureau, Vintage 2020 county population estimates.",
+       url = "https://www2.census.gov/programs-surveys/popest/datasets/2010-2020/counties/totals/co-est2020-alldata.csv"),
+  list(label = "Urban–rural classes", text = "USDA Economic Research Service, Rural–Urban Continuum Codes, 2013 and 2023."),
+  list(label = "Change palette", text = "CARTOColors Earth, CARTO, CC BY 4.0."))
+
+build_meta <- function(counties, palette_check, pop_base_diff, t1, t2) {
   stopifnot(palette_check$pathways == 8)
   n <- tabulate(counties$pathway, nbins = 8)
   list(
@@ -183,7 +199,15 @@ build_meta <- function(counties, palette_check, pop_base_diff) {
         "Components of change, April 2010 to July 2020, are from the Census Bureau's Vintage 2020",
         "estimates. Loss counties are grouped by sign, as in Table 2 of the paper, with natural change",
         "of zero counted as natural decrease.")),
-    validation = list(adCells = 21756L, adMismatches = 0L))
+    indicators = lapply(PROFILE_INDICATORS, function(i) {
+      list(key = i$key, label = i$label, source = SOURCE_LABELS[[i$source]],
+           definition = INDICATOR_DEFINITIONS[[i$key]])
+    }),
+    sources = DATA_SOURCES,
+    validation = list(adCells = 21756L, adMismatches = 0L,
+                      table1Cells = t1$n_cells, table1Within = t1$n_cells - t1$n_outside,
+                      table1Intended = length(t1$intended),
+                      table2Cells = t2$cells, table2Matching = t2$cells - t2$mismatches))
 }
 
 write_json_file <- function(x, path, pretty = FALSE) {

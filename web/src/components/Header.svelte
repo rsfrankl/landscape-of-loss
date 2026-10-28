@@ -1,20 +1,27 @@
 <script lang="ts">
   import { MODES } from '../lib/types';
   import type { StartupData } from '../lib/data';
-  import { ui } from '../lib/state.svelte';
+  import { openAbout, ui } from '../lib/state.svelte';
   import Search from './Search.svelte';
   import LocateButton from './LocateButton.svelte';
 
   let { data }: { data: StartupData } = $props();
 </script>
 
-<!-- Two rows (spec 6.1): the title, with search and location on the right where they fit;
+<!-- Two rows (spec 6.1): the title, with search, location and "?" on the right where they fit;
      then the mode tabs; then the subtitle on its own full-width line. -->
 <header>
   <h1>The Landscape of Loss: US County-Level Depopulation Pathways, 1950–2020</h1>
   <div class="tools">
     <Search counties={data.counties} />
     <LocateButton {data} />
+    <button
+      type="button"
+      class="about"
+      aria-label="How to read this, about and data notes"
+      aria-haspopup="dialog"
+      onclick={() => openAbout('read')}>?</button
+    >
   </div>
   <fieldset class="modes">
     <legend class="visually-hidden">Map mode</legend>
@@ -89,6 +96,19 @@
     grid-area: sub;
     margin: 0;
     color: var(--muted);
+  }
+  .about {
+    flex: none;
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--hairline);
+    border-radius: 50%;
+    background: var(--bg);
+    font-weight: 800;
+    cursor: pointer;
+  }
+  .about:hover {
+    border-color: var(--muted);
   }
   label {
     position: relative;

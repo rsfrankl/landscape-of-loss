@@ -98,7 +98,16 @@ export function togglePinned(pathway: number): void {
   ui.pinned = ui.pinned === pathway ? null : pathway;
 }
 
-/** A short status message on its own line under the header controls (e.g. location results). */
+/** The explainer modal (spec 6.9): open state and the tab shown. */
+export type AboutTab = 'read' | 'about' | 'notes';
+export const about = $state({ open: false, tab: 'read' as AboutTab });
+
+export function openAbout(tab: AboutTab = 'read'): void {
+  about.tab = tab;
+  about.open = true;
+}
+
+/** A short status message in a strip over the top of the map (e.g. location results). */
 export const notice = $state({ text: '' });
 
 /** Open state of the profile's collapsible blocks; kept across selections for the session. */

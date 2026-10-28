@@ -86,7 +86,7 @@ list(
   tar_target(web_topo, write_web_topo(topo, ad_check, WEB_DATA), format = "file"),
   tar_target(web_counties, write_web_json(counties_json(counties), "counties.json", ad_check, WEB_DATA),
              format = "file"),
-  tar_target(web_meta, write_web_json(build_meta(counties, palette_check, base2010$n_diff), "meta.json",
+  tar_target(web_meta, write_web_json(build_meta(counties, palette_check, base2010$n_diff, table1, table2), "meta.json",
                                       ad_check, WEB_DATA, pretty = TRUE),
              format = "file"),
   tar_target(web_acs, write_web_json(acs_payload(acs_parts, table1, universe), "acs.json",

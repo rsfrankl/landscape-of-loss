@@ -50,6 +50,27 @@ PROFILE_INDICATORS <- list(
   list(key = "renter_occupied", label = "Renter-occupied homes", source = "acs", num = v("B25003", 3), den = v("B25003", 1))
 )
 
+# Definitions for Data notes (meta.json `indicators`), keyed like PROFILE_INDICATORS.
+INDICATOR_DEFINITIONS <- c(
+  white_nh = "Share of the total population, 2020 Census table P2.",
+  black_nh = "Share of the total population, 2020 Census table P2.",
+  asian_nh = "Share of the total population, 2020 Census table P2.",
+  hispanic = "Share of the total population (any race), 2020 Census table P2.",
+  age_65_plus = "Share of the total population aged 65 and over (ACS table B01001).",
+  foreign_born = "Share of the total population born outside the United States (ACS table B05002).",
+  language_other_than_english = paste(
+    "Share of people aged 5 and over who speak a language other than English at home (ACS table",
+    "B16004). These are the values behind Table 1 of the paper, whose row label differs."),
+  bachelors_plus_age25 = paste(
+    "Share of people aged 25 and over with a bachelor's degree or higher (ACS table B15003).",
+    "Table 1 of the paper reports bachelor's degree only."),
+  below_poverty = "Share of people whose poverty status is determined who are below the poverty level (ACS table B17001).",
+  emp_ag_forestry_fishing_hunting_mining = "Share of employed civilians aged 16 and over (ACS table C24050).",
+  emp_manufacturing = "Share of employed civilians aged 16 and over (ACS table C24050).",
+  emp_prof_sci_mgmt_admin = "Share of employed civilians aged 16 and over (ACS table C24050).",
+  owner_occupied = "Share of occupied housing units (ACS table B25003).",
+  renter_occupied = "Share of occupied housing units (ACS table B25003).")
+
 indicator_keys <- function() vapply(PROFILE_INDICATORS, `[[`, "", "key")
 table1_row <- function(ind) if (is.null(ind$table1)) ind$key else ind$table1
 

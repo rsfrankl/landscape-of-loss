@@ -1,5 +1,13 @@
 import { expect, test, type Page } from '@playwright/test';
 
+// The first-visit intro card sits over the map; tests other than its own start with it dismissed.
+const INTRO_KEY = 'landscape-of-loss:intro-dismissed';
+test.beforeEach(async ({ page }, info) => {
+  if (!info.title.startsWith('intro card')) {
+    await page.addInitScript((key) => localStorage.setItem(key, '1'), INTRO_KEY);
+  }
+});
+
 test('map loads, paints, switches modes and never uses Arial', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
@@ -588,4 +596,70 @@ test('downloads: this county, the filtered counties and all counties, each with 
   expect(all.file).toBe('landscape-of-loss-all.csv');
   expect(all.lines).toHaveLength(3109);
   await expect(page.locator('footer').last()).toContainText('Please cite:');
+});
+
+const noArial = (page: Page) =>
+  page.evaluate(() =>
+    [...document.querySelectorAll('*')].map((el) => getComputedStyle(el).fontFamily).filter((f) => /arial/i.test(f)),
+  );
+
+test('explainer: three tabs by keyboard, Esc closes only the modal, focus returns', async ({ page }) => {
+  await page.goto('./?county=28101');
+  const open = page.getByRole('button', { name: 'How to read this, about and data notes' });
+  await open.click();
+  const dialog = page.getByRole('dialog', { name: 'The Landscape of Loss' });
+  await expect(dialog).toBeVisible();
+  const tabs = dialog.getByRole('tab');
+  await expect(tabs).toHaveText(['How to read this', 'About', 'Data notes']);
+  await expect(tabs.first()).toHaveAttribute('aria-selected', 'true');
+  await expect(dialog.getByRole('tabpanel')).toContainText('Regional loss');
+  await expect(dialog.locator('.pathways li')).toHaveCount(8);
+  await expect(dialog.locator('svg rect.centre')).toHaveCount(4);
+
+  await tabs.first().focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(tabs.nth(1)).toBeFocused();
+  await expect(tabs.nth(1)).toHaveAttribute('aria-selected', 'true');
+  await expect(dialog.getByRole('tabpanel')).toContainText('doi:10.1080/24694452.2026.2691208');
+  await expect(dialog.getByRole('tabpanel')).toContainText('Schroeder, Jonathan P. (2016)');
+  await page.keyboard.press('End');
+  await expect(tabs.nth(2)).toHaveAttribute('aria-selected', 'true');
+  const notes = dialog.getByRole('tabpanel');
+  for (const text of ['workbook value', 'exact breaks', 'population-weighted', 'Connecticut', 'Conterminous U.S.', '21,756 of 21,756', '104 of', '20 of 20', 'B16004']) {
+    await expect(notes).toContainText(text);
+  }
+  // No A–D letters in the explainer either.
+  await expect(dialog).not.toContainText(/\bA–D\b/);
+  expect(await noArial(page)).toEqual([]);
+
+  // Esc closes the modal, not the county profile, and focus returns to "?".
+  await page.keyboard.press('Escape');
+  await expect(dialog).toBeHidden();
+  await expect(profileTitle(page)).toHaveText('Newton County, MS');
+  await expect(open).toBeFocused();
+});
+
+test('intro card: shown on a first visit, opens the explainer, stays dismissed', async ({ page }) => {
+  await page.goto('./');
+  const card = page.getByRole('region', { name: 'Introduction' });
+  await expect(card).toContainText('Click any county to see its 70-year history.');
+  await expect(card).not.toContainText('What is the geography');
+  expect(await noArial(page)).toEqual([]);
+  await card.getByRole('button', { name: 'How to read this' }).click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(card).toHaveCount(0);
+  await page.reload();
+  await expect(page.locator('canvas[role="img"]')).toBeVisible();
+  await expect(card).toHaveCount(0);
+
+  // × also dismisses; a shared county link never shows it.
+  await page.evaluate((key) => localStorage.removeItem(key), INTRO_KEY);
+  await page.reload();
+  await card.getByRole('button', { name: 'Dismiss introduction' }).click();
+  await expect(card).toHaveCount(0);
+  await page.evaluate((key) => localStorage.removeItem(key), INTRO_KEY);
+  await page.goto('./?county=01005');
+  await expect(profileTitle(page)).toBeVisible();
+  await expect(card).toHaveCount(0);
 });

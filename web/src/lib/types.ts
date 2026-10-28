@@ -53,7 +53,19 @@ export interface Meta {
     text: string;
   };
   notes: Record<string, string>;
-  validation: { adCells: number; adMismatches: number };
+  /** Profile indicators with their source and definition, for Data notes. */
+  indicators: { key: string; label: string; source: string; definition: string }[];
+  /** Data sources and credits, for the About tab. */
+  sources: { label: string; text: string; url?: string }[];
+  validation: {
+    adCells: number;
+    adMismatches: number;
+    table1Cells: number;
+    table1Within: number;
+    table1Intended: number;
+    table2Cells: number;
+    table2Matching: number;
+  };
 }
 
 export interface County {
