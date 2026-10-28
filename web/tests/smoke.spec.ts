@@ -189,8 +189,16 @@ test('similar counties: 5 matches ringed on the map, settings in the URL, back l
   await page.getByRole('button', { name: 'Similar counties' }).click();
   const matches = page.locator('button.match');
   await expect(matches).toHaveCount(5);
-  await expect(matches.first()).toHaveAccessibleName('Barton County, MO, Emerging Localized Loss pathway, open profile');
+  await expect(matches.first()).toHaveAccessibleName('1. Barton County, MO, Emerging Localized Loss pathway, open profile');
+  await expect(matches.locator('.badge')).toHaveText(['1', '2', '3', '4', '5']);
+  // On the map: a thin solid outline and a rank badge per match; the selected outline stays heavier.
   await expect(page.locator('path.line.match')).toHaveCount(5);
+  await expect(page.locator('svg g.badge text')).toHaveText(['1', '2', '3', '4', '5']);
+  const strokes = await page.evaluate(() => {
+    const css = (sel: string) => getComputedStyle(document.querySelector(sel)!);
+    return { match: css('path.line.match').strokeWidth, dash: css('path.line.match').strokeDasharray, selected: css('path.line.selected').strokeWidth };
+  });
+  expect(strokes).toEqual({ match: '1.25px', dash: 'none', selected: '2px' });
   await expect(page.getByText('Not part of the paper\'s analysis.', { exact: false })).toBeVisible();
   // The page itself never scrolls; only the panel does.
   expect(await page.evaluate(() => document.scrollingElement!.scrollHeight - window.innerHeight)).toBeLessThanOrEqual(0);
@@ -217,6 +225,7 @@ test('similar counties: 5 matches ringed on the map, settings in the URL, back l
   // Closing the profile removes the rings; a pool with no matches says so.
   await page.getByRole('button', { name: 'Close county profile' }).click();
   await expect(page.locator('path.line.match')).toHaveCount(0);
+  await expect(page.locator('svg g.badge')).toHaveCount(0);
   await page.goto('./?county=06037&sim=size,metro');
   await page.getByRole('button', { name: 'Similar counties' }).click();
   await expect(page.getByText('No counties match these settings.', { exact: false })).toBeVisible();

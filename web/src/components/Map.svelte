@@ -236,6 +236,12 @@
     select(svg).transition().duration(600).call(zoomer.transform, next);
   }
 
+  /** A county's label point in screen pixels, under the current zoom. */
+  function badgeXY(i: number): [number, number] {
+    const [u, v] = projection(counties[i].label) ?? [0, 0];
+    return transform.apply([base.x + u * base.s, base.y + v * base.s]);
+  }
+
   /** Fits a set of counties (e.g. similar counties and the selected one) to ~80% of the map. */
   function zoomToCounties(list: number[]): void {
     const b = list.map(layerBounds);
@@ -337,7 +343,7 @@
       <g transform="translate({base.x},{base.y}) scale({base.s})">
         <path class="states" d={stateD} />
         <!-- Cased outlines: a background-coloured halo under a dark line (spec 7). Similar
-             counties get a dashed line over a solid halo. -->
+             counties get a thinner one, so the selected county stays the strongest mark. -->
         {#each ui.matches as m (m)}
           <path class="halo match" d={countyD[m]} />
         {/each}
@@ -354,6 +360,14 @@
         {/if}
       </g>
     </g>
+    <!-- Similar-county rank badges at each match's label point, a fixed size on screen. -->
+    {#each ui.matches as m, rank (m)}
+      {@const [bx, by] = badgeXY(m)}
+      <g class="badge" transform="translate({bx},{by})">
+        <circle r="8" />
+        <text dy="0.35em" text-anchor="middle">{rank + 1}</text>
+      </g>
+    {/each}
   </svg>
   {#if tooltipFor >= 0}
     <Tooltip {meta} county={counties[tooltipFor]} x={pointerXY[0]} y={pointerXY[1]} bounds={{ width, height }} />
@@ -410,11 +424,23 @@
     stroke-width: 2px;
   }
   .halo.match {
-    stroke-width: 4px;
+    stroke-width: 3px;
   }
   .line.match {
-    stroke-width: 2px;
-    stroke-dasharray: 4 3;
+    stroke-width: 1.25px;
+  }
+  .badge {
+    pointer-events: none;
+  }
+  .badge circle {
+    fill: var(--heading);
+    stroke: var(--bg);
+    stroke-width: 1.5px;
+  }
+  .badge text {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    fill: var(--bg);
   }
   .halo.hover {
     stroke-width: 3.5px;

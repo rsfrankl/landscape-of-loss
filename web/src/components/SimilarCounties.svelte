@@ -64,16 +64,17 @@
     Population indexed, {first} = 100. <span class="swatch-line own" aria-hidden="true"></span>Gray: {county.name}.
   </p>
   <ol>
-    {#each matches as m (m.index)}
+    {#each matches as m, rank (m.index)}
       {@const c = counties[m.index]}
       {@const p = meta.pathways[c.pathway - 1]}
       <li>
         <button
           type="button"
           class="match"
-          aria-label="{countyTitle(c)}, {p.name} pathway, open profile"
+          aria-label="{rank + 1}. {countyTitle(c)}, {p.name} pathway, open profile"
           onclick={() => openSimilar(m.index)}
         >
+          <span class="badge num" aria-hidden="true">{rank + 1}</span>
           <svg width={W} height={H} aria-hidden="true">
             <line class="base" x1={x(0)} x2={x(meta.years.length - 1)} y1={y(100)} y2={y(100)} />
             <path class="own" d={path(own)} />
@@ -174,9 +175,9 @@
   }
   .match {
     display: grid;
-    grid-template-columns: auto 1fr;
+    grid-template-columns: auto auto 1fr;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     width: 100%;
     padding: 6px;
     border: 1px solid transparent;
@@ -187,6 +188,18 @@
   }
   .match:hover {
     border-color: var(--hairline);
+  }
+  /* The same rank badge as on the map (spec 6.7). */
+  .badge {
+    display: grid;
+    place-items: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--heading);
+    color: var(--bg);
+    font-size: 11px;
+    line-height: 1;
   }
   svg {
     display: block;
