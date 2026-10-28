@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
 
 // The first-visit intro card sits over the map; tests other than its own start with it dismissed.
 const INTRO_KEY = 'landscape-of-loss:intro-dismissed';
@@ -701,4 +702,50 @@ test('phones: map, search and profile blocks 1–3 work in the bottom sheet', as
       .filter((r) => r.width < 40 || r.height < 40).length,
   );
   expect(small).toBe(0);
+});
+
+test('axe finds no WCAG 2.1 A/AA violations: default view, profile open, explainer open', async ({ page }) => {
+  const scan = async (where: string) => {
+    const { violations } = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();
+    const found = violations.map((v) => `${where}: ${v.id} (${v.nodes.length}) ${v.nodes.slice(0, 3).map((n) => n.target.join(' ')).join(' | ')}`);
+    expect(found).toEqual([]);
+  };
+  await page.goto('./');
+  await expect(page.locator('.breakdown')).toBeVisible();
+  await scan('default view');
+
+  await page.goto('./?county=28101');
+  await page.getByRole('button', { name: 'Who lives here (ACS 2016–20)' }).click();
+  await expect(page.getByText('White, non-Hispanic')).toBeVisible();
+  await page.getByRole('button', { name: 'Why it changed, 2010–20' }).click();
+  await page.getByRole('button', { name: 'See similar counties', exact: true }).click();
+  await expect(page.locator('button.match')).toHaveCount(5);
+  await scan('profile');
+
+  await page.getByRole('button', { name: 'How to read this, about and data notes' }).click();
+  for (const tab of ['How to read this', 'About', 'Data notes']) {
+    await page.getByRole('tab', { name: tab }).click();
+    await scan(`explainer: ${tab}`);
+  }
+});
+
+test('acceptance data on screen: pathway counts, 2010–20 losers, Sarpy in the 10–19.9% class', async ({ page }) => {
+  await page.goto('./?mode=pathways');
+  await expect(page.locator('.legend .count')).toHaveText(['557', '126', '442', '512', '949', '141', '312', '69']);
+
+  // Milam TX and Buena Vista VA lost population in 2010–20.
+  await page.goto('./?county=48331');
+  await expect(page.locator('.sentence').first()).toHaveText(/^Milam County lost less than 0\.1%/);
+  await page.goto('./?county=51530');
+  await expect(page.locator('.sentence').first()).toHaveText(/^Buena Vista city lost \d+\.\d%/);
+
+  // Sarpy NE reads 19.9% and takes the +10% to 19.9% colour, not the 20%-or-more one.
+  await page.goto('./?county=31153');
+  await expect(page.locator('.sentence').first()).toHaveText(/^Sarpy County grew 19\.9%/);
+  const colors = await page.evaluate(async () => {
+    const meta = await (await fetch('data/meta.json')).json();
+    return meta.change.map((c: { color: string }) => c.color.toLowerCase());
+  });
+  const lastBar = page.locator('.profile svg rect').last();
+  expect((await lastBar.getAttribute('fill'))!.toLowerCase()).toBe(colors[1]);
 });

@@ -42,7 +42,7 @@ An R data pipeline writes static JSON and TopoJSON; a Svelte 5 + Vite + D3 front
 | Map and charts | D3 v7: `d3-geo` (`geoConicEqualArea`, Albers parameters), `d3-zoom`, `topojson-client` | Equal-area projection matching the paper's figures |
 | Rendering | Canvas for county fills; SVG overlay for state lines, hover outline, selection, labels | 3,108 fills recolour per frame without lag |
 | Hosting | GitHub Pages via a GitHub Actions workflow | Static, no backend |
-| Tests | `testthat` (pipeline), Vitest (logic), Playwright (smoke) |  |
+| Tests | `testthat` (pipeline), Vitest (logic), Playwright (smoke), `@axe-core/playwright` (dev dependency only: WCAG 2.1 A/AA scans in the smoke suite) | Lighthouse runs one-off via `npx`, not as a dependency |
 
 No React, no MapLibre or Leaflet, no basemap tiles, no UI component library.
 
@@ -340,7 +340,9 @@ The change palette replaces the published Fig. 1 colours in Decadal population c
 
 - Text contrast WCAG AA (4.5:1) against `#FBFBFB`.
 - Every control reachable by keyboard; visible focus rings; Esc closes panels and modals.
-- An `aria-live` region announces the selected county and its pathway.
+- An `aria-live` region announces the selected county and its pathway, or, with no county open, the pathway pinned in the 2010–20 breakdown.
+- The map area is the page's `<main>` landmark; the side panel is an `<aside>`. The decade label buttons under the slider are pointer shortcuts hidden from assistive technology; the slider (with `aria-valuetext`) is the keyboard and screen-reader route.
+- The site has an SVG favicon (`web/public/favicon.svg`, heading colour with two arrows).
 - The map canvas has `role="img"` with a label naming the current mode and decade; search is the non-visual route to every county.
 
 ## 8. Build, delivery and acceptance
@@ -379,17 +381,19 @@ Build in five milestones; stop for author review after milestones 1, 3 and 5.
 
 ### 8.5 Acceptance criteria
 
-- [ ] Pipeline rebuilds A–D with 0 mismatches out of 21,756 cells
-- [ ] Exactly 3,108 counties, each with pathway, sequence, 8 population counts and RUCC (or a note)
-- [ ] Pathway counts on screen match the paper: 557, 126, 442, 512, 949, 141, 312, 69
-- [ ] The 2010–20 breakdown (Decadal population change at 2010–20) shows 1,637 losing and 1,471 gaining counties
-- [ ] Milam TX and Buena Vista VA show as 2010–20 losers; Sarpy NE shows as 10–19.9%
-- [ ] Table 1 and Table 2 comparisons written to `docs/validation.md`, gaps explained
-- [ ] Similar counties returns 5 results (or a note) in under 5 ms; same-pathway default respected
-- [ ] Every URL state round-trips
-- [ ] No Arial in computed styles anywhere (check in Playwright)
-- [ ] Keyboard-only path: search → select → read profile → close
-- [ ] Lighthouse accessibility score 95 or higher; performance budgets in 8.1 met
+- [x] Pipeline rebuilds A–D with 0 mismatches out of 21,756 cells
+- [x] Exactly 3,108 counties, each with pathway, sequence, 8 population counts and RUCC (or a note)
+- [x] Pathway counts on screen match the paper: 557, 126, 442, 512, 949, 141, 312, 69
+- [x] The 2010–20 breakdown (Decadal population change at 2010–20) shows 1,637 losing and 1,471 gaining counties
+- [x] Milam TX and Buena Vista VA show as 2010–20 losers; Sarpy NE shows as 10–19.9%
+- [x] Table 1 and Table 2 comparisons written to `docs/validation.md`, gaps explained
+- [x] Similar counties returns 5 results (or a note) in under 5 ms; same-pathway default respected
+- [x] Every URL state round-trips
+- [x] No Arial in computed styles anywhere (check in Playwright)
+- [x] Keyboard-only path: search → select → read profile → close
+- [x] Lighthouse accessibility score 95 or higher; performance budgets in 8.1 met
+
+Status and measurements (28 Oct 2026): `docs/acceptance.md`.
 
 ### 8.6 Open items for the author
 

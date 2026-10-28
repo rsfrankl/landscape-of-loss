@@ -52,11 +52,11 @@
   {@const selected = ui.selected >= 0 ? data.counties[ui.selected] : null}
   <div class="app">
     <div class="header"><Header {data} /></div>
-    <div class="map">
+    <main class="map">
       <MapView {data} />
       <Notice />
       <IntroCard />
-    </div>
+    </main>
     <!-- The decade row is reserved in every mode, so switching modes never resizes the map. -->
     <div class="decade">
       {#if usesDecade}
@@ -87,6 +87,8 @@
   <div class="visually-hidden" aria-live="polite">
     {#if selected}
       Selected {countyTitle(selected)}: {data.meta.pathways[selected.pathway - 1].name} pathway.
+    {:else if ui.pinned !== null}
+      {data.meta.pathways[ui.pinned - 1].name} pathway highlighted on the map.
     {/if}
   </div>
 {:catch error}

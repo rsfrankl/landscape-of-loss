@@ -56,9 +56,10 @@
       aria-valuetext={meta.decades[ui.decade].label}
       oninput={(e) => choose(Number(e.currentTarget.value))}
     />
-    <div class="labels">
+    <!-- Pointer shortcuts only: the slider above is the keyboard and screen-reader route. -->
+    <div class="labels" aria-hidden="true">
       {#each meta.decades as d, i (d.start)}
-        <button type="button" tabindex="-1" aria-label={d.label} class:current={i === ui.decade} onclick={() => choose(i)}>
+        <button type="button" tabindex="-1" class:current={i === ui.decade} onclick={() => choose(i)}>
           <span class="long">{d.label}</span>
           <span class="short">{String(d.start).slice(2)}–{String(d.end).slice(2)}</span>
         </button>
