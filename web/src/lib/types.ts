@@ -127,3 +127,8 @@ export const MODES: { id: Mode; label: string; usesDecade: boolean }[] = [
 
 /** Index of 2010–20 in the decade arrays. */
 export const LAST_DECADE = 6;
+
+/** The 2010–20 breakdown shows only in Decadal population change at 2010–20 (spec 6.6). */
+export function showsBreakdown(mode: Mode, decade: number): boolean {
+  return mode === 'change' && decade === LAST_DECADE;
+}

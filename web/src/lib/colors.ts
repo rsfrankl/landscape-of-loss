@@ -63,10 +63,17 @@ export interface Emphasis {
   filter: number[];
   /** Legend key under the pointer; other counties dim while it is set. */
   isolate: string | null;
+  /** Breakdown pathway (spec 6.6); other counties fade to 20% of their colour. */
+  highlight: number | null;
 }
 
-export function isDimmed(e: Emphasis, mode: Mode, county: County, decade: number): boolean {
-  if (e.filter.length > 0 && !e.filter.includes(county.pathway)) return true;
-  if (e.isolate !== null && legendKey(mode, county, decade) !== e.isolate) return true;
-  return false;
+/**
+ * How a county draws: `gray` (outside the filter or the isolated legend key; neutral gray at
+ * 25%), `faded` (outside the breakdown highlight; its own colour at 20%) or `full`.
+ */
+export function emphasis(e: Emphasis, mode: Mode, county: County, decade: number): 'gray' | 'faded' | 'full' {
+  if (e.filter.length > 0 && !e.filter.includes(county.pathway)) return 'gray';
+  if (e.isolate !== null && legendKey(mode, county, decade) !== e.isolate) return 'gray';
+  if (e.highlight !== null && county.pathway !== e.highlight) return 'faded';
+  return 'full';
 }

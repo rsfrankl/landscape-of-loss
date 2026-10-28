@@ -1,5 +1,5 @@
 import type { Mode } from './types';
-import { LAST_DECADE } from './types';
+import { LAST_DECADE, showsBreakdown } from './types';
 
 // Shared view state. lib/urlSync.svelte.ts round-trips mode, decade, selected and filter
 // through the URL keys of spec 6.9 (mode, decade, county, path).
@@ -11,6 +11,10 @@ export const ui = $state({
   filter: [] as number[],
   /** Legend key under the pointer, e.g. "p3", "A", "c2"; dims everything else. */
   isolate: null as string | null,
+  /** Breakdown pathway under the pointer or focus (spec 6.6); fades the other counties. */
+  highlight: null as number | null,
+  /** Breakdown pathway pinned by a click; kept while a county is open. */
+  pinned: null as number | null,
   /** County indices (TopoJSON order); -1 for none. */
   hovered: -1,
   selected: -1,
@@ -30,6 +34,15 @@ export function selectCounty(i: number, force = false): void {
   focus.county = i;
   focus.force = force;
   focus.seq++;
+}
+
+/** The breakdown pathway the map highlights: the hovered one, else the pinned one. */
+export function breakdownHighlight(): number | null {
+  return showsBreakdown(ui.mode, ui.decade) ? (ui.highlight ?? ui.pinned) : null;
+}
+
+export function togglePinned(pathway: number): void {
+  ui.pinned = ui.pinned === pathway ? null : pathway;
 }
 
 /** A short status message on its own line under the header controls (e.g. location results). */

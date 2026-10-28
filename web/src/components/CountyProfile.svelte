@@ -2,7 +2,7 @@
   // The county profile (spec 6.5), grouped by time frame: the 70-year pathway, the
   // decade-by-decade strip, single decades, then the detail blocks.
   import type { County, Meta } from '../lib/types';
-  import { LAST_DECADE, MODES } from '../lib/types';
+  import { LAST_DECADE, MODES, showsBreakdown } from '../lib/types';
   import { profileOpen, ui } from '../lib/state.svelte';
   import { countyTitle, decadeSentence, populationLine, recentSentence, type Segment } from '../lib/describe';
   import ProfileBlock from './ProfileBlock.svelte';
@@ -41,6 +41,9 @@
 {/snippet}
 
 <section class="profile" aria-labelledby="profile-title">
+  {#if showsBreakdown(ui.mode, ui.decade)}
+    <button type="button" class="back" onclick={() => (ui.selected = -1)}>← Back to breakdown</button>
+  {/if}
   <header class="head">
     <div>
       <h2 id="profile-title">{countyTitle(county)}</h2>
@@ -96,6 +99,16 @@
 <style>
   .profile {
     padding: var(--gutter);
+  }
+  .back {
+    min-height: 40px;
+    margin: -8px 0 4px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--accent);
+    text-decoration: underline;
+    cursor: pointer;
   }
   .head {
     display: flex;

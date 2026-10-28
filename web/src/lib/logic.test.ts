@@ -6,8 +6,8 @@ import componentsJson from '../../public/data/components.json';
 import type { AdCode, Components, County, Meta } from './types';
 import { LAST_DECADE } from './types';
 import { changeClass, formatPct, truncate1 } from './format';
-import { dataColor, hexToRgb, isDark, isDimmed, legendKey, mix, palettes } from './colors';
-import { legendCounts } from './counts';
+import { dataColor, emphasis, hexToRgb, isDark, legendKey, mix, palettes } from './colors';
+import { breakdownCounts, legendCounts } from './counts';
 import { decodePick, pickCandidates, pickColor } from './picking';
 import { alignCounties, type CountyTopology } from './data';
 import {
@@ -104,6 +104,18 @@ describe('legend counts', () => {
     expect(counties.length - lost).toBe(1471);
   });
 
+  it('the 2010–20 breakdown splits 1,637 losing and 1,471 gaining counties into their pathways', () => {
+    const b = breakdownCounts(counties);
+    expect([...b.loss.keys()].sort()).toEqual([1, 2, 3, 4]);
+    expect([...b.growth.keys()].sort()).toEqual([5, 6, 7, 8]);
+    expect([1, 2, 3, 4].map((p) => b.loss.get(p))).toEqual([557, 126, 442, 512]);
+    expect([5, 6, 7, 8].map((p) => b.growth.get(p))).toEqual([949, 141, 312, 69]);
+    expect([...b.loss.values()].reduce((a, n) => a + n, 0)).toBe(1637);
+    expect([...b.growth.values()].reduce((a, n) => a + n, 0)).toBe(1471);
+    // Each county's group agrees with its 2010–20 change class, so the bars match the map.
+    expect(counties.filter((c) => (c.group === 'loss') !== c.cls[LAST_DECADE] >= 4)).toEqual([]);
+  });
+
   it('A–D counts per decade sum to 3,108', () => {
     for (let d = 0; d < 7; d++) {
       const n = legendCounts(counties, 'context', d);
@@ -123,12 +135,17 @@ describe('colours', () => {
     expect(legendKey('change', barbour, 4)).toBe('c2');
   });
 
-  it('dim by filter and by legend isolation', () => {
+  it('gray by filter and legend isolation, fade outside the breakdown highlight', () => {
     const barbour = county('01005');
-    expect(isDimmed({ filter: [], isolate: null }, 'pathways', barbour, 0)).toBe(false);
-    expect(isDimmed({ filter: [3], isolate: null }, 'context', barbour, 0)).toBe(true);
-    expect(isDimmed({ filter: [1], isolate: 'B' }, 'context', barbour, 5)).toBe(false);
-    expect(isDimmed({ filter: [], isolate: 'A' }, 'context', barbour, 5)).toBe(true);
+    const e = { filter: [] as number[], isolate: null, highlight: null };
+    expect(emphasis(e, 'pathways', barbour, 0)).toBe('full');
+    expect(emphasis({ ...e, filter: [3] }, 'context', barbour, 0)).toBe('gray');
+    expect(emphasis({ ...e, filter: [1], isolate: 'B' }, 'context', barbour, 5)).toBe('full');
+    expect(emphasis({ ...e, isolate: 'A' }, 'context', barbour, 5)).toBe('gray');
+    expect(emphasis({ ...e, highlight: 1 }, 'change', barbour, LAST_DECADE)).toBe('full');
+    expect(emphasis({ ...e, highlight: 3 }, 'change', barbour, LAST_DECADE)).toBe('faded');
+    // Gray wins over faded: a filtered-out county stays gray whatever is highlighted.
+    expect(emphasis({ ...e, filter: [2], highlight: 3 }, 'change', barbour, LAST_DECADE)).toBe('gray');
   });
 
   it('mixes a colour over the background', () => {
@@ -237,13 +254,13 @@ describe('URL state', () => {
   });
 
   it('round-trips every key', () => {
-    const state = { mode: 'context' as const, decade: 4, selected: idx('01005'), filter: [3, 4] };
+    const state = { mode: 'context' as const, decade: 4, selected: idx('01005'), filter: [3, 4], pinned: null };
     const search = toSearch(state, meta, counties);
     expect(search).toBe('?mode=context&decade=1990&county=01005&path=3,4');
     expect(parseUrl(search, meta, counties)).toEqual(state);
     for (const mode of ['change', 'context', 'pathways'] as const) {
       for (let decade = 0; decade < 7; decade++) {
-        const s = { mode, decade, selected: idx('28101'), filter: [] };
+        const s = { mode, decade, selected: idx('28101'), filter: [], pinned: null };
         expect(parseUrl(toSearch(s, meta, counties), meta, counties)).toEqual(s);
       }
     }
@@ -255,7 +272,19 @@ describe('URL state', () => {
       decade: LAST_DECADE,
       selected: idx('28101'),
       filter: [2],
+      pinned: null,
     });
+  });
+
+  it('keeps the breakdown pin only in Decadal population change at 2010–20', () => {
+    const pinned = { ...DEFAULT_STATE, selected: idx('01005'), pinned: 3 };
+    expect(toSearch(pinned, meta, counties)).toBe('?county=01005&hl=3');
+    expect(parseUrl('?county=01005&hl=3', meta, counties)).toEqual(pinned);
+    expect(toSearch({ ...pinned, decade: 4 }, meta, counties)).toBe('?decade=1990&county=01005');
+    expect(toSearch({ ...pinned, mode: 'pathways' }, meta, counties)).toBe('?mode=pathways&county=01005');
+    expect(parseUrl('?decade=1990&hl=3', meta, counties).pinned).toBeNull();
+    expect(parseUrl('?mode=context&hl=3', meta, counties).pinned).toBeNull();
+    expect(parseUrl('?hl=9', meta, counties).pinned).toBeNull();
   });
 
   it('ignores unknown values', () => {

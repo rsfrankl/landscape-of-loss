@@ -138,6 +138,50 @@ test('URL state round-trips and the profile follows the map decade', async ({ pa
   expect(errors).toEqual([]);
 });
 
+test('the 2010–20 breakdown shows only at 2010–20, pins a pathway, and survives a county', async ({ page }) => {
+  await page.goto('./');
+  const breakdown = page.locator('.breakdown');
+  await expect(breakdown.getByText('Lost population 2010–20 (1,637)')).toBeVisible();
+  await expect(breakdown.getByText('Gained (1,471)')).toBeVisible();
+  const rows = breakdown.getByRole('button');
+  await expect(rows).toHaveCount(8);
+
+  // Pinning fades the other counties on the map.
+  const mapSum = () =>
+    page.locator('canvas').evaluate((c: HTMLCanvasElement) => {
+      const d = c.getContext('2d')!.getImageData(0, 0, c.width, c.height).data;
+      let s = 0;
+      for (let i = 0; i < d.length; i += 4) s += d[i] + d[i + 1] + d[i + 2];
+      return s;
+    });
+  const before = await mapSum();
+  const persistent = breakdown.getByRole('button', { name: /^Persistent Loss/ });
+  await persistent.click();
+  await page.mouse.move(0, 0);
+  await expect(persistent).toHaveAttribute('aria-pressed', 'true');
+  await expect(page).toHaveURL(/\?hl=3$/);
+  await page.waitForTimeout(300);
+  expect(await mapSum()).toBeGreaterThan(before);
+
+  // Opening a county keeps the pin; "Back to breakdown" returns to it.
+  await page.goto('./?county=01005&hl=3');
+  await page.getByRole('button', { name: '← Back to breakdown' }).click();
+  await expect(page).toHaveURL(/\?hl=3$/);
+  await expect(persistent).toHaveAttribute('aria-pressed', 'true');
+
+  // Esc unpins; another decade hides the block and clears the pin.
+  await page.keyboard.press('Escape');
+  await expect(page).toHaveURL(/\/landscape-of-loss\/$/);
+  await persistent.click();
+  await page.locator('input[type="range"]').fill('4');
+  await expect(breakdown).toHaveCount(0);
+  await expect(page).toHaveURL(/\?decade=1990$/);
+  await page.locator('input[type="range"]').fill('6');
+  await expect(breakdown.locator('[aria-pressed="true"]')).toHaveCount(0);
+  await page.getByLabel('Population change trajectories', { exact: true }).check({ force: true });
+  await expect(breakdown).toHaveCount(0);
+});
+
 test('keyboard path: search → select → read profile → close', async ({ page }) => {
   await page.goto('./');
   const box = page.getByRole('combobox', { name: 'Search for a county' });

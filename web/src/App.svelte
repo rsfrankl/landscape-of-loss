@@ -1,6 +1,6 @@
 <script lang="ts">
   import { loadStartup } from './lib/data';
-  import { MODES } from './lib/types';
+  import { MODES, showsBreakdown } from './lib/types';
   import { selectCounty, ui } from './lib/state.svelte';
   import { countyTitle } from './lib/describe';
   import { startUrlSync } from './lib/urlSync.svelte';
@@ -18,8 +18,17 @@
   });
   const usesDecade = $derived(MODES.find((m) => m.id === ui.mode)!.usesDecade);
 
+  // The breakdown's pin goes with the breakdown: another decade or tab clears it (spec 6.6).
+  $effect(() => {
+    if (showsBreakdown(ui.mode, ui.decade)) return;
+    ui.pinned = null;
+    ui.highlight = null;
+  });
+
   function onKeydown(event: KeyboardEvent): void {
-    if (event.key === 'Escape' && ui.selected >= 0) selectCounty(-1);
+    if (event.key !== 'Escape') return;
+    if (ui.selected >= 0) selectCounty(-1);
+    else if (ui.pinned !== null) ui.pinned = null;
   }
 </script>
 

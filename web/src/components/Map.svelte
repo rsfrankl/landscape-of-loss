@@ -15,8 +15,8 @@
   } from 'd3';
   import { feature, mesh } from 'topojson-client';
   import type { StartupData } from '../lib/data';
-  import { focus, selectCounty, ui } from '../lib/state.svelte';
-  import { dataColor, hexToRgb, isDimmed, mix, palettes, type Rgb } from '../lib/colors';
+  import { breakdownHighlight, focus, selectCounty, ui } from '../lib/state.svelte';
+  import { dataColor, emphasis, hexToRgb, mix, palettes, type Rgb } from '../lib/colors';
   import { PICK_RADIUS, pickCandidates, pickColor } from '../lib/picking';
   import { mapLabel } from '../lib/describe';
   import Tooltip from './Tooltip.svelte';
@@ -60,7 +60,11 @@
 
   // Interface tokens read from CSS so no hexes live here.
   let borderStyle = '';
+  let bgRgb: Rgb = [0, 0, 0];
   let dimRgb: Rgb = [0, 0, 0];
+
+  // The breakdown highlight (spec 6.6), derived so clearing a hidden pin does not recolour.
+  const highlight = $derived(breakdownHighlight());
 
   // ---- Fills and the recolour transition ------------------------------------------------
   const shown = new Float32Array(n * 3);
@@ -72,10 +76,12 @@
   let lastDecade = untrack(() => ui.decade);
 
   function computeTargets(): void {
-    const emphasis = { filter: ui.filter, isolate: ui.isolate };
+    const e = { filter: ui.filter, isolate: ui.isolate, highlight };
     for (let i = 0; i < n; i++) {
       const c = counties[i];
-      const rgb = isDimmed(emphasis, ui.mode, c, ui.decade) ? dimRgb : dataColor(pal, ui.mode, c, ui.decade);
+      const look = emphasis(e, ui.mode, c, ui.decade);
+      const data = dataColor(pal, ui.mode, c, ui.decade);
+      const rgb = look === 'gray' ? dimRgb : look === 'faded' ? mix(bgRgb, data, 0.2) : data;
       target[i * 3] = rgb[0];
       target[i * 3 + 1] = rgb[1];
       target[i * 3 + 2] = rgb[2];
@@ -242,7 +248,8 @@
   onMount(() => {
     const css = getComputedStyle(container);
     borderStyle = css.getPropertyValue('--bg').trim();
-    dimRgb = mix(hexToRgb(css.getPropertyValue('--bg')), hexToRgb(css.getPropertyValue('--muted')), 0.25);
+    bgRgb = hexToRgb(css.getPropertyValue('--bg'));
+    dimRgb = mix(bgRgb, hexToRgb(css.getPropertyValue('--muted')), 0.25);
 
     zoomer = zoom<SVGSVGElement, unknown>()
       .scaleExtent([1, 12])
@@ -267,7 +274,7 @@
 
   // Recolour whenever the mode, decade or emphasis changes.
   $effect(() => {
-    void [ui.mode, ui.decade, ui.isolate, ui.filter.length, ...ui.filter];
+    void [ui.mode, ui.decade, ui.isolate, highlight, ui.filter.length, ...ui.filter];
     untrack(recolour);
   });
 

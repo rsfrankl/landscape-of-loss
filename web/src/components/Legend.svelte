@@ -1,11 +1,13 @@
 <script lang="ts">
   import type { County, Meta } from '../lib/types';
+  import { showsBreakdown } from '../lib/types';
   import { toggleFilter, ui } from '../lib/state.svelte';
   import { legendCounts } from '../lib/counts';
   import { formatCount } from '../lib/format';
   import { isDark } from '../lib/colors';
   import Arrows from './Arrows.svelte';
   import ArrowNote from './ArrowNote.svelte';
+  import Breakdown from './Breakdown.svelte';
 
   let { meta, counties }: { meta: Meta; counties: County[] } = $props();
 
@@ -91,6 +93,9 @@
         </li>
       {/each}
     </ul>
+    {#if showsBreakdown(ui.mode, decade)}
+      <Breakdown {meta} {counties} />
+    {/if}
   {/if}
 
   {#if ui.filter.length > 0}

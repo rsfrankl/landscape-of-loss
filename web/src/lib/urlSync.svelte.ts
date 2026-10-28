@@ -6,6 +6,7 @@ function apply(s: UrlState): void {
   ui.mode = s.mode;
   ui.decade = s.decade;
   ui.filter = s.filter;
+  ui.pinned = s.pinned;
   if (s.selected !== ui.selected) selectCounty(s.selected);
 }
 
@@ -32,7 +33,7 @@ export function startUrlSync(meta: Meta, counties: County[]): () => void {
   const stop = $effect.root(() => {
     $effect(() => {
       const next = toSearch(
-        { mode: ui.mode, decade: ui.decade, selected: ui.selected, filter: ui.filter },
+        { mode: ui.mode, decade: ui.decade, selected: ui.selected, filter: ui.filter, pinned: ui.pinned },
         meta,
         counties,
       );
