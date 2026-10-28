@@ -158,15 +158,13 @@
     line-height: 1;
     color: var(--muted);
   }
-  /* One fixed line under the key: no overlap, no layout shift. */
+  /* Two lines reserved under the key, so the readout can wrap (enlarged text, WCAG 1.4.4)
+     without shifting the rows in the usual case. */
   .readout {
-    height: 1.5em;
+    min-height: 3em;
     margin: -4px 0 6px;
-    overflow: hidden;
     font-size: var(--size-small);
     line-height: 1.5;
-    white-space: nowrap;
-    text-overflow: ellipsis;
   }
   .readout .hint {
     color: var(--muted);

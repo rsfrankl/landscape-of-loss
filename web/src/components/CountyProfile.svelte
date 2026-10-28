@@ -36,7 +36,8 @@
   const usesDecade = $derived(MODES.find((m) => m.id === ui.mode)!.usesDecade);
   const merged = $derived(!usesDecade || ui.decade === LAST_DECADE);
 
-  // After following a similar county, go back to it; else back to the breakdown if it shows.
+  // After following a similar county, go back to it; else back to the breakdown, if the profile
+  // was opened from it (a pathway pinned or pointed at; spec 6.6) and it still shows.
   const backTo = $derived(ui.trail.length ? counties[ui.trail[ui.trail.length - 1]] : null);
 
   // The trajectory link opens block 7 (which frames the map), scrolls to it and focuses its heading.
@@ -59,7 +60,7 @@
 <section class="profile" aria-labelledby="profile-title">
   {#if backTo}
     <button type="button" class="back" onclick={goBack}>← Back to {backTo.name}</button>
-  {:else if showsBreakdown(ui.mode, ui.decade)}
+  {:else if ui.fromBreakdown && showsBreakdown(ui.mode, ui.decade)}
     <button type="button" class="back" onclick={() => selectCounty(-1)}>← Back to breakdown</button>
   {/if}
   <header class="head">

@@ -30,6 +30,11 @@ export const ui = $state({
   matchesInView: true,
   /** Counties to go back to after following a similar county ("← Back to …"). */
   trail: [] as number[],
+  /**
+   * The profile was opened while a breakdown pathway was pinned or pointed at (spec 6.6), so it
+   * offers "← Back to breakdown".
+   */
+  fromBreakdown: false,
 });
 
 /**
@@ -44,6 +49,7 @@ export const focus = $state({ county: -1, seq: 0, counties: [] as number[] });
  * keep it.
  */
 export function selectCounty(i: number, zoom = false): void {
+  ui.fromBreakdown = i >= 0 && breakdownHighlight() !== null;
   ui.selected = i;
   ui.trail = [];
   if (i < 0 || !zoom) return;
@@ -54,16 +60,18 @@ export function selectCounty(i: number, zoom = false): void {
 
 /** Opens a similar county (spec 6.7), remembering the current one for "← Back to …". */
 export function openSimilar(i: number): void {
-  const trail = [...ui.trail, ui.selected];
+  const [trail, fromBreakdown] = [[...ui.trail, ui.selected], ui.fromBreakdown];
   selectCounty(i);
   ui.trail = trail;
+  ui.fromBreakdown = fromBreakdown;
 }
 
 /** Returns to the county the current one was reached from. */
 export function goBack(): void {
-  const trail = ui.trail.slice(0, -1);
+  const [trail, fromBreakdown] = [ui.trail.slice(0, -1), ui.fromBreakdown];
   selectCounty(ui.trail[ui.trail.length - 1]);
   ui.trail = trail;
+  ui.fromBreakdown = fromBreakdown;
 }
 
 /**

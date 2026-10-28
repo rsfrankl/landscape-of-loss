@@ -24,6 +24,7 @@
     if (showsBreakdown(ui.mode, ui.decade)) return;
     ui.pinned = null;
     ui.highlight = null;
+    ui.fromBreakdown = false;
   });
 
   function onKeydown(event: KeyboardEvent): void {

@@ -170,9 +170,10 @@ test('URL state round-trips and the profile follows the map decade', async ({ pa
   await expect(readout).toHaveText(/^\s*County 60\.1% · Pathway 78\.5% · Conterminous U\.S\. 58\.0%\s*$/);
   await page.locator('.rows li').nth(1).hover();
   await expect(readout).toHaveText(/^\s*County 30\.3% · Pathway \d+\.\d% · Conterminous U\.S\. \d+\.\d%\s*$/);
-  // Fixed line: no layout shift (compared relative to each other, since hovering may scroll the panel).
+  // Two lines reserved: no layout shift (compared relative to each other, since hovering may scroll the panel).
   const [after, rowAfter] = [(await readout.boundingBox())!, (await row.boundingBox())!];
   expect(after.height).toBe(before!.height);
+  expect(await readout.evaluate((el) => getComputedStyle(el).whiteSpace)).not.toBe('nowrap');
   expect(rowAfter.y - after.y).toBeCloseTo(rowBox!.y - before!.y, 1);
   await expect(page.locator('ul.key')).toContainText('Conterminous U.S.');
   await expect(page.getByText('Each row has its own scale.', { exact: false })).toBeVisible();
@@ -183,6 +184,22 @@ test('URL state round-trips and the profile follows the map decade', async ({ pa
   );
   expect(arial).toEqual([]);
   expect(errors).toEqual([]);
+});
+
+test('the ACS readout reserves two lines and wraps without clipping at 200% text size', async ({ page }) => {
+  await page.goto('./?county=28101');
+  await page.getByRole('button', { name: 'Who lives here (ACS 2016–20)' }).click();
+  const readout = page.locator('p.readout');
+  const lines = () => readout.evaluate((el) => el.clientHeight / parseFloat(getComputedStyle(el).lineHeight));
+  expect(await lines()).toBeCloseTo(2, 1);
+  // Text-only zoom (as in Firefox) scales px font sizes: double the readout's.
+  await page.addStyleTag({ content: 'p.readout { font-size: 24px !important; }' });
+  await page.locator('.rows li').first().focus();
+  await expect(readout).toContainText('Conterminous U.S. 58.0%');
+  const m = await readout.evaluate((el) => ({ h: el.clientHeight, sh: el.scrollHeight }));
+  expect(m.sh).toBeLessThanOrEqual(m.h);
+  const [r, row] = [(await readout.boundingBox())!, (await page.locator('.rows li').first().boundingBox())!];
+  expect(r.y + r.height).toBeLessThanOrEqual(row.y);
 });
 
 test('the 2010–20 breakdown shows only at 2010–20, pins a pathway, and survives a county', async ({ page }) => {
@@ -214,6 +231,22 @@ test('the 2010–20 breakdown shows only at 2010–20, pins a pathway, and survi
   await page.goto('./?county=01005&hl=3');
   await page.getByRole('button', { name: '← Back to breakdown' }).click();
   await expect(page).toHaveURL(/\?hl=3$/);
+  await expect(persistent).toHaveAttribute('aria-pressed', 'true');
+
+  // Without a pin, a map click at 2010–20 opens a profile with no "Back to breakdown"; with one, it has it.
+  const back = page.getByRole('button', { name: '← Back to breakdown' });
+  await page.goto('./');
+  await page.waitForTimeout(300);
+  const box = (await page.locator('canvas[role="img"]').boundingBox())!;
+  await page.mouse.click(box.x + box.width * 0.55, box.y + box.height * 0.5);
+  await expect(profileTitle(page)).toBeVisible();
+  await expect(back).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  await persistent.click();
+  await page.mouse.click(box.x + box.width * 0.55, box.y + box.height * 0.5);
+  await expect(profileTitle(page)).toBeVisible();
+  await expect(back).toBeVisible();
+  await back.click();
   await expect(persistent).toHaveAttribute('aria-pressed', 'true');
 
   // Esc unpins; another decade hides the block and clears the pin.
@@ -330,7 +363,8 @@ test('similar counties: rows, map rings and framing, settings in the URL, back l
   await expect(profileTitle(page)).toHaveText('Barton County, MO');
   await page.getByRole('button', { name: '← Back to Barbour County' }).click();
   await expect(profileTitle(page)).toHaveText('Barbour County, AL');
-  await expect(page.getByRole('button', { name: '← Back to breakdown' })).toBeVisible();
+  // Opened from the URL with no pathway pinned, so there is no breakdown to go back to.
+  await expect(page.getByRole('button', { name: '← Back to breakdown' })).toHaveCount(0);
 
   // Closing the profile removes the rings; a pool with no matches says so.
   await page.getByRole('button', { name: 'Close county profile' }).click();
