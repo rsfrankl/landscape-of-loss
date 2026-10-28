@@ -206,12 +206,12 @@ RUCC 2023 is primary; metro = codes 1–3. 8 Connecticut counties have no 2023 c
 | file | bytes | gzip_bytes |
 | --- | --- | --- |
 | counties.topo.json | 1,119,539 | 308,442 |
-| meta.json | 6,356 | 2,200 |
+| meta.json | 6,584 | 2,296 |
 | counties.json | 1,537,444 | 434,564 |
 | acs.json | 1,313,359 | 165,748 |
 | components.json | 291,651 | 56,395 |
 
-Startup files (`counties.topo.json`, `meta.json`, `counties.json`): 745,206 bytes gzipped (budget 2 MB).
+Startup files (`counties.topo.json`, `meta.json`, `counties.json`): 745,302 bytes gzipped (budget 2 MB).
 
 Pathway and A–D colours in `meta.json` match `data_dict.docx` (asserted). The change palette is new by design (spec §7) and not checked against Figure 1.
 

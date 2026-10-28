@@ -115,9 +115,19 @@ test('URL state round-trips and the profile follows the map decade', async ({ pa
   const row = page.locator('.rows li').first();
   await expect(row.locator('.track .tick')).toHaveText(['0', /^\d+%$/]);
   await expect(row.locator('.value')).toHaveText(/^\d+\.\d%$/);
-  await expect(row.locator('.readout')).toBeHidden();
+  const readout = page.locator('p.readout');
+  await expect(readout).toHaveText(/Point to or select a row/);
+  const before = await readout.boundingBox();
+  const rowBox = await row.boundingBox();
   await row.focus();
-  await expect(row.locator('.readout')).toHaveText(/^\s*County \d+\.\d% · Pathway \d+\.\d% · U\.S\. \d+\.\d%\s*$/);
+  await expect(readout).toHaveText(/^\s*County 60\.1% · Pathway 78\.5% · Conterminous U\.S\. 58\.0%\s*$/);
+  await page.locator('.rows li').nth(1).hover();
+  await expect(readout).toHaveText(/^\s*County 30\.3% · Pathway \d+\.\d% · Conterminous U\.S\. \d+\.\d%\s*$/);
+  // Fixed line: no layout shift (compared relative to each other, since hovering may scroll the panel).
+  const [after, rowAfter] = [(await readout.boundingBox())!, (await row.boundingBox())!];
+  expect(after.height).toBe(before!.height);
+  expect(rowAfter.y - after.y).toBeCloseTo(rowBox!.y - before!.y, 1);
+  await expect(page.locator('ul.key')).toContainText('Conterminous U.S.');
   await expect(page.getByText('Each row has its own scale.', { exact: false })).toBeVisible();
   await page.getByRole('button', { name: 'Why it changed, 2010–20' }).click();
   await expect(page.getByText(/like \d+% of loss counties\.$/)).toBeVisible();

@@ -176,7 +176,9 @@ build_meta <- function(counties, palette_check, pop_base_diff) {
         "Race and ethnicity are from the 2020 Census (PL 94-171, table P2); the other profile indicators",
         "are ACS 2016–20 5-year estimates. Language is the share of people aged 5+ who speak a language",
         "other than English at home. Education is bachelor's degree or higher (age 25+), which differs",
-        "from Table 1 of the paper (bachelor's degree only)."),
+        "from Table 1 of the paper (bachelor's degree only). The \"Conterminous U.S.\" comparison values",
+        "are pooled over the 3,108 conterminous counties in this study, not the whole country, so they",
+        "differ slightly from national figures (non-Hispanic white: 58.0% here, 57.8% nationally)."),
       components = paste(
         "Components of change, April 2010 to July 2020, are from the Census Bureau's Vintage 2020",
         "estimates. Loss counties are grouped by sign, as in Table 2 of the paper, with natural change",

@@ -20,19 +20,39 @@
   );
   const x = (v: number, end: number) => pad + (Math.min(v, end) / end) * (width - 2 * pad);
   const pct = (v: number) => `${v.toFixed(1)}%`;
+
+  // The readout line under the key follows the hovered row, else the focused one.
+  let hovered = $state(-1);
+  let focused = $state(-1);
+  const active = $derived(hovered >= 0 ? hovered : focused);
 </script>
 
 <ul class="key" aria-hidden="true">
   <li><span class="k-dot"></span>County, with margin of error</li>
   <li><span class="k-path" style:background={pathway.color}></span>{pathway.name}</li>
-  <li><span class="k-us"></span>U.S.</li>
+  <li><span class="k-us"></span>Conterminous U.S.</li>
 </ul>
+<p class="readout" aria-hidden="true">
+  {#if active >= 0}
+    {@const r = rows[active]}
+    County <span class="num">{pct(r.value)}</span> · Pathway <span class="num">{pct(r.path)}</span> · Conterminous U.S. <span class="num">{pct(r.us)}</span>
+  {:else}
+    <span class="hint">Point to or select a row to compare its values.</span>
+  {/if}
+</p>
 
 <ul class="rows">
-  {#each rows as r (r.ind.key)}
+  {#each rows as r, i (r.ind.key)}
     <!-- Focusable so the readout is reachable without hover (click also focuses). -->
-    <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-    <li tabindex="0">
+    <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
+    <li
+      tabindex="0"
+      class:active={i === active}
+      onpointerenter={() => (hovered = i)}
+      onpointerleave={() => (hovered = -1)}
+      onfocus={() => (focused = i)}
+      onblur={() => (focused = -1)}
+    >
       <span class="label">{r.ind.label}</span>
       <div class="track" aria-hidden="true">
         <span class="num tick">0</span>
@@ -50,13 +70,9 @@
         <span class="num tick">{r.end}%</span>
       </div>
       <span class="num value" aria-hidden="true">{pct(r.value)}</span>
-      <span class="readout" aria-hidden="true">
-        County <span class="num">{pct(r.value)}</span> · Pathway <span class="num">{pct(r.path)}</span> · U.S.
-        <span class="num">{pct(r.us)}</span>
-      </span>
       <span class="visually-hidden">
         County {pct(r.value)}{r.moe !== null ? ` (margin of error ±${r.moe.toFixed(1)})` : ''}; {pathway.name}
-        {pct(r.path)}; U.S. {pct(r.us)}; axis 0 to {r.end}%.
+        {pct(r.path)}; conterminous U.S. {pct(r.us)}; axis 0 to {r.end}%.
       </span>
     </li>
   {/each}
@@ -142,27 +158,21 @@
     line-height: 1;
     color: var(--muted);
   }
-  /* Hover or focus readout, just under the row's track. */
+  /* One fixed line under the key: no overlap, no layout shift. */
   .readout {
-    display: none;
-    position: absolute;
-    z-index: 2;
-    top: calc(100% - 4px);
-    right: 0;
-    padding: 2px 6px;
-    background: var(--bg);
-    border: 1px solid var(--hairline);
-    box-shadow: 0 2px 6px rgb(26 18 16 / 0.12);
+    height: 1.5em;
+    margin: -4px 0 6px;
+    overflow: hidden;
     font-size: var(--size-small);
+    line-height: 1.5;
     white-space: nowrap;
+    text-overflow: ellipsis;
   }
-  .rows li:hover .readout,
-  .rows li:focus .readout {
-    display: block;
+  .readout .hint {
+    color: var(--muted);
   }
-  /* One readout at a time: while the pointer is over the list, the hovered row wins. */
-  .rows:hover li:focus:not(:hover) .readout {
-    display: none;
+  .rows li.active {
+    background: var(--hairline);
   }
   .plot {
     flex: 1;
