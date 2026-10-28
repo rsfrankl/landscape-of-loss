@@ -182,6 +182,47 @@ test('the 2010–20 breakdown shows only at 2010–20, pins a pathway, and survi
   await expect(breakdown).toHaveCount(0);
 });
 
+test('similar counties: 5 matches ringed on the map, settings in the URL, back link', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await page.goto('./?county=01005');
+  await page.getByRole('button', { name: 'Similar counties' }).click();
+  const matches = page.locator('button.match');
+  await expect(matches).toHaveCount(5);
+  await expect(matches.first()).toHaveAccessibleName('Barton County, MO, Emerging Localized Loss pathway, open profile');
+  await expect(page.locator('path.line.match')).toHaveCount(5);
+  await expect(page.getByText('Not part of the paper\'s analysis.', { exact: false })).toBeVisible();
+  // The page itself never scrolls; only the panel does.
+  expect(await page.evaluate(() => document.scrollingElement!.scrollHeight - window.innerHeight)).toBeLessThanOrEqual(0);
+
+  await page.getByText('Any pathway').click();
+  await page.getByLabel('Similar size').check();
+  await expect(page).toHaveURL(/\?county=01005&sim=any,size$/);
+  await page.reload();
+  await page.getByRole('button', { name: 'Similar counties' }).click();
+  await expect(page.getByLabel('Any pathway')).toBeChecked();
+  await expect(page.getByLabel('Similar size')).toBeChecked();
+  await expect(matches).toHaveCount(5);
+
+  // Following a match offers a way back; the block stays open and the rings follow.
+  await page.getByText('Same pathway').click();
+  await page.getByLabel('Similar size').uncheck();
+  await expect(page).toHaveURL(/\?county=01005$/);
+  await matches.first().click();
+  await expect(profileTitle(page)).toHaveText('Barton County, MO');
+  await page.getByRole('button', { name: '← Back to Barbour County' }).click();
+  await expect(profileTitle(page)).toHaveText('Barbour County, AL');
+  await expect(page.getByRole('button', { name: '← Back to breakdown' })).toBeVisible();
+
+  // Closing the profile removes the rings; a pool with no matches says so.
+  await page.getByRole('button', { name: 'Close county profile' }).click();
+  await expect(page.locator('path.line.match')).toHaveCount(0);
+  await page.goto('./?county=06037&sim=size,metro');
+  await page.getByRole('button', { name: 'Similar counties' }).click();
+  await expect(page.getByText('No counties match these settings.', { exact: false })).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
 test('keyboard path: search → select → read profile → close', async ({ page }) => {
   await page.goto('./');
   const box = page.getByRole('combobox', { name: 'Search for a county' });

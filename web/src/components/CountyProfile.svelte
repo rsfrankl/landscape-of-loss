@@ -3,17 +3,18 @@
   // decade-by-decade strip, single decades, then the detail blocks.
   import type { County, Meta } from '../lib/types';
   import { LAST_DECADE, MODES, showsBreakdown } from '../lib/types';
-  import { profileOpen, ui } from '../lib/state.svelte';
+  import { goBack, profileOpen, selectCounty, ui } from '../lib/state.svelte';
   import { countyTitle, decadeSentence, populationLine, recentSentence, type Segment } from '../lib/describe';
   import ProfileBlock from './ProfileBlock.svelte';
   import SequenceStrip from './SequenceStrip.svelte';
   import PopulationChart from './PopulationChart.svelte';
   import AcsProfile from './AcsProfile.svelte';
   import ComponentsChart from './ComponentsChart.svelte';
+  import SimilarCounties from './SimilarCounties.svelte';
   import { loadProfileData, type ProfileData } from '../lib/data';
   import { driverShares } from '../lib/profile';
 
-  let { meta, county }: { meta: Meta; county: County } = $props();
+  let { meta, counties, county }: { meta: Meta; counties: County[]; county: County } = $props();
 
   // acs.json and components.json load on the first profile open (spec 5).
   let extra = $state.raw<ProfileData | null>(null);
@@ -32,6 +33,9 @@
   // Blocks 4 and 5 merge when the map shows 2010–20 or the mode has no decade.
   const usesDecade = $derived(MODES.find((m) => m.id === ui.mode)!.usesDecade);
   const merged = $derived(!usesDecade || ui.decade === LAST_DECADE);
+
+  // After following a similar county, go back to it; else back to the breakdown if it shows.
+  const backTo = $derived(ui.trail.length ? counties[ui.trail[ui.trail.length - 1]] : null);
 </script>
 
 {#snippet sentence(s: Segment[])}
@@ -41,8 +45,10 @@
 {/snippet}
 
 <section class="profile" aria-labelledby="profile-title">
-  {#if showsBreakdown(ui.mode, ui.decade)}
-    <button type="button" class="back" onclick={() => (ui.selected = -1)}>← Back to breakdown</button>
+  {#if backTo}
+    <button type="button" class="back" onclick={goBack}>← Back to {backTo.name}</button>
+  {:else if showsBreakdown(ui.mode, ui.decade)}
+    <button type="button" class="back" onclick={() => selectCounty(-1)}>← Back to breakdown</button>
   {/if}
   <header class="head">
     <div>
@@ -50,7 +56,7 @@
       <p class="pop">{populationLine(meta, county)}</p>
       {#if county.rucc_note}<p class="note">{county.rucc_note}</p>{/if}
     </div>
-    <button type="button" class="close" aria-label="Close county profile" onclick={() => (ui.selected = -1)}>×</button>
+    <button type="button" class="close" aria-label="Close county profile" onclick={() => selectCounty(-1)}>×</button>
   </header>
 
   <ProfileBlock title="{last - first}-year trajectory, {first}–{last}">
@@ -93,6 +99,10 @@
     {:else}
       <p class="status">{failed ? 'The profile data could not be loaded.' : 'Loading…'}</p>
     {/if}
+  </ProfileBlock>
+
+  <ProfileBlock title="Similar counties" collapsible bind:open={profileOpen.similar}>
+    <SimilarCounties {meta} {counties} {county} />
   </ProfileBlock>
 </section>
 

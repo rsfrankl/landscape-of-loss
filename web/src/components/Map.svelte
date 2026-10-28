@@ -236,13 +236,28 @@
     select(svg).transition().duration(600).call(zoomer.transform, next);
   }
 
-  // Selections from search, location, the URL and map clicks ask for a county to be in view.
+  /** Fits a set of counties (e.g. similar counties and the selected one) to ~80% of the map. */
+  function zoomToCounties(list: number[]): void {
+    const b = list.map(layerBounds);
+    const u0 = Math.min(...b.map((x) => x[0][0]));
+    const v0 = Math.min(...b.map((x) => x[0][1]));
+    const u1 = Math.max(...b.map((x) => x[1][0]));
+    const v1 = Math.max(...b.map((x) => x[1][1]));
+    const k = Math.max(1, Math.min(12, 0.8 * Math.min(width / (u1 - u0), height / (v1 - v0))));
+    const next = zoomIdentity
+      .translate(width / 2 - (k * (u0 + u1)) / 2, height / 2 - (k * (v0 + v1)) / 2)
+      .scale(k);
+    select(svg).transition().duration(600).call(zoomer.transform, next);
+  }
+
+  // Selections from search, location, the URL and map clicks ask for a county to be in view;
+  // "Show on map" asks for a set.
   let handledFocus = 0;
   $effect(() => {
     const seq = focus.seq;
     if (!zoomer || width === 0 || height === 0 || seq === handledFocus) return;
     handledFocus = seq;
-    untrack(() => zoomToCounty(focus.county, focus.force));
+    untrack(() => (focus.counties.length ? zoomToCounties(focus.counties) : zoomToCounty(focus.county, focus.force)));
   });
 
   onMount(() => {
@@ -321,7 +336,14 @@
     <g transform="translate({transform.x},{transform.y}) scale({transform.k})">
       <g transform="translate({base.x},{base.y}) scale({base.s})">
         <path class="states" d={stateD} />
-        <!-- Cased outlines: a background-coloured halo under a dark line (spec 7). -->
+        <!-- Cased outlines: a background-coloured halo under a dark line (spec 7). Similar
+             counties get a dashed line over a solid halo. -->
+        {#each ui.matches as m (m)}
+          <path class="halo match" d={countyD[m]} />
+        {/each}
+        {#each ui.matches as m (m)}
+          <path class="line match" d={countyD[m]} />
+        {/each}
         {#if ui.selected >= 0}
           <path class="halo selected" d={countyD[ui.selected]} />
           <path class="line selected" d={countyD[ui.selected]} />
@@ -386,6 +408,13 @@
   }
   .line.selected {
     stroke-width: 2px;
+  }
+  .halo.match {
+    stroke-width: 4px;
+  }
+  .line.match {
+    stroke-width: 2px;
+    stroke-dasharray: 4 3;
   }
   .halo.hover {
     stroke-width: 3.5px;

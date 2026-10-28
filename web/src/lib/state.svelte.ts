@@ -32,14 +32,40 @@ export const ui = $state({
  * Asks the map to bring a county into view. `force` (search, location) always zooms to it;
  * otherwise the map zooms only when the county is off-screen or under 12 px (spec 6.9).
  */
-export const focus = $state({ county: -1, force: false, seq: 0 });
+export const focus = $state({ county: -1, force: false, seq: 0, counties: [] as number[] });
 
-/** Selects a county (or -1 to close) and asks the map to bring it into view. */
+/**
+ * Selects a county (or -1 to close) and asks the map to bring it into view. Clears the trail
+ * of similar counties followed; openSimilar and goBack keep it.
+ */
 export function selectCounty(i: number, force = false): void {
   ui.selected = i;
+  ui.trail = [];
   if (i < 0) return;
   focus.county = i;
   focus.force = force;
+  focus.counties = [];
+  focus.seq++;
+}
+
+/** Opens a similar county (spec 6.7), remembering the current one for "← Back to …". */
+export function openSimilar(i: number): void {
+  const trail = [...ui.trail, ui.selected];
+  selectCounty(i);
+  ui.trail = trail;
+}
+
+/** Returns to the county the current one was reached from. */
+export function goBack(): void {
+  const trail = ui.trail.slice(0, -1);
+  selectCounty(ui.trail[ui.trail.length - 1]);
+  ui.trail = trail;
+}
+
+/** Asks the map to zoom so that all these counties are in view ("Show on map"). */
+export function showCounties(list: number[]): void {
+  focus.counties = list;
+  focus.force = true;
   focus.seq++;
 }
 
@@ -56,7 +82,7 @@ export function togglePinned(pathway: number): void {
 export const notice = $state({ text: '' });
 
 /** Open state of the profile's collapsible blocks; kept across selections for the session. */
-export const profileOpen = $state({ acs: false, components: false });
+export const profileOpen = $state({ acs: false, components: false, similar: false });
 
 export function toggleFilter(pathway: number): void {
   ui.filter = ui.filter.includes(pathway)

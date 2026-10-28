@@ -46,7 +46,7 @@
     {/if}
     <aside class="panel">
       {#if selected}
-        <CountyProfile meta={data.meta} county={selected} />
+        <CountyProfile meta={data.meta} counties={data.counties} county={selected} />
       {:else}
         <Legend meta={data.meta} counties={data.counties} />
       {/if}
@@ -86,6 +86,8 @@
   }
   .panel {
     grid-area: panel;
+    /* Contains visually hidden (absolute) elements, so they never extend the page. */
+    position: relative;
     min-height: 0;
     overflow-y: auto;
     border-left: 1px solid var(--hairline);
