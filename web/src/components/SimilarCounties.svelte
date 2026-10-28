@@ -1,11 +1,12 @@
 <script lang="ts">
   // Profile block 9 (spec 6.7): the 5 counties whose decade-by-decade log growth rates lie
   // closest to this county's, as small multiples of indexed population (first year = 100).
-  // Mounted only while the block is open, so the map outlines the matches only while they show.
-  // Pointing at a row outlines its county on the map; pointing at a match on the map marks its row.
+  // Mounted only while the block is open, so the map marks the matches only while they show.
+  // Pointing at a row emphasises its county on the map; pointing at a match on the map marks its row.
+  import { untrack } from 'svelte';
   import { line, scaleLinear } from 'd3';
   import type { County, Meta } from '../lib/types';
-  import { openSimilar, showCounties, ui } from '../lib/state.svelte';
+  import { activeMatch, openSimilar, showCounties, ui } from '../lib/state.svelte';
   import { similarCounties } from '../lib/similar';
   import { countyTitle } from '../lib/describe';
 
@@ -21,6 +22,19 @@
       ui.matchHover = -1;
     };
   });
+
+  const fit = () => showCounties([index, ...matches.map((m) => m.index)]);
+
+  // Opening the block, or changing its settings, frames the county and its matches. Following a
+  // match (a new county) does not: the map moves only on these and "Show on map".
+  $effect(() => {
+    void [ui.similar.any, ui.similar.size, ui.similar.metro];
+    untrack(() => {
+      if (matches.length) fit();
+    });
+  });
+
+  const active = $derived(activeMatch());
 
   const first = $derived(meta.years[0]);
   const last = $derived(meta.years[meta.years.length - 1]);
@@ -73,7 +87,7 @@
         <button
           type="button"
           class="match"
-          class:linked={ui.matchHover === m.index || ui.hovered === m.index}
+          class:linked={active === m.index}
           aria-label="{countyTitle(c)}, {p.name} pathway, open profile"
           onclick={() => openSimilar(m.index)}
           onpointerenter={() => (ui.matchHover = m.index)}
@@ -97,7 +111,7 @@
   {#if matches.length < 5}
     <p class="few">Only {matches.length} {matches.length === 1 ? 'county matches' : 'counties match'} these settings.</p>
   {/if}
-  <button type="button" class="show" onclick={() => showCounties([index, ...matches.map((m) => m.index)])}>
+  <button type="button" class="show" onclick={fit}>
     Show on map
   </button>
 {/if}
@@ -181,7 +195,8 @@
   }
   .match {
     display: grid;
-    grid-template-columns: auto 1fr;
+    /* A fixed chart column, so the five charts share the same x positions. */
+    grid-template-columns: 112px minmax(0, 1fr);
     align-items: center;
     gap: 12px;
     width: 100%;

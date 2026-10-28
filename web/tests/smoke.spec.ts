@@ -182,7 +182,7 @@ test('the 2010–20 breakdown shows only at 2010–20, pins a pathway, and survi
   await expect(breakdown).toHaveCount(0);
 });
 
-test('similar counties: 5 matches ringed on the map, settings in the URL, back link', async ({ page }) => {
+test('similar counties: rows, map rings and framing, settings in the URL, back link', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
   await page.goto('./?county=01005');
@@ -199,29 +199,57 @@ test('similar counties: 5 matches ringed on the map, settings in the URL, back l
   });
   expect(strokes).toEqual({ match: '1.25px', dash: 'none', selected: '2px' });
 
-  // Hovering a row outlines its county like the selection and adds a locator ring; the map stays put.
+  // Every match has a small locator ring; none is emphasised until something is pointed at.
+  const rings = page.locator('svg g.locator');
+  await expect(rings).toHaveCount(5);
+  await expect(rings.locator('circle.line').first()).toHaveAttribute('r', '6');
+  await expect(page.locator('svg g.locator.faded, svg g.locator.active')).toHaveCount(0);
+
+  // Opening the block framed the county and its matches (from the URL load's regional zoom).
   const view = () => page.locator('svg > g').first().getAttribute('transform');
-  await page.waitForTimeout(800); // the URL load's zoom transition
+  const scale = async () => Number(/scale\(([\d.]+)\)/.exec((await view())!)![1]);
+  await page.waitForTimeout(800);
+  const fitted = await scale();
+  expect(fitted).toBeLessThan(2);
+
+  // Hovering a row enlarges its ring and fades the others; it also gets the selected-style
+  // outline. The map never moves on hover.
   const before = await view();
   await matches.nth(1).hover();
+  await expect(page.locator('svg g.locator.active circle.line')).toHaveAttribute('r', '10');
+  await expect(page.locator('svg g.locator.faded')).toHaveCount(4);
+  expect(await page.locator('svg g.locator.active circle.line').evaluate((el) => getComputedStyle(el).strokeWidth)).toBe('2px');
+  expect(await page.locator('svg g.locator.faded').first().evaluate((el) => getComputedStyle(el).opacity)).toBe('0.4');
   await expect(page.locator('path.line.linked')).toHaveCount(1);
-  await expect(page.locator('circle.locator')).toHaveCount(2);
-  expect(await page.locator('path.line.linked').evaluate((el) => getComputedStyle(el).strokeWidth)).toBe('2px');
+  await expect(matches.nth(1)).toHaveClass(/linked/);
   expect(await view()).toBe(before);
   await page.mouse.move(0, 0);
-  await expect(page.locator('circle.locator')).toHaveCount(0);
+  await expect(page.locator('svg g.locator.active')).toHaveCount(0);
   // Focus does the same as hover.
   await matches.first().focus();
-  await expect(page.locator('circle.locator')).toHaveCount(2);
+  await expect(page.locator('svg g.locator.active')).toHaveCount(1);
   await matches.first().blur();
 
-  // Hovering a matched county on the map marks its row (at full extent, so the match is on screen).
-  await page.getByRole('button', { name: 'Reset view' }).click();
-  await page.waitForTimeout(700);
-  const ring = (await page.locator('path.line.match').first().boundingBox())!;
-  await page.mouse.move(ring.x + ring.width / 2, ring.y + ring.height / 2);
+  // Hovering a matched county on the map does the same and marks its row.
+  const outline = (await page.locator('path.line.match').first().boundingBox())!;
+  await page.mouse.move(outline.x + outline.width / 2, outline.y + outline.height / 2);
   await expect(page.locator('button.match.linked')).toHaveCount(1);
+  await expect(page.locator('svg g.locator.active')).toHaveCount(1);
+  await expect(page.locator('svg g.locator.faded')).toHaveCount(4);
+  expect(await view()).toBe(before);
   await page.mouse.move(0, 0);
+
+  // After the user zooms away, changing a setting frames the matches again.
+  const box = (await page.locator('canvas[role="img"]').boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  for (let i = 0; i < 6; i++) await page.mouse.wheel(0, -300);
+  await page.waitForTimeout(500);
+  expect(await scale()).toBeGreaterThan(fitted + 1);
+  await page.mouse.move(0, 0);
+  await page.getByLabel('Same metro status').check();
+  await page.waitForTimeout(800);
+  expect(await scale()).toBeLessThan(2);
+  await page.getByLabel('Same metro status').uncheck();
   await expect(page.getByText('Not part of the paper\'s analysis.', { exact: false })).toBeVisible();
   // The page itself never scrolls; only the panel does.
   expect(await page.evaluate(() => document.scrollingElement!.scrollHeight - window.innerHeight)).toBeLessThanOrEqual(0);

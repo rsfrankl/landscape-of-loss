@@ -64,6 +64,15 @@ export function goBack(): void {
   ui.trail = trail;
 }
 
+/**
+ * The similar county emphasised on the map and in block 9: its row under the pointer or focus,
+ * else the matched county under the pointer on the map; -1 for none.
+ */
+export function activeMatch(): number {
+  if (ui.matchHover >= 0) return ui.matchHover;
+  return ui.matches.includes(ui.hovered) ? ui.hovered : -1;
+}
+
 /** Asks the map to zoom so that all these counties are in view ("Show on map"). */
 export function showCounties(list: number[]): void {
   focus.counties = list;

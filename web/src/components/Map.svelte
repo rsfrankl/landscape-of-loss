@@ -15,7 +15,7 @@
   } from 'd3';
   import { feature, mesh } from 'topojson-client';
   import type { StartupData } from '../lib/data';
-  import { breakdownHighlight, focus, selectCounty, ui } from '../lib/state.svelte';
+  import { activeMatch, breakdownHighlight, focus, selectCounty, ui } from '../lib/state.svelte';
   import { dataColor, emphasis, hexToRgb, mix, palettes, type Rgb } from '../lib/colors';
   import { PICK_RADIUS, pickCandidates, pickColor } from '../lib/picking';
   import { mapLabel } from '../lib/describe';
@@ -233,6 +233,8 @@
     select(svg).transition().duration(600).call(zoomer.transform, next);
   }
 
+  const active = $derived(activeMatch());
+
   /** A county's label point in screen pixels, under the current zoom. */
   function screenXY(i: number): [number, number] {
     const [u, v] = projection(counties[i].label) ?? [0, 0];
@@ -363,11 +365,24 @@
         {/if}
       </g>
     </g>
-    <!-- Locator ring for the match row under the pointer or focus, a fixed size on screen. -->
-    {#if ui.matchHover >= 0}
-      {@const [lx, ly] = screenXY(ui.matchHover)}
-      <circle class="locator halo" cx={lx} cy={ly} r="9" />
-      <circle class="locator line" cx={lx} cy={ly} r="9" />
+    <!-- Similar counties: a locator ring at each match's label point, a fixed size on screen.
+         The active match (its row or the county under the pointer) gets a larger, heavier ring
+         drawn last; the others fade. -->
+    {#each ui.matches as m (m)}
+      {#if m !== active}
+        {@const [lx, ly] = screenXY(m)}
+        <g class="locator" class:faded={active >= 0}>
+          <circle class="halo" cx={lx} cy={ly} r="6" />
+          <circle class="line" cx={lx} cy={ly} r="6" />
+        </g>
+      {/if}
+    {/each}
+    {#if active >= 0}
+      {@const [lx, ly] = screenXY(active)}
+      <g class="locator active">
+        <circle class="halo" cx={lx} cy={ly} r="10" />
+        <circle class="line" cx={lx} cy={ly} r="10" />
+      </g>
     {/if}
   </svg>
   {#if tooltipFor >= 0}
@@ -431,14 +446,25 @@
     stroke-width: 1.25px;
   }
   .locator {
-    fill: none;
     pointer-events: none;
   }
-  .locator.halo {
+  .locator circle {
+    fill: none;
+  }
+  .locator .halo {
     stroke-width: 4px;
   }
-  .locator.line {
+  .locator .line {
     stroke-width: 1.5px;
+  }
+  .locator.faded {
+    opacity: 0.4;
+  }
+  .locator.active .halo {
+    stroke-width: 5px;
+  }
+  .locator.active .line {
+    stroke-width: 2px;
   }
   .halo.hover {
     stroke-width: 3.5px;
