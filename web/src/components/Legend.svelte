@@ -8,6 +8,7 @@
   import Arrows from './Arrows.svelte';
   import ArrowNote from './ArrowNote.svelte';
   import Breakdown from './Breakdown.svelte';
+  import Download from './Download.svelte';
 
   let { meta, counties }: { meta: Meta; counties: County[] } = $props();
 
@@ -103,6 +104,12 @@
       Showing {filterNames.join(', ')}.
       <button type="button" class="link" onclick={() => (ui.filter = [])}>Clear filter</button>
     </p>
+    <Download
+      {meta}
+      counties={() => counties.filter((c) => ui.filter.includes(c.pathway))}
+      label="Download these counties (CSV)"
+      suffix="filtered"
+    />
   {/if}
 </section>
 

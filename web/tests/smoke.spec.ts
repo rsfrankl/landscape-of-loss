@@ -560,3 +560,32 @@ test('the profile panel shows no A–D letters', async ({ page }) => {
   await expect(panel.locator('.hint')).toHaveText(note);
   await expect(panel.locator('.hint svg')).toHaveCount(2);
 });
+
+test('downloads: this county, the filtered counties and all counties, each with a citation', async ({ page }) => {
+  const save = async (name: string) => {
+    const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name }).click()]);
+    const chunks: Uint8Array[] = await (await download.createReadStream()).toArray();
+    const bytes = new Uint8Array(chunks.reduce((n, c) => n + c.length, 0));
+    chunks.reduce((at, c) => (bytes.set(c, at), at + c.length), 0);
+    const text = new TextDecoder().decode(bytes);
+    return { file: download.suggestedFilename(), lines: text.trimEnd().split('\r\n') };
+  };
+  await page.goto('./?county=01005');
+  const one = await save('Download this county (CSV)');
+  expect(one.file).toBe('landscape-of-loss-01005.csv');
+  expect(one.lines[0]).toMatch(/^geoid,county,state,pathway,seq,pop1950,/);
+  expect(one.lines.slice(1)).toEqual([expect.stringMatching(/^01005,Barbour County,Alabama,Emerging Localized Loss,BBDDDBB,/)]);
+  await expect(page.locator('.profile .cite')).toContainText('Please cite: Park, G., Seymour, E., and Franklin, R. (2026)');
+  await expect(page.locator('.profile .cite')).toContainText('Schroeder (2016)');
+
+  await page.goto('./?mode=pathways&path=3,4');
+  const some = await save('Download these counties (CSV)');
+  expect(some.file).toBe('landscape-of-loss-filtered.csv');
+  expect(some.lines).toHaveLength(442 + 512 + 1);
+  await expect(page.locator('.legend .cite')).toContainText('Please cite:');
+
+  const all = await save('Download all counties (CSV)');
+  expect(all.file).toBe('landscape-of-loss-all.csv');
+  expect(all.lines).toHaveLength(3109);
+  await expect(page.locator('footer').last()).toContainText('Please cite:');
+});

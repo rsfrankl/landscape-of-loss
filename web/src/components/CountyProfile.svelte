@@ -13,6 +13,7 @@
   import AcsProfile from './AcsProfile.svelte';
   import ComponentsChart from './ComponentsChart.svelte';
   import SimilarCounties from './SimilarCounties.svelte';
+  import Download from './Download.svelte';
   import { loadProfileData, type ProfileData } from '../lib/data';
   import { driverShares } from '../lib/profile';
 
@@ -121,6 +122,9 @@
     {/if}
   </ProfileBlock>
 
+  <div class="foot">
+    <Download {meta} counties={() => [county]} label="Download this county (CSV)" suffix={county.geoid} />
+  </div>
 </section>
 
 <style>
@@ -204,5 +208,8 @@
   .status {
     margin: 0;
     color: var(--muted);
+  }
+  .foot {
+    margin-top: 12px;
   }
 </style>

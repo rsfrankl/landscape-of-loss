@@ -61,7 +61,7 @@
         <Legend meta={data.meta} counties={data.counties} />
       {/if}
     </aside>
-    <div class="footer"><Footer meta={data.meta} /></div>
+    <div class="footer"><Footer meta={data.meta} counties={data.counties} /></div>
   </div>
   <div class="visually-hidden" aria-live="polite">
     {#if selected}

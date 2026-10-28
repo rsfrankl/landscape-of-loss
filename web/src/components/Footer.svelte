@@ -1,22 +1,27 @@
 <script lang="ts">
-  import type { Meta } from '../lib/types';
+  import type { County, Meta } from '../lib/types';
+  import { countiesCsv, csvName, downloadCsv } from '../lib/csv';
 
-  let { meta }: { meta: Meta } = $props();
+  let { meta, counties }: { meta: Meta; counties: County[] } = $props();
   const c = $derived(meta.citation);
 </script>
 
-<!-- One line on desktop (spec 6.1); the full citation is in the About tab. -->
+<!-- One line from 1280 px (spec 6.1): download all, with the citation beside it; the full
+     citation is in the About tab. -->
 <footer>
   <p>
-    Park, Seymour and Franklin ({c.year}), <i>{c.journal}</i>, <a href={c.url}>doi:{c.doi}</a>
-    <span class="sep">·</span> Historical counts: Schroeder (2016), <a href="https://doi.org/10.13020/D6XW2H">doi:10.13020/D6XW2H</a>;
-    2020 Census
+    <button type="button" class="link" onclick={() => downloadCsv(csvName('all'), countiesCsv(meta, counties))}>
+      Download all counties (CSV)
+    </button>
+    <span class="sep">·</span> Please cite: Park, Seymour and Franklin ({c.year}), <i>Annals of the AAG</i>,
+    <a href={c.url}>doi:{c.doi}</a>. Historical counts: Schroeder (2016),
+    <a href="https://doi.org/10.13020/D6XW2H">doi:10.13020/D6XW2H</a>.
   </p>
 </footer>
 
 <style>
   footer {
-    padding: 6px var(--gutter);
+    padding: 0 var(--gutter);
     border-top: 1px solid var(--hairline);
     font-size: var(--size-small);
     color: var(--muted);
@@ -26,5 +31,14 @@
   }
   .sep {
     margin: 0 4px;
+  }
+  .link {
+    min-height: 40px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--accent);
+    text-decoration: underline;
+    cursor: pointer;
   }
 </style>

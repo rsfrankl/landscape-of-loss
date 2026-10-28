@@ -15,6 +15,14 @@ Historical population data: Schroeder, Jonathan P. (2016). Historical Population
 for 2010 U.S. States, Counties and Metro/Micro Areas, 1790–2010. Data Repository for the
 University of Minnesota (DRUM). [doi:10.13020/D6XW2H](https://doi.org/10.13020/D6XW2H).
 
+## Downloads and citation
+
+The site offers CSV downloads of one county, the counties in the current pathway filter, or
+all 3,108 counties: a plain header row and one row per county (`geoid, county, state,
+pathway, seq, pop1950…pop2020, pct1950_60…pct2010_20, rucc2013, rucc2023`). If you use
+them, please cite the paper above and, for the historical counts, Schroeder (2016),
+[doi:10.13020/D6XW2H](https://doi.org/10.13020/D6XW2H).
+
 The full specification is in [docs/SPEC.md](docs/SPEC.md). The data validation report is in
 [docs/validation.md](docs/validation.md).
 

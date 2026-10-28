@@ -8,6 +8,7 @@ import { LAST_DECADE } from './types';
 import { changeClass, formatPct, truncate1 } from './format';
 import { dataColor, emphasis, hexToRgb, isDark, legendKey, mix, palettes } from './colors';
 import { breakdownCounts, legendCounts } from './counts';
+import { countiesCsv, csvColumns } from './csv';
 import { decodePick, pickCandidates, pickColor } from './picking';
 import { alignCounties, type CountyTopology } from './data';
 import {
@@ -480,5 +481,41 @@ describe('pick candidates', () => {
 
   it('still offers the real county when the centre pixel is a blend', () => {
     expect(pickCandidates(data, 3, 3, 0, 1, 3108)).toEqual([9, 5, 2]);
+  });
+});
+
+describe('CSV downloads (spec 6.9)', () => {
+  it('starts with a plain header row in the spec column order', () => {
+    const text = countiesCsv(meta, counties);
+    const [head] = text.split('\r\n');
+    expect(head).toBe(
+      'geoid,county,state,pathway,seq,pop1950,pop1960,pop1970,pop1980,pop1990,pop2000,pop2010,pop2020,' +
+        'pct1950_60,pct1960_70,pct1970_80,pct1980_90,pct1990_00,pct2000_10,pct2010_20,rucc2013,rucc2023',
+    );
+    expect(csvColumns(meta)).toHaveLength(22);
+    expect(text.startsWith('#')).toBe(false);
+  });
+
+  it('writes one row per county, 3,108 in all, with full-precision values', () => {
+    const rows = countiesCsv(meta, counties).trimEnd().split('\r\n');
+    expect(rows).toHaveLength(3109);
+    const barbour = rows.find((r) => r.startsWith('01005,'))!;
+    expect(barbour).toBe(
+      '01005,Barbour County,Alabama,Emerging Localized Loss,BBDDDBB,' +
+        `${county('01005').pop.join(',')},${county('01005').pct.join(',')},${county('01005').rucc13},${county('01005').rucc23 ?? ''}`,
+    );
+  });
+
+  it('quotes fields with commas or quotes, and leaves a missing 2023 code empty', () => {
+    const odd = { ...county('09001'), name: 'Fair "field", County' };
+    const [, row] = countiesCsv(meta, [odd]).split('\r\n');
+    expect(row.startsWith('09001,"Fair ""field"", County",Connecticut,')).toBe(true);
+    expect(county('09001').rucc23).toBeNull();
+    expect(row.endsWith(`,${county('09001').rucc13},`)).toBe(true);
+  });
+
+  it('subsets to the counties in a filter', () => {
+    const kept = counties.filter((c) => [3, 4].includes(c.pathway));
+    expect(countiesCsv(meta, kept).trimEnd().split('\r\n')).toHaveLength(442 + 512 + 1);
   });
 });
