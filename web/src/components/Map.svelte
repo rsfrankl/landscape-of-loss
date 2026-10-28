@@ -19,6 +19,7 @@
   import { dataColor, emphasis, hexToRgb, mix, palettes, type Rgb } from '../lib/colors';
   import { PICK_RADIUS, pickCandidates, pickColor } from '../lib/picking';
   import { mapLabel } from '../lib/describe';
+  import { BADGE_RADIUS, placeBadges } from '../lib/badges';
   import Tooltip from './Tooltip.svelte';
 
   let { data }: { data: StartupData } = $props();
@@ -242,6 +243,9 @@
     return transform.apply([base.x + u * base.s, base.y + v * base.s]);
   }
 
+  // Recomputed on every zoom step, synchronously, so the badges never animate apart.
+  const badges = $derived(placeBadges(ui.matches.map(badgeXY)));
+
   /** Fits a set of counties (e.g. similar counties and the selected one) to ~80% of the map. */
   function zoomToCounties(list: number[]): void {
     const b = list.map(layerBounds);
@@ -360,11 +364,16 @@
         {/if}
       </g>
     </g>
-    <!-- Similar-county rank badges at each match's label point, a fixed size on screen. -->
-    {#each ui.matches as m, rank (m)}
-      {@const [bx, by] = badgeXY(m)}
-      <g class="badge" transform="translate({bx},{by})">
-        <circle r="8" />
+    <!-- Similar-county rank badges, a fixed size on screen, nudged apart where they collide;
+         a leader line points back to a moved badge's label point. Rank 1 draws last, on top. -->
+    {#each badges as b, rank (rank)}
+      {#if b.leader}
+        <line class="leader" x1={b.ax} y1={b.ay} x2={b.x} y2={b.y} />
+      {/if}
+    {/each}
+    {#each badges.map((b, rank) => ({ b, rank })).reverse() as { b, rank } (rank)}
+      <g class="badge" transform="translate({b.x},{b.y})">
+        <circle r={BADGE_RADIUS} />
         <text dy="0.35em" text-anchor="middle">{rank + 1}</text>
       </g>
     {/each}
@@ -429,8 +438,13 @@
   .line.match {
     stroke-width: 1.25px;
   }
-  .badge {
+  .badge,
+  .leader {
     pointer-events: none;
+  }
+  .leader {
+    stroke: var(--heading);
+    stroke-width: 1px;
   }
   .badge circle {
     fill: var(--heading);

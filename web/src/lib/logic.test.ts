@@ -24,6 +24,7 @@ import { axisEnd, driverSentence, driverShares } from './profile';
 import { buildIndex, search } from './search';
 import { countyAt } from './locate';
 import { DEFAULT_SIMILAR, similarCounties } from './similar';
+import { BADGE_RADIUS, LEADER_MIN, MAX_SHIFT, placeBadges } from './badges';
 
 const meta = metaJson as unknown as Meta;
 const counties = alignCounties(topoJson as unknown as CountyTopology, countiesJson as unknown as County[]);
@@ -419,6 +420,37 @@ describe('similar counties (spec 6.7)', () => {
     const t = performance.now();
     for (let i = 0; i < 200; i++) similarCounties(counties, i * 15, { any: true, size: false, metro: false });
     expect((performance.now() - t) / 200).toBeLessThan(5);
+  });
+});
+
+describe('similar-county badges (spec 6.7)', () => {
+  const dist = (a: { x: number; y: number }, b: { x: number; y: number }) => Math.hypot(a.x - b.x, a.y - b.y);
+
+  it('nudges two adjacent matches apart, within the cap, with leader lines past 6 px', () => {
+    // Barton and Dade MO are neighbors: at full extent their label points sit ~6 px apart.
+    const points: [number, number][] = [[200, 150], [206, 151], [420, 300]];
+    const [a, b, far] = placeBadges(points);
+    expect(dist(a, b)).toBeGreaterThanOrEqual(2 * BADGE_RADIUS);
+    for (const p of [a, b]) {
+      const shift = Math.hypot(p.x - p.ax, p.y - p.ay);
+      expect(shift).toBeLessThanOrEqual(MAX_SHIFT + 1e-9);
+      expect(p.leader).toBe(shift > LEADER_MIN);
+    }
+    // A badge with room around it stays on its label point, with no leader.
+    expect([far.x, far.y, far.leader]).toEqual([420, 300, false]);
+  });
+
+  it('is deterministic, keeps order, and caps the shift even when badges coincide', () => {
+    const points: [number, number][] = [[50, 50], [50, 50], [52, 49], [51, 52], [49, 51]];
+    const once = placeBadges(points);
+    expect(placeBadges(points)).toEqual(once);
+    expect(once.map((p) => [p.ax, p.ay])).toEqual(points);
+    for (const p of once) expect(Math.hypot(p.x - p.ax, p.y - p.ay)).toBeLessThanOrEqual(MAX_SHIFT + 1e-9);
+  });
+
+  it('leaves badges in place when nothing collides', () => {
+    const points: [number, number][] = [[0, 0], [40, 0], [0, 40]];
+    expect(placeBadges(points).map((p) => [p.x, p.y, p.leader])).toEqual(points.map(([x, y]) => [x, y, false]));
   });
 });
 

@@ -193,7 +193,8 @@ test('similar counties: 5 matches ringed on the map, settings in the URL, back l
   await expect(matches.locator('.badge')).toHaveText(['1', '2', '3', '4', '5']);
   // On the map: a thin solid outline and a rank badge per match; the selected outline stays heavier.
   await expect(page.locator('path.line.match')).toHaveCount(5);
-  await expect(page.locator('svg g.badge text')).toHaveText(['1', '2', '3', '4', '5']);
+  // Rank 1 draws last, so it sits on top where badges still overlap.
+  await expect(page.locator('svg g.badge text')).toHaveText(['5', '4', '3', '2', '1']);
   const strokes = await page.evaluate(() => {
     const css = (sel: string) => getComputedStyle(document.querySelector(sel)!);
     return { match: css('path.line.match').strokeWidth, dash: css('path.line.match').strokeDasharray, selected: css('path.line.selected').strokeWidth };
