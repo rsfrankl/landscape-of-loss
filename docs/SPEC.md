@@ -398,6 +398,6 @@ Status and measurements (28 Oct 2026): `docs/acceptance.md`.
 ### 8.6 Open items for the author
 
 - Edit the eight pathway blurbs (6.9). (Title confirmed 27 Oct 2026; section 6.1.)
-- Decide on the three low-contrast pathway pairs (section 7) after seeing the built map.
+- Decide on the three low-contrast pathway pairs (section 7) after seeing the built map. Options, scored with the 27 Oct method, in `docs/pathway-colours.md` (script `pipeline/checks/pathway_colours.R`); the palette is unchanged until then.
 - Schroeder (2016) data cleared for use (26 Oct 2026); credit line in section 3.
 - Create the GitHub repository `landscape-of-loss` (section 8.3).
