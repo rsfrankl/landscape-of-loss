@@ -35,7 +35,7 @@
   const projection = geoConicEqualArea()
     .parallels([29.5, 45.5])
     .rotate([96, 0])
-    .fitExtent([[8, 8], [W - 8, H - 8]], fc);
+    .fitSize([W, H], fc);
   const toPath = geoPath(projection);
   const countyD = fc.features.map((f) => toPath(f) ?? '');
   const countyPaths = countyD.map((d) => new Path2D(d));
@@ -55,10 +55,17 @@
   let zooming = false;
   const dpr = typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1;
 
-  // Fit the reference space inside the container, centred.
+  // Fit the counties' own projected bounds inside the container, centred, with a small margin, so
+  // no slack in the reference box is left empty on screen.
+  const [[bx0, by0], [bx1, by1]] = toPath.bounds(fc);
+  const MARGIN = 8;
   const base = $derived.by(() => {
-    const s = Math.min(width / W, height / H) || 1;
-    return { s, x: (width - W * s) / 2, y: (height - H * s) / 2 };
+    const s = Math.min((width - 2 * MARGIN) / (bx1 - bx0), (height - 2 * MARGIN) / (by1 - by0)) || 1;
+    return {
+      s,
+      x: (width - (bx1 - bx0) * s) / 2 - bx0 * s,
+      y: (height - (by1 - by0) * s) / 2 - by0 * s,
+    };
   });
 
   // Interface tokens read from CSS so no hexes live here.

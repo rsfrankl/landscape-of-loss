@@ -67,6 +67,53 @@ test('the three mode tabs fit on one line at 1024 px', async ({ page }) => {
   expect(overflow).toBeLessThanOrEqual(0);
 });
 
+test('the subtitle stays within two lines; the tabs start their own row', async ({ page }) => {
+  for (const width of [1024, 1280, 1920]) {
+    await page.setViewportSize({ width, height: 800 });
+    await page.goto('./');
+    const sub = page.locator('.subtitle');
+    await expect(sub).toContainText('What is the geography of US population loss');
+    const lines = await sub.evaluate((el) => el.getBoundingClientRect().height / parseFloat(getComputedStyle(el).lineHeight));
+    expect(lines, `${width} px`).toBeLessThanOrEqual(2.05);
+    const [title, tabs] = [await page.locator('h1').boundingBox(), await page.locator('.modes').boundingBox()];
+    expect(tabs!.y).toBeGreaterThanOrEqual(title!.y + title!.height);
+  }
+});
+
+test('switching modes never changes the map size, position or zoom', async ({ page }) => {
+  const state = () =>
+    page.evaluate(() => {
+      const r = document.querySelector('.app > .map')!.getBoundingClientRect();
+      const g = [...document.querySelectorAll('.map svg > g, .map svg > g > g')].map((e) => e.getAttribute('transform'));
+      return JSON.stringify([r.x, r.y, r.width, r.height, ...g]);
+    });
+  for (const [width, height] of [[1280, 800], [1920, 1080]]) {
+    await page.setViewportSize({ width, height });
+    for (const search of ['', '?county=01005']) {
+      await page.goto(`./${search}`);
+      await page.waitForTimeout(800);
+      for (const zoomed of [false, true]) {
+        if (zoomed) {
+          const box = (await page.locator('canvas[role="img"]').boundingBox())!;
+          await page.mouse.move(box.x + box.width * 0.6, box.y + box.height * 0.4);
+          for (let i = 0; i < 3; i++) await page.mouse.wheel(0, -300);
+          await page.waitForTimeout(500);
+          await page.mouse.move(0, 0);
+        }
+        const before = await state();
+        for (const label of ['Population change trajectories', 'Decadal population change in spatial context', 'Population change trajectories', 'Decadal population change']) {
+          await page.getByLabel(label, { exact: true }).check({ force: true });
+          await page.waitForTimeout(50);
+          expect(await state(), `${width}×${height} ${search} zoomed=${zoomed} → ${label}`).toBe(before);
+        }
+      }
+    }
+  }
+  // Trajectories mode keeps the decade row, with a caption.
+  await page.getByLabel('Population change trajectories', { exact: true }).check({ force: true });
+  await expect(page.getByText('Pathways cover the whole period, 1950–2020')).toBeVisible();
+});
+
 const profileTitle = (page: Page) => page.locator('#profile-title');
 
 test('mode=recent redirects to Decadal population change at 2010–20, keeping the county', async ({ page }) => {
@@ -385,9 +432,10 @@ test('use my location selects the county there, or says it is outside the study'
   await page.getByRole('button', { name: 'My location' }).click();
   const status = page.getByRole('status');
   await expect(status).toHaveText(/^Your location is outside the counties in this study\./);
-  // On its own line under the header controls, clear of the panel title.
-  const [msg, panel] = [await status.boundingBox(), await page.locator('aside.panel').boundingBox()];
-  expect(msg!.y + msg!.height).toBeLessThanOrEqual(panel!.y);
+  // In a strip across the top of the map, under the header controls and never over the panel.
+  const [msg, panel, header] = [await status.boundingBox(), await page.locator('aside.panel').boundingBox(), await page.locator('.app > .header').boundingBox()];
+  expect(msg!.x + msg!.width).toBeLessThanOrEqual(panel!.x);
+  expect(msg!.y).toBeGreaterThanOrEqual(header!.y + header!.height);
   await page.getByRole('button', { name: 'Dismiss message' }).click();
   await expect(status).toBeHidden();
 

@@ -71,8 +71,8 @@
     display: flex;
     align-items: center;
     gap: 16px;
-    padding: 10px var(--gutter) 12px;
-    border-top: 1px solid var(--hairline);
+    height: 100%;
+    padding: 0 var(--gutter);
   }
   .play {
     flex: none;
@@ -99,7 +99,7 @@
     margin: 0 calc(100% / 14);
     display: block;
     accent-color: var(--accent);
-    height: 24px;
+    height: 20px;
     cursor: pointer;
   }
   .labels {
@@ -107,7 +107,8 @@
     grid-template-columns: repeat(7, 1fr);
   }
   .labels button {
-    padding: 2px 0;
+    padding: 0;
+    line-height: 1.3;
     border: 0;
     background: none;
     font-family: var(--font-mono);

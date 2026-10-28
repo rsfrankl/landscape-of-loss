@@ -10,6 +10,7 @@
   import Legend from './components/Legend.svelte';
   import CountyProfile from './components/CountyProfile.svelte';
   import Footer from './components/Footer.svelte';
+  import Notice from './components/Notice.svelte';
 
   // The URL sets the view before the map first paints (spec 6.9).
   const loading = loadStartup().then((data) => {
@@ -38,12 +39,20 @@
   <div class="status">Loading the map…</div>
 {:then data}
   {@const selected = ui.selected >= 0 ? data.counties[ui.selected] : null}
-  <div class="app" class:with-decades={usesDecade}>
+  <div class="app">
     <div class="header"><Header {data} /></div>
-    <div class="map"><MapView {data} /></div>
-    {#if usesDecade}
-      <div class="decade"><DecadeControl meta={data.meta} /></div>
-    {/if}
+    <div class="map">
+      <MapView {data} />
+      <Notice />
+    </div>
+    <!-- The decade row is reserved in every mode, so switching modes never resizes the map. -->
+    <div class="decade">
+      {#if usesDecade}
+        <DecadeControl meta={data.meta} />
+      {:else}
+        <p class="whole-period">Pathways cover the whole period, {data.meta.years[0]}–{data.meta.years[data.meta.years.length - 1]}</p>
+      {/if}
+    </div>
     <aside class="panel">
       {#if selected}
         <CountyProfile meta={data.meta} counties={data.counties} county={selected} />
@@ -67,7 +76,7 @@
     display: grid;
     height: 100vh;
     grid-template-columns: minmax(0, 1fr) var(--panel-width);
-    grid-template-rows: auto minmax(0, 1fr) auto auto;
+    grid-template-rows: auto minmax(0, 1fr) var(--decade-height) auto;
     grid-template-areas:
       'header header'
       'map panel'
@@ -79,10 +88,21 @@
   }
   .map {
     grid-area: map;
+    position: relative;
     min-height: 0;
   }
   .decade {
     grid-area: decade;
+    min-height: 0;
+    border-top: 1px solid var(--hairline);
+  }
+  .whole-period {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    margin: 0;
+    padding: 0 var(--gutter);
+    color: var(--muted);
   }
   .panel {
     grid-area: panel;
@@ -105,7 +125,7 @@
     .app {
       height: auto;
       grid-template-columns: minmax(0, 1fr);
-      grid-template-rows: auto 60vh auto auto auto;
+      grid-template-rows: auto 60vh var(--decade-height) auto auto;
       grid-template-areas: 'header' 'map' 'decade' 'panel' 'footer';
     }
     .panel {

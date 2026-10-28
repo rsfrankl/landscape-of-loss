@@ -83,6 +83,12 @@
     position: relative;
     width: 260px;
   }
+  /* Narrow enough to share the tabs' row at 1024 px (spec 6.1). */
+  @media (max-width: 1149px) {
+    .search {
+      width: 168px;
+    }
+  }
   input {
     width: 100%;
     min-height: 40px;

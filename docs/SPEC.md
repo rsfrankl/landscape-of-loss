@@ -146,16 +146,17 @@ The `pop`, `pct`, `cls`, `lgr` and `seq` values are Barbour County's real values
 
 ## 6. Interface and interactions
 
-One screen: a full-height map on the left, a 380 px side panel on the right, a header across the top and a decade control under the map when the mode uses decades.
+One screen: a full-height map on the left, a 380 px side panel on the right, a header across the top and a decade row under the map. The decade row is reserved in every mode (the decade control, or in Population change trajectories a caption, "Pathways cover the whole period, 1950–2020"), so switching modes never changes the map's size, position or zoom.
 
 ### 6.1 Layout (desktop, ≥ 1024 px wide)
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
-│ Title                         [Change|In spatial context|Trajectories]│
-│                          [ search county…      ] (◎ my location) (?)│
+│ Title                       [ search county…  ] (◎ my location) (?)  │
+│ [Change|In spatial context|Trajectories]                             │
+│ Subtitle (full width, at most two lines)                             │
 ├───────────────────────────────────────────────┬──────────────────────┤
-│                                               │ Side panel           │
+│ (status messages: strip over the map's top)   │ Side panel           │
 │                 MAP (Albers)                  │  • nothing selected: │
 │                                               │    legend + filter   │
 │                                   [reset view]│  • county selected:  │
@@ -163,11 +164,17 @@ One screen: a full-height map on the left, a 380 px side panel on the right, a h
 ├───────────────────────────────────────────────┤                      │
 │  ▶  1950–60 ─●─ 1960–70 ─ … ─ 2010–20         │                      │
 ├───────────────────────────────────────────────┴──────────────────────┤
-│ Footer: citation + DOI link · data sources · download all (CSV)      │
+│ Footer (one line): citation + DOI · data sources · download all (CSV)│
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
 Title: **The Landscape of Loss: US County-Level Depopulation Pathways, 1950–2020**. No institutional logo.
+
+Subtitle, on its own full-width line under the header rows, in body type and the muted colour: “What is the geography of US population loss, and how does it change when we account for spatial context (what’s happening in neighboring counties) and each county’s history of population change?” It fits in at most two lines from 1024 px up.
+
+The header is always two rows plus the subtitle, since title, tabs and search together (about 2,060 px) never fit in one band. Row 1 is the title, with search, location and "?" on the right where they fit (≥ 1360 px). Row 2 is the mode tabs; below 1360 px search, location and "?" follow the tabs on that row (under 1150 px with a 168 px search box and an icon-only location button, whose label stays for screen readers), and below 1024 px they take a row of their own. The footer is one line on desktop (a short citation; the full citation is in About). The decade row is 52 px.
+
+The map fits the counties' own projected bounds (not a fixed reference box) to the map area with an 8 px margin, so it fills the width or the height of its area.
 
 ### 6.2 Map modes (segmented control in the header)
 
@@ -255,7 +262,7 @@ Ranks the 5 counties whose decade-by-decade population change most closely match
 ### 6.8 Search, location, filter
 
 - **Search.** Autocomplete over "County name, ST", accent- and case-insensitive ("dona ana" finds Doña Ana County, NM), top 8 matches, ↑↓ Enter. Every query word must start a word of "County name, ST" ("newton ms"); matches on the first word rank first, then larger counties. Esc closes the list; Esc in an empty box closes the profile. Selecting frames the county in its region (6.9) and opens its profile.
-- **Use my location.** Browser geolocation (a fresh position each click); find the county with `d3.geoContains`, checking `bbox` first; select it and frame it in its region (6.9). Outside the conterminous U.S. → "Your location is outside the counties in this study." Denied → "Location access was denied, so your county could not be found. Check that location access is allowed for this site in your browser and in your computer’s privacy settings." Messages show on their own line under the header controls (a `role="status"` region), never over the panel, with a × to dismiss; they also clear after 8 s or on the next click or key press (Tab and modifier keys excepted, so the × stays reachable). The location is never stored or sent anywhere.
+- **Use my location.** Browser geolocation (a fresh position each click); find the county with `d3.geoContains`, checking `bbox` first; select it and frame it in its region (6.9). Outside the conterminous U.S. → "Your location is outside the counties in this study." Denied → "Location access was denied, so your county could not be found. Check that location access is allowed for this site in your browser and in your computer’s privacy settings." Messages show in a strip across the top of the map, under the header controls (a `role="status"` region), never over the panel, with a × to dismiss; the strip overlays the map, so it never resizes it; they also clear after 8 s or on the next click or key press (Tab and modifier keys excepted, so the × stays reachable). The location is never stored or sent anywhere.
 - **Pathway filter.** Legend items in Population change trajectories mode are toggles (multi-select). The filter persists across modes: non-selected counties draw in a neutral grey at 25% opacity. "Clear filter" link when active.
 
 ### 6.9 Zoom, URL state, explainer, downloads

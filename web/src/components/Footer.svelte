@@ -5,20 +5,18 @@
   const c = $derived(meta.citation);
 </script>
 
+<!-- One line on desktop (spec 6.1); the full citation is in the About tab. -->
 <footer>
   <p>
-    {c.authors.join(', ')} ({c.year}). {c.title}. <i>{c.journal}</i>.
-    <a href={c.url}>doi:{c.doi}</a>
-  </p>
-  <p class="sources">
-    Historical counts: Schroeder (2016), <a href="https://doi.org/10.13020/D6XW2H">doi:10.13020/D6XW2H</a>;
-    2020 Census. Boundaries: 2020 counties, conterminous U.S.
+    Park, Seymour and Franklin ({c.year}), <i>{c.journal}</i>, <a href={c.url}>doi:{c.doi}</a>
+    <span class="sep">·</span> Historical counts: Schroeder (2016), <a href="https://doi.org/10.13020/D6XW2H">doi:10.13020/D6XW2H</a>;
+    2020 Census
   </p>
 </footer>
 
 <style>
   footer {
-    padding: 8px var(--gutter);
+    padding: 6px var(--gutter);
     border-top: 1px solid var(--hairline);
     font-size: var(--size-small);
     color: var(--muted);
@@ -26,7 +24,7 @@
   p {
     margin: 0;
   }
-  .sources {
-    margin-top: 2px;
+  .sep {
+    margin: 0 4px;
   }
 </style>

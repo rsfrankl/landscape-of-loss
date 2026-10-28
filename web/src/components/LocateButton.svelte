@@ -35,7 +35,7 @@
     <circle cx="8" cy="8" r="1.75" class="dot" />
     <path d="M8 0.5v3M8 12.5v3M0.5 8h3M12.5 8h3" />
   </svg>
-  {busy ? 'Finding…' : 'My location'}
+  <span class="label">{busy ? 'Finding…' : 'My location'}</span>
 </button>
 
 <style>
@@ -63,5 +63,21 @@
   .dot {
     fill: currentColor;
     stroke: none;
+  }
+  /* Icon only where the tools share the tabs' row (spec 6.1); the label stays for screen readers. */
+  @media (max-width: 1149px) {
+    button {
+      justify-content: center;
+      width: 40px;
+      padding: 0;
+    }
+    .label {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
   }
 </style>
