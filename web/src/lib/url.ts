@@ -1,8 +1,9 @@
 import type { County, Meta, Mode } from './types';
 import { LAST_DECADE, MODES, showsBreakdown } from './types';
+import { DEFAULT_SIMILAR, type SimilarOptions } from './similar';
 
-// URL state (spec 6.9): ?mode=context&decade=1990&county=01005&path=3,4&hl=3. `decade` is the
-// decade's start year; defaults are left out so the plain URL is the default view.
+// URL state (spec 6.9): ?mode=context&decade=1990&county=01005&path=3,4&hl=3&sim=any,size.
+// `decade` is the decade's start year; defaults are left out so the plain URL is the default view.
 
 export interface UrlState {
   mode: Mode;
@@ -13,14 +14,25 @@ export interface UrlState {
   filter: number[];
   /** Pathway pinned in the 2010–20 breakdown; only kept where the breakdown shows. */
   pinned: number | null;
+  /** Similar-counties settings (spec 6.7), as `sim` tokens `any`, `size`, `metro`. */
+  similar: SimilarOptions;
 }
 
-export const DEFAULT_STATE: UrlState = { mode: 'change', decade: LAST_DECADE, selected: -1, filter: [], pinned: null };
+export const DEFAULT_STATE: UrlState = {
+  mode: 'change',
+  decade: LAST_DECADE,
+  selected: -1,
+  filter: [],
+  pinned: null,
+  similar: DEFAULT_SIMILAR,
+};
+
+const SIM_TOKENS = ['any', 'size', 'metro'] as const;
 
 /** Reads a query string. Unknown or malformed values fall back to the default for that key. */
 export function parseUrl(search: string, meta: Meta, counties: County[]): UrlState {
   const q = new URLSearchParams(search);
-  const state: UrlState = { ...DEFAULT_STATE, filter: [] };
+  const state: UrlState = { ...DEFAULT_STATE, filter: [], similar: { ...DEFAULT_SIMILAR } };
 
   let mode = q.get('mode');
   let decade = q.get('decade');
@@ -44,6 +56,9 @@ export function parseUrl(search: string, meta: Meta, counties: County[]): UrlSta
 
   const hl = Number(q.get('hl'));
   if (ids.has(hl) && showsBreakdown(state.mode, state.decade)) state.pinned = hl;
+
+  const sim = new Set((q.get('sim') ?? '').split(','));
+  for (const t of SIM_TOKENS) state.similar[t] = sim.has(t);
   return state;
 }
 
@@ -55,7 +70,9 @@ export function toSearch(state: UrlState, meta: Meta, counties: County[]): strin
   if (state.selected >= 0) q.set('county', counties[state.selected].geoid);
   if (state.filter.length) q.set('path', state.filter.join(','));
   if (state.pinned !== null && showsBreakdown(state.mode, state.decade)) q.set('hl', String(state.pinned));
-  // Keep the commas in `path` readable.
+  const sim = SIM_TOKENS.filter((t) => state.similar[t]);
+  if (sim.length) q.set('sim', sim.join(','));
+  // Keep the commas in `path` and `sim` readable.
   const s = q.toString().replace(/%2C/g, ',');
   return s ? `?${s}` : '';
 }

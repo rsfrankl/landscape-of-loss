@@ -23,6 +23,7 @@ import { DEFAULT_STATE, parseUrl, toSearch } from './url';
 import { axisEnd, driverSentence, driverShares } from './profile';
 import { buildIndex, search } from './search';
 import { countyAt } from './locate';
+import { DEFAULT_SIMILAR, similarCounties } from './similar';
 
 const meta = metaJson as unknown as Meta;
 const counties = alignCounties(topoJson as unknown as CountyTopology, countiesJson as unknown as County[]);
@@ -254,13 +255,13 @@ describe('URL state', () => {
   });
 
   it('round-trips every key', () => {
-    const state = { mode: 'context' as const, decade: 4, selected: idx('01005'), filter: [3, 4], pinned: null };
+    const state = { mode: 'context' as const, decade: 4, selected: idx('01005'), filter: [3, 4], pinned: null, similar: DEFAULT_SIMILAR };
     const search = toSearch(state, meta, counties);
     expect(search).toBe('?mode=context&decade=1990&county=01005&path=3,4');
     expect(parseUrl(search, meta, counties)).toEqual(state);
     for (const mode of ['change', 'context', 'pathways'] as const) {
       for (let decade = 0; decade < 7; decade++) {
-        const s = { mode, decade, selected: idx('28101'), filter: [], pinned: null };
+        const s = { mode, decade, selected: idx('28101'), filter: [], pinned: null, similar: DEFAULT_SIMILAR };
         expect(parseUrl(toSearch(s, meta, counties), meta, counties)).toEqual(s);
       }
     }
@@ -273,6 +274,7 @@ describe('URL state', () => {
       selected: idx('28101'),
       filter: [2],
       pinned: null,
+      similar: DEFAULT_SIMILAR,
     });
   });
 
@@ -285,6 +287,18 @@ describe('URL state', () => {
     expect(parseUrl('?decade=1990&hl=3', meta, counties).pinned).toBeNull();
     expect(parseUrl('?mode=context&hl=3', meta, counties).pinned).toBeNull();
     expect(parseUrl('?hl=9', meta, counties).pinned).toBeNull();
+  });
+
+  it('round-trips the similar-counties settings as sim tokens', () => {
+    const s = { ...DEFAULT_STATE, selected: idx('01005'), similar: { any: true, size: true, metro: false } };
+    expect(toSearch(s, meta, counties)).toBe('?county=01005&sim=any,size');
+    expect(parseUrl('?county=01005&sim=size,any,nope', meta, counties)).toEqual(s);
+    for (const any of [false, true])
+      for (const size of [false, true])
+        for (const metro of [false, true]) {
+          const t = { ...DEFAULT_STATE, similar: { any, size, metro } };
+          expect(parseUrl(toSearch(t, meta, counties), meta, counties)).toEqual(t);
+        }
   });
 
   it('ignores unknown values', () => {
@@ -354,6 +368,57 @@ describe('profile detail blocks', () => {
       'The census shows a loss, but the 2010–20 estimates show growth (as for 3% of losing counties).',
     );
     expect([...shares.values()].reduce((a, b) => a + b)).toBeCloseTo(1);
+  });
+});
+
+describe('similar counties (spec 6.7)', () => {
+  const idx = (g: string) => counties.findIndex((c) => c.geoid === g);
+  const geoids = (m: { index: number }[], list = counties) => m.map((x) => list[x.index].geoid);
+
+  it('ranks the 5 nearest lgr vectors in the same pathway by default', () => {
+    const i = idx('01005');
+    const m = similarCounties(counties, i, DEFAULT_SIMILAR);
+    expect(geoids(m)).toEqual(['29011', '45017', '01111', '08105', '29057']);
+    expect(m.every((x) => counties[x.index].pathway === counties[i].pathway)).toBe(true);
+    expect(m[0].distance).toBeCloseTo(0.075, 3);
+  });
+
+  it('excludes the county itself and sorts ascending with a GEOID tie-break', () => {
+    // Two identical copies of a county tie at distance 0; the lower GEOID comes first.
+    const a = county('01005');
+    const twins = [a, { ...a, geoid: '99002' }, { ...a, geoid: '99001' }, county('29011')];
+    expect(geoids(similarCounties(twins, 0, DEFAULT_SIMILAR), twins)).toEqual(['99001', '99002', '29011']);
+    for (const g of ['01005', '28101', '06037']) {
+      const m = similarCounties(counties, idx(g), { any: true, size: false, metro: false });
+      expect(m).toHaveLength(5);
+      expect(geoids(m)).not.toContain(g);
+      for (let k = 1; k < m.length; k++) expect(m[k].distance).toBeGreaterThanOrEqual(m[k - 1].distance);
+    }
+  });
+
+  it('applies the size and metro checkboxes', () => {
+    const i = idx('28101');
+    const self = counties[i];
+    const m = similarCounties(counties, i, { any: true, size: true, metro: true });
+    expect(m).toHaveLength(5);
+    for (const x of m) {
+      const c = counties[x.index];
+      expect(c.pop[7]).toBeGreaterThanOrEqual(0.5 * self.pop[7]);
+      expect(c.pop[7]).toBeLessThanOrEqual(2 * self.pop[7]);
+      expect(c.metro).toBe(self.metro);
+    }
+  });
+
+  it('returns fewer than 5 when the pool is small', () => {
+    // Los Angeles: no metro county in its pathway is within 2× of its size.
+    expect(similarCounties(counties, idx('06037'), { any: false, size: true, metro: true })).toEqual([]);
+    expect(similarCounties(counties, idx('06003'), { any: false, size: true, metro: true })).toHaveLength(2);
+  });
+
+  it('runs in under 5 ms per selection', () => {
+    const t = performance.now();
+    for (let i = 0; i < 200; i++) similarCounties(counties, i * 15, { any: true, size: false, metro: false });
+    expect((performance.now() - t) / 200).toBeLessThan(5);
   });
 });
 

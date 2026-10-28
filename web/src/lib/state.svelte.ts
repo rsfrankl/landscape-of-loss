@@ -1,5 +1,6 @@
 import type { Mode } from './types';
 import { LAST_DECADE, showsBreakdown } from './types';
+import { DEFAULT_SIMILAR, type SimilarOptions } from './similar';
 
 // Shared view state. lib/urlSync.svelte.ts round-trips mode, decade, selected and filter
 // through the URL keys of spec 6.9 (mode, decade, county, path).
@@ -19,6 +20,12 @@ export const ui = $state({
   hovered: -1,
   selected: -1,
   playing: false,
+  /** Similar-counties settings (spec 6.7); kept across selections. */
+  similar: { ...DEFAULT_SIMILAR } as SimilarOptions,
+  /** Similar counties ringed on the map, while profile block 9 is open. */
+  matches: [] as number[],
+  /** Counties to go back to after following a similar county ("← Back to …"). */
+  trail: [] as number[],
 });
 
 /**
