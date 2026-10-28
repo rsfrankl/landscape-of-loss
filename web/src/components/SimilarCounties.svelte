@@ -26,7 +26,7 @@
   const fit = () => showCounties([index, ...matches.map((m) => m.index)]);
 
   // Opening the block, or changing its settings, frames the county and its matches. Following a
-  // match (a new county) does not: the map moves only on these and "Show on map".
+  // match (a new county) does not: the map moves only on these and "Show all on map".
   $effect(() => {
     void [ui.similar.any, ui.similar.size, ui.similar.metro];
     untrack(() => {
@@ -111,9 +111,10 @@
   {#if matches.length < 5}
     <p class="few">Only {matches.length} {matches.length === 1 ? 'county matches' : 'counties match'} these settings.</p>
   {/if}
-  <button type="button" class="show" onclick={fit}>
-    Show on map
-  </button>
+  <!-- Only needed when the county or a match is outside the current view. -->
+  {#if !ui.matchesInView}
+    <button type="button" class="show" onclick={fit}>Show all on map</button>
+  {/if}
 {/if}
 <p class="note">
   Ranked by how closely population change matched, decade by decade, {first}–{last}. Not part of the paper's analysis.

@@ -26,6 +26,8 @@ export const ui = $state({
   matches: [] as number[],
   /** Similar county whose row is under the pointer or focus; -1 for none. */
   matchHover: -1,
+  /** The selected county and every similar county lie wholly inside the map's settled view. */
+  matchesInView: true,
   /** Counties to go back to after following a similar county ("← Back to …"). */
   trail: [] as number[],
 });

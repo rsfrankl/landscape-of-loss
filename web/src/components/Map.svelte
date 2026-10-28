@@ -50,6 +50,8 @@
   let width = $state(0);
   let height = $state(0);
   let transform: ZoomTransform = $state.raw(zoomIdentity);
+  /** The transform once a zoom gesture or transition has ended, so view checks never flicker. */
+  let settled: ZoomTransform = $state.raw(zoomIdentity);
   let zooming = false;
   const dpr = typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1;
 
@@ -255,7 +257,21 @@
     select(svg).transition().duration(600).call(zoomer.transform, next);
   }
 
-  // Search, location and URL loads ask for a county to be framed; "Show on map" asks for a set.
+  // Whether "Show all on map" is needed (spec 6.7): is any of the selected county and its
+  // matches not wholly inside the settled view?
+  $effect(() => {
+    const t = settled;
+    ui.matchesInView = [ui.selected, ...ui.matches]
+      .filter((i) => i >= 0)
+      .every((i) => {
+        const [[u0, v0], [u1, v1]] = layerBounds(i);
+        const [x0, y0] = t.apply([u0, v0]);
+        const [x1, y1] = t.apply([u1, v1]);
+        return x0 >= 0 && y0 >= 0 && x1 <= width && y1 <= height;
+      });
+  });
+
+  // Search, location and URL loads ask for a county to be framed; "Show all on map" asks for a set.
   // Map clicks and hovering never move the map.
   let handledFocus = 0;
   $effect(() => {
@@ -280,8 +296,9 @@
         setHovered(-1);
       })
       .on('zoom', (event) => (transform = event.transform))
-      .on('end', () => {
+      .on('end', (event) => {
         zooming = false;
+        settled = event.transform;
         drawPick();
       });
     select(svg).call(zoomer);

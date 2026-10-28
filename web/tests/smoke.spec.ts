@@ -211,6 +211,9 @@ test('similar counties: rows, map rings and framing, settings in the URL, back l
   await page.waitForTimeout(800);
   const fitted = await scale();
   expect(fitted).toBeLessThan(2);
+  // Everything is in view, so "Show all on map" is hidden.
+  const showAll = page.getByRole('button', { name: 'Show all on map' });
+  await expect(showAll).toHaveCount(0);
 
   // Hovering a row enlarges its ring and fades the others; it also gets the selected-style
   // outline. The map never moves on hover.
@@ -245,6 +248,15 @@ test('similar counties: rows, map rings and framing, settings in the URL, back l
   for (let i = 0; i < 6; i++) await page.mouse.wheel(0, -300);
   await page.waitForTimeout(500);
   expect(await scale()).toBeGreaterThan(fitted + 1);
+  await page.mouse.move(0, 0);
+  // Matches are now out of view: the button appears, and using it frames them and hides it.
+  await expect(showAll).toBeVisible();
+  await showAll.click();
+  await expect(showAll).toHaveCount(0);
+  expect(await scale()).toBeCloseTo(fitted, 5);
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  for (let i = 0; i < 6; i++) await page.mouse.wheel(0, -300);
+  await page.waitForTimeout(500);
   await page.mouse.move(0, 0);
   await page.getByLabel('Same metro status').check();
   await page.waitForTimeout(800);
