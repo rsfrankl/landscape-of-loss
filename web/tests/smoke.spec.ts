@@ -111,6 +111,14 @@ test('URL state round-trips and the profile follows the map decade', async ({ pa
   // The detail blocks load on demand and open on click.
   await page.getByRole('button', { name: 'Who lives here (ACS 2016–20)' }).click();
   await expect(page.getByText('White, non-Hispanic')).toBeVisible();
+  // Axis labels sit on the track; the right column holds only the county value; focus shows a readout.
+  const row = page.locator('.rows li').first();
+  await expect(row.locator('.track .tick')).toHaveText(['0', /^\d+%$/]);
+  await expect(row.locator('.value')).toHaveText(/^\d+\.\d%$/);
+  await expect(row.locator('.readout')).toBeHidden();
+  await row.focus();
+  await expect(row.locator('.readout')).toHaveText(/^\s*County \d+\.\d% · Pathway \d+\.\d% · U\.S\. \d+\.\d%\s*$/);
+  await expect(page.getByText('Each row has its own scale.', { exact: false })).toBeVisible();
   await page.getByRole('button', { name: 'Why it changed, 2010–20' }).click();
   await expect(page.getByText(/like \d+% of loss counties\.$/)).toBeVisible();
   const arial = await page.evaluate(() =>
