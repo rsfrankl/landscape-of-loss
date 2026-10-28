@@ -1,5 +1,5 @@
 <script lang="ts">
-  // Profile block 9 (spec 6.7): the 5 counties whose decade-by-decade log growth rates lie
+  // Profile block 7, "See similar counties" (spec 6.7): the 5 counties whose decade-by-decade log growth rates lie
   // closest to this county's, as small multiples of indexed population (first year = 100).
   // Mounted only while the block is open, so the map marks the matches only while they show.
   // Pointing at a row emphasises its county on the map; pointing at a match on the map marks its row.

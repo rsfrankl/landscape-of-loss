@@ -186,7 +186,7 @@ test('similar counties: rows, map rings and framing, settings in the URL, back l
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
   await page.goto('./?county=01005');
-  await page.getByRole('button', { name: 'Similar counties' }).click();
+  await page.getByRole('button', { name: 'See similar counties', exact: true }).click();
   const matches = page.locator('button.match');
   await expect(matches).toHaveCount(5);
   await expect(matches.first()).toHaveAccessibleName('Barton County, MO, Emerging Localized Loss pathway, open profile');
@@ -270,7 +270,7 @@ test('similar counties: rows, map rings and framing, settings in the URL, back l
   await page.getByLabel('Similar size').check();
   await expect(page).toHaveURL(/\?county=01005&sim=any,size$/);
   await page.reload();
-  await page.getByRole('button', { name: 'Similar counties' }).click();
+  await page.getByRole('button', { name: 'See similar counties', exact: true }).click();
   await expect(page.getByLabel('Any pathway')).toBeChecked();
   await expect(page.getByLabel('Similar size')).toBeChecked();
   await expect(matches).toHaveCount(5);
@@ -289,9 +289,35 @@ test('similar counties: rows, map rings and framing, settings in the URL, back l
   await page.getByRole('button', { name: 'Close county profile' }).click();
   await expect(page.locator('path.line.match')).toHaveCount(0);
   await page.goto('./?county=06037&sim=size,metro');
-  await page.getByRole('button', { name: 'Similar counties' }).click();
+  await page.getByRole('button', { name: 'See similar counties', exact: true }).click();
   await expect(page.getByText('No counties match these settings.', { exact: false })).toBeVisible();
   expect(errors).toEqual([]);
+});
+
+test('similar counties sit after the population chart; the trajectory link opens and scrolls to them', async ({ page }) => {
+  await page.goto('./?county=13067');
+  await expect(profileTitle(page)).toHaveText('Cobb County, GA');
+  const headings = await page.locator('.profile h3').allTextContents();
+  const at = (t: string) => headings.findIndex((h) => h.trim().startsWith(t));
+  expect(at('See similar counties')).toBe(at('Population, 1950–2020') + 1);
+  expect(at('Who lives here')).toBe(at('See similar counties') + 1);
+
+  // Collapsed by default, since opening reframes the map.
+  const toggle = page.getByRole('button', { name: 'See similar counties', exact: true });
+  await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.locator('button.match')).toHaveCount(0);
+
+  await page.getByRole('button', { name: 'See counties with similar population change trajectories ↓' }).click();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.locator('button.match')).toHaveCount(5);
+  await expect(toggle).toBeFocused();
+  // Scrolled to the top of the panel.
+  await expect
+    .poll(async () => {
+      const [panel, block] = await Promise.all([page.locator('aside.panel').boundingBox(), toggle.boundingBox()]);
+      return block!.y - panel!.y;
+    })
+    .toBeLessThan(60);
 });
 
 test('map clicks never zoom; search and URL loads frame the county in its region', async ({ page }) => {

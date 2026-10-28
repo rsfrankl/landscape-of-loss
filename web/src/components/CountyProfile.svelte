@@ -1,6 +1,8 @@
 <script lang="ts">
   // The county profile (spec 6.5), grouped by time frame: the 70-year pathway, the
-  // decade-by-decade strip, single decades, then the detail blocks.
+  // decade-by-decade strip, single decades, the population chart, similar counties, then the
+  // detail blocks.
+  import { tick } from 'svelte';
   import type { County, Meta } from '../lib/types';
   import { LAST_DECADE, MODES, showsBreakdown } from '../lib/types';
   import { goBack, profileOpen, selectCounty, ui } from '../lib/state.svelte';
@@ -36,6 +38,16 @@
 
   // After following a similar county, go back to it; else back to the breakdown if it shows.
   const backTo = $derived(ui.trail.length ? counties[ui.trail[ui.trail.length - 1]] : null);
+
+  // The trajectory link opens block 7 (which frames the map), scrolls to it and focuses its heading.
+  let similarBlock: HTMLDivElement;
+  async function seeSimilar(): Promise<void> {
+    profileOpen.similar = true;
+    await tick();
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    similarBlock.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+    similarBlock.querySelector<HTMLButtonElement>('h3 button')?.focus({ preventScroll: true });
+  }
 </script>
 
 {#snippet sentence(s: Segment[])}
@@ -62,6 +74,7 @@
   <ProfileBlock title="{last - first}-year trajectory, {first}–{last}">
     <p class="pathway"><span class="dot" style:background={pathway.color}></span>{pathway.name}</p>
     <p class="blurb">{pathway.blurb}</p>
+    <button type="button" class="link" onclick={seeSimilar}>See counties with similar population change trajectories ↓</button>
   </ProfileBlock>
 
   <ProfileBlock title="Each decade: the county and its neighbors">
@@ -85,6 +98,12 @@
     <PopulationChart {meta} {county} />
   </ProfileBlock>
 
+  <div class="anchor" bind:this={similarBlock}>
+    <ProfileBlock title="See similar counties" collapsible bind:open={profileOpen.similar}>
+      <SimilarCounties {meta} {counties} {county} />
+    </ProfileBlock>
+  </div>
+
   <ProfileBlock title="Who lives here (ACS 2016–20)" collapsible bind:open={profileOpen.acs}>
     {#if extra}
       <AcsProfile acs={extra.acs} {county} {pathway} />
@@ -101,9 +120,6 @@
     {/if}
   </ProfileBlock>
 
-  <ProfileBlock title="Similar counties" collapsible bind:open={profileOpen.similar}>
-    <SimilarCounties {meta} {counties} {county} />
-  </ProfileBlock>
 </section>
 
 <style>
@@ -166,6 +182,20 @@
   }
   .blurb {
     margin: 4px 0 0;
+  }
+  .link {
+    min-height: 40px;
+    margin: 2px 0 -10px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--accent);
+    text-align: left;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  .anchor {
+    scroll-margin-top: 8px;
   }
   .sentence {
     margin: 0;

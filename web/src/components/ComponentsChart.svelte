@@ -1,5 +1,5 @@
 <script lang="ts">
-  // Profile block 8 (spec 6.5): natural change, domestic and international migration, 2010–20,
+  // Profile block 9 (spec 6.5): natural change, domestic and international migration, 2010–20,
   // as bars about zero. No net or total bar: the estimates' total can contradict the census
   // change shown in blocks 4–5. Loss counties add the Table 2 driver sentence.
   import { scaleLinear } from 'd3';

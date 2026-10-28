@@ -22,7 +22,7 @@ export const ui = $state({
   playing: false,
   /** Similar-counties settings (spec 6.7); kept across selections. */
   similar: { ...DEFAULT_SIMILAR } as SimilarOptions,
-  /** Similar counties outlined on the map, while profile block 9 is open. */
+  /** Similar counties outlined on the map, while profile block 7 is open. */
   matches: [] as number[],
   /** Similar county whose row is under the pointer or focus; -1 for none. */
   matchHover: -1,
@@ -67,7 +67,7 @@ export function goBack(): void {
 }
 
 /**
- * The similar county emphasised on the map and in block 9: its row under the pointer or focus,
+ * The similar county emphasised on the map and in profile block 7: its row under the pointer or focus,
  * else the matched county under the pointer on the map; -1 for none.
  */
 export function activeMatch(): number {

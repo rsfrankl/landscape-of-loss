@@ -1,5 +1,5 @@
 <script lang="ts">
-  // Profile block 7 (spec 6.5): one row per indicator, each on its own axis from 0 so small
+  // Profile block 8 (spec 6.5): one row per indicator, each on its own axis from 0 so small
   // shares stay readable. County dot with MOE whisker, pathway tick, U.S. tick.
   import type { Acs, County, Pathway } from '../lib/types';
   import { axisEnd } from '../lib/profile';

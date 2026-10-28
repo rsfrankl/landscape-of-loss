@@ -1,7 +1,7 @@
 import type { Components, Driver } from './types';
 
 /**
- * End of an ACS row's axis (spec 6.5 block 7): a rounded value strictly above the largest of
+ * End of an ACS row's axis (spec 6.5 block 8): a rounded value strictly above the largest of
  * county + MOE, pathway and U.S. Steps of 5 up to 50, then 10; never past 100.
  */
 export function axisEnd(largest: number): number {
