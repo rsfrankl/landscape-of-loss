@@ -663,3 +663,42 @@ test('intro card: shown on a first visit, opens the explainer, stays dismissed',
   await expect(profileTitle(page)).toBeVisible();
   await expect(card).toHaveCount(0);
 });
+
+test('phones: map, search and profile blocks 1–3 work in the bottom sheet', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto('./');
+  const canvas = page.locator('canvas[role="img"]');
+  await expect
+    .poll(() =>
+      canvas.evaluate((c: HTMLCanvasElement) => {
+        const d = c.getContext('2d')!.getImageData(0, 0, c.width, c.height).data;
+        let painted = 0;
+        for (let i = 3; i < d.length; i += 4) if (d[i] > 0) painted++;
+        return painted / (c.width * c.height);
+      }),
+    )
+    .toBeGreaterThan(0.2);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(0);
+
+  const search = page.getByRole('combobox', { name: 'Search for a county' });
+  await search.fill('newton ms');
+  await page.keyboard.press('Enter');
+  await expect(profileTitle(page)).toHaveText('Newton County, MS');
+
+  const handle = page.getByRole('button', { name: 'Show more' });
+  await handle.click();
+  await expect(page.getByRole('button', { name: 'Show less' })).toHaveAttribute('aria-expanded', 'true');
+  for (const name of ['70-year trajectory, 1950–2020', 'Each decade: the county and its neighbors']) {
+    await page.getByRole('heading', { name }).scrollIntoViewIfNeeded();
+    await expect(page.getByRole('heading', { name })).toBeInViewport();
+  }
+  await expect(page.locator('.cell')).toHaveCount(7);
+
+  // Touch targets: the header controls and the sheet handle are at least 40 × 40 px.
+  const small = await page.evaluate(() =>
+    [...document.querySelectorAll('.app > .header :is(button, label:not(.visually-hidden), input), aside .handle, .decades .play')]
+      .map((el) => el.getBoundingClientRect())
+      .filter((r) => r.width < 40 || r.height < 40).length,
+  );
+  expect(small).toBe(0);
+});

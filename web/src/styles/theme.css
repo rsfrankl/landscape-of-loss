@@ -20,6 +20,8 @@
   --panel-width: 380px;
   /* The decade row's height, reserved in every mode so the map never resizes (spec 6.3). */
   --decade-height: 52px;
+  /* Bottom sheet peek height below 768 px (spec 8.2). */
+  --sheet-peek: 38dvh;
   --gutter: 16px;
 }
 

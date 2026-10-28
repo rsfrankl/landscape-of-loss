@@ -29,6 +29,13 @@
     ui.fromBreakdown = false;
   });
 
+  // Below 768 px the panel is a bottom sheet (spec 8.2): it peeks over the bottom of the screen
+  // and a handle expands it. The footer then moves to the end of the sheet.
+  const phone = matchMedia('(max-width: 767px)');
+  let mobile = $state(phone.matches);
+  phone.addEventListener('change', () => (mobile = phone.matches));
+  let sheetOpen = $state(false);
+
   function onKeydown(event: KeyboardEvent): void {
     // Esc in the explainer closes only the explainer.
     if (event.key !== 'Escape' || about.open) return;
@@ -58,14 +65,23 @@
         <p class="whole-period">Pathways cover the whole period, {data.meta.years[0]}–{data.meta.years[data.meta.years.length - 1]}</p>
       {/if}
     </div>
-    <aside class="panel">
+    <aside class="panel" class:open={sheetOpen}>
+      {#if mobile}
+        <button type="button" class="handle" aria-expanded={sheetOpen} onclick={() => (sheetOpen = !sheetOpen)}>
+          <span class="grip" aria-hidden="true"></span>
+          {sheetOpen ? 'Show less' : 'Show more'}
+        </button>
+      {/if}
       {#if selected}
         <CountyProfile meta={data.meta} counties={data.counties} county={selected} />
       {:else}
         <Legend meta={data.meta} counties={data.counties} />
       {/if}
+      {#if mobile}<Footer meta={data.meta} counties={data.counties} />{/if}
     </aside>
-    <div class="footer"><Footer meta={data.meta} counties={data.counties} /></div>
+    {#if !mobile}
+      <div class="footer"><Footer meta={data.meta} counties={data.counties} /></div>
+    {/if}
   </div>
   <About meta={data.meta} />
   <div class="visually-hidden" aria-live="polite">
@@ -126,17 +142,59 @@
     color: var(--muted);
   }
 
-  /* Below 768 px the panel stacks under the map (spec 8.2; polish comes later). */
+  /* Below 768 px (spec 8.2): map and decade row above a bottom sheet. The sheet's peek height is
+     reserved as a grid row, so the map is never covered until the sheet is expanded. */
   @media (max-width: 767px) {
     .app {
-      height: auto;
+      height: 100dvh;
       grid-template-columns: minmax(0, 1fr);
-      grid-template-rows: auto 60vh var(--decade-height) auto auto;
-      grid-template-areas: 'header' 'map' 'decade' 'panel' 'footer';
+      grid-template-rows: auto minmax(0, 1fr) var(--decade-height) var(--sheet-peek);
+      grid-template-areas: 'header' 'map' 'decade' 'panel';
     }
     .panel {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 3;
+      height: var(--sheet-peek);
+      background: var(--bg);
       border-left: 0;
       border-top: 1px solid var(--hairline);
+      border-radius: 10px 10px 0 0;
+      box-shadow: 0 -2px 10px rgb(26 18 16 / 0.12);
+      transition: height 200ms ease;
+    }
+    .panel.open {
+      height: 85dvh;
+    }
+    .handle {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      width: 100%;
+      min-height: 40px;
+      padding: 6px 0 4px;
+      border: 0;
+      background: var(--bg);
+      font-size: var(--size-small);
+      color: var(--muted);
+      cursor: pointer;
+    }
+    .grip {
+      width: 36px;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--hairline);
+    }
+  }
+  @media (max-width: 767px) and (prefers-reduced-motion: reduce) {
+    .panel {
+      transition: none;
     }
   }
 </style>

@@ -83,10 +83,15 @@
     position: relative;
     width: 260px;
   }
-  /* Narrow enough to share the tabs' row at 1024 px (spec 6.1). */
+  /* Narrow enough to share the tabs' row at 1024 px (spec 6.1); on phones the row's free width. */
   @media (max-width: 1149px) {
     .search {
       width: 168px;
+    }
+  }
+  @media (max-width: 767px) {
+    .search {
+      width: auto;
     }
   }
   input {

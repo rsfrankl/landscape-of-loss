@@ -58,8 +58,9 @@
     />
     <div class="labels">
       {#each meta.decades as d, i (d.start)}
-        <button type="button" tabindex="-1" class:current={i === ui.decade} onclick={() => choose(i)}>
-          {d.label}
+        <button type="button" tabindex="-1" aria-label={d.label} class:current={i === ui.decade} onclick={() => choose(i)}>
+          <span class="long">{d.label}</span>
+          <span class="short">{String(d.start).slice(2)}–{String(d.end).slice(2)}</span>
         </button>
       {/each}
     </div>
@@ -116,6 +117,22 @@
     color: var(--muted);
     cursor: pointer;
     text-align: center;
+  }
+  .short {
+    display: none;
+  }
+  /* Two-digit labels on phones, so seven fit (as in the profile strip). */
+  @media (max-width: 767px) {
+    .decades {
+      gap: 10px;
+      padding: 0 12px;
+    }
+    .long {
+      display: none;
+    }
+    .short {
+      display: inline;
+    }
   }
   .labels button.current {
     color: var(--text);

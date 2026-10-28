@@ -133,6 +133,40 @@
       flex-wrap: wrap;
     }
   }
+  /* Phones (spec 8.2): a smaller title, the three tabs as equal columns whose labels wrap, the
+     search box taking the row's free width, and a smaller subtitle. */
+  @media (max-width: 767px) {
+    header {
+      gap: 6px;
+      padding: 8px 12px 6px;
+    }
+    h1 {
+      font-size: 17px;
+    }
+    .modes {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      justify-self: stretch;
+    }
+    label {
+      justify-content: center;
+      padding: 2px 6px;
+      font-size: var(--size-small);
+      line-height: 1.2;
+      text-align: center;
+      white-space: normal;
+    }
+    .tools {
+      justify-content: stretch;
+    }
+    .tools > :global(:first-child) {
+      flex: 1;
+    }
+    .subtitle {
+      font-size: var(--size-small);
+      line-height: 1.35;
+    }
+  }
   input {
     position: absolute;
     opacity: 0;

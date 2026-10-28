@@ -357,7 +357,8 @@ Build in five milestones; stop for author review after milestones 1, 3 and 5.
 ### 8.2 Mobile readiness rules (desktop-first, built so mobile can follow)
 
 - Hover only previews; tapping does everything hover does plus more.
-- The side panel is one component that can render as a right panel (≥ 1024 px) or a bottom sheet (< 768 px).
+- The side panel is one component that can render as a right panel (≥ 768 px) or a bottom sheet (< 768 px). The sheet peeks at 38% of the screen height, a row the grid reserves so it never covers the map, and a sticky "Show more" / "Show less" handle (`aria-expanded`) expands it to 85% over the map. It holds the legend or the profile, then the footer (download all and the citation).
+- On phones the header is compact: a 17 px title, the three tabs as equal columns whose labels wrap, the search box taking the row beside location and "?", and a 12 px subtitle. The decade labels shorten to two digits ("90–00"), as in the profile strip, and keep their full names for screen readers.
 - Layout in CSS grid with named areas; no fixed pixel positions for panels.
 - Touch targets at least 40 × 40 px for controls.
 - v1 acceptance below 768 px: map, search, profile sections 1–3 work. Polish is a later release.
