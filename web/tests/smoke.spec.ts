@@ -868,3 +868,11 @@ test('acceptance data on screen: pathway counts, 2010–20 losers, Sarpy in the 
   const lastBar = page.locator('.profile svg rect').last();
   expect((await lastBar.getAttribute('fill'))!.toLowerCase()).toBe(colors[1]);
 });
+
+test('the ?palette= colour preview is dev-only: the production build ignores it', async ({ page }) => {
+  await page.goto('./?mode=pathways&palette=B');
+  const swatch = page.locator('.legend .item', { hasText: 'Persistent Loss' }).locator('.swatch');
+  await expect(swatch).toHaveCSS('background-color', 'rgb(239, 111, 106)');
+  await expect(page.getByText('dev preview')).toHaveCount(0);
+  await expect(page).toHaveURL(/\?mode=pathways$/);
+});

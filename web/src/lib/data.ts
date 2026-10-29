@@ -1,5 +1,6 @@
 import type { Topology, GeometryCollection } from 'topojson-specification';
 import type { Acs, Components, County, Meta } from './types';
+import { applyDevPalette } from './devPalette';
 
 export type CountyTopology = Topology<{
   counties: GeometryCollection<{ name: string; state: string; stusps: string }>;
@@ -54,5 +55,6 @@ export async function loadStartup(): Promise<StartupData> {
     getJson<CountyTopology>('counties.topo.json'),
     getJson<County[]>('counties.json'),
   ]);
+  if (import.meta.env.DEV) applyDevPalette(meta);
   return { meta, topo, counties: alignCounties(topo, records) };
 }

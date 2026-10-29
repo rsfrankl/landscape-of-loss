@@ -8,6 +8,11 @@ same as the 27 Oct change-palette re-check. It does not exactly reproduce the 26
 figures in spec 7, so compare options only within this note. Script:
 `pipeline/checks/pathway_colours.R`, which also writes the swatch sheet below.
 
+To see an option on the real map, run the dev server (`cd web && npm run dev`) and add
+`?palette=A`, `?palette=B` or `?palette=C` to the URL, e.g.
+`http://localhost:5173/landscape-of-loss/?mode=pathways&palette=B`. The key stays in the URL as
+you click around. It is dev-only; the live site ignores it.
+
 ![Swatches for options A–C under normal vision, deuteranopia, protanopia and tritanopia](pathway-colours.svg)
 
 ## What is weak now (option A)

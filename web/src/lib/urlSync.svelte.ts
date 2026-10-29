@@ -1,6 +1,7 @@
 import type { County, Meta } from './types';
 import { selectCounty, ui } from './state.svelte';
 import { parseUrl, toSearch, type UrlState } from './url';
+import { withDevPalette } from './devPalette';
 
 /** Applies a URL state. `zoom` frames the county on the map (the page load; not Back/Forward). */
 function apply(s: UrlState, zoom = false): void {
@@ -20,7 +21,9 @@ function apply(s: UrlState, zoom = false): void {
 export function startUrlSync(meta: Meta, counties: County[]): () => void {
   apply(parseUrl(location.search, meta, counties), true);
 
-  const current = () => toSearch(parseUrl(location.search, meta, counties), meta, counties);
+  // The dev server's ?palette= preview (spec 8.6) stays in the URL; production has no such key.
+  const canonical = (search: string) => (import.meta.env.DEV ? withDevPalette(search) : search);
+  const current = () => canonical(toSearch(parseUrl(location.search, meta, counties), meta, counties));
   const write = (search: string, push: boolean) => {
     const url = `${location.pathname}${search}${location.hash}`;
     if (push) history.pushState(null, '', url);
@@ -34,7 +37,7 @@ export function startUrlSync(meta: Meta, counties: County[]): () => void {
 
   const stop = $effect.root(() => {
     $effect(() => {
-      const next = toSearch(
+      const next = canonical(toSearch(
         {
           mode: ui.mode,
           decade: ui.decade,
@@ -45,7 +48,7 @@ export function startUrlSync(meta: Meta, counties: County[]): () => void {
         },
         meta,
         counties,
-      );
+      ));
       if (next === location.search) return;
       const selectedNow = parseUrl(location.search, meta, counties).selected;
       write(next, selectedNow !== ui.selected);
