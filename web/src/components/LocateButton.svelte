@@ -65,7 +65,7 @@
     stroke: none;
   }
   /* Icon only where the tools share the tabs' row (spec 6.1); the label stays for screen readers. */
-  @media (max-width: 1149px) {
+  @media (max-width: 1439px) {
     button {
       justify-content: center;
       width: 40px;

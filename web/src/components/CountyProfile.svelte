@@ -5,7 +5,7 @@
   import { tick } from 'svelte';
   import type { County, Meta } from '../lib/types';
   import { LAST_DECADE, MODES, showsBreakdown } from '../lib/types';
-  import { goBack, profileOpen, selectCounty, ui } from '../lib/state.svelte';
+  import { goBack, profileOpen, selectCounty, setSimilarOpen, ui } from '../lib/state.svelte';
   import { countyTitle, decadeSentence, populationLine, recentSentence, type Segment } from '../lib/describe';
   import ProfileBlock from './ProfileBlock.svelte';
   import SequenceStrip from './SequenceStrip.svelte';
@@ -15,7 +15,6 @@
   import SimilarCounties from './SimilarCounties.svelte';
   import Download from './Download.svelte';
   import { loadProfileData, type ProfileData } from '../lib/data';
-  import { driverShares } from '../lib/profile';
 
   let { meta, counties, county }: { meta: Meta; counties: County[]; county: County } = $props();
 
@@ -26,7 +25,6 @@
     (d) => (extra = d),
     () => (failed = true),
   );
-  const shares = $derived(extra ? driverShares(extra.components) : null);
 
   const pathway = $derived(meta.pathways[county.pathway - 1]);
   const first = $derived(meta.years[0]);
@@ -38,17 +36,25 @@
   const merged = $derived(!usesDecade || ui.decade === LAST_DECADE);
 
   // After following a similar county, go back to it; else back to the breakdown, if the profile
-  // was opened from it (a pathway pinned or pointed at; spec 6.6) and it still shows.
+  // was opened from it (a pathway pinned or pointed at; spec 6.6) and it still shows. "Back to the
+  // map legend" follows on every profile.
   const backTo = $derived(ui.trail.length ? counties[ui.trail[ui.trail.length - 1]] : null);
 
   // The trajectory link opens block 7 (which frames the map), scrolls to it and focuses its heading.
   let similarBlock: HTMLDivElement;
+  const similarToggle = () => similarBlock.querySelector<HTMLButtonElement>('h3 button');
   async function seeSimilar(): Promise<void> {
-    profileOpen.similar = true;
+    setSimilarOpen(true);
     await tick();
     const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
     similarBlock.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
-    similarBlock.querySelector<HTMLButtonElement>('h3 button')?.focus({ preventScroll: true });
+    similarToggle()?.focus({ preventScroll: true });
+  }
+
+  // "Hide similar counties" collapses the block and returns focus to its heading.
+  function hideSimilar(): void {
+    setSimilarOpen(false);
+    similarToggle()?.focus();
   }
 </script>
 
@@ -59,11 +65,14 @@
 {/snippet}
 
 <section class="profile" aria-labelledby="profile-title">
-  {#if backTo}
-    <button type="button" class="back" onclick={goBack}>← Back to {backTo.name}</button>
-  {:else if ui.fromBreakdown && showsBreakdown(ui.mode, ui.decade)}
-    <button type="button" class="back" onclick={() => selectCounty(-1)}>← Back to breakdown</button>
-  {/if}
+  <div class="backs">
+    {#if backTo}
+      <button type="button" class="back" onclick={goBack}>← Back to {backTo.name}</button>
+    {:else if ui.fromBreakdown && showsBreakdown(ui.mode, ui.decade)}
+      <button type="button" class="back" onclick={() => selectCounty(-1)}>← Back to breakdown</button>
+    {/if}
+    <button type="button" class="back" onclick={() => selectCounty(-1)}>← Back to the map legend</button>
+  </div>
   <header class="head">
     <div>
       <h2 id="profile-title">{countyTitle(county)}</h2>
@@ -101,8 +110,8 @@
   </ProfileBlock>
 
   <div class="anchor" bind:this={similarBlock}>
-    <ProfileBlock title="See similar counties" collapsible bind:open={profileOpen.similar}>
-      <SimilarCounties {meta} {counties} {county} />
+    <ProfileBlock title="See similar counties" collapsible bind:open={() => profileOpen.similar, setSimilarOpen}>
+      <SimilarCounties {meta} {counties} {county} onhide={hideSimilar} />
     </ProfileBlock>
   </div>
 
@@ -114,9 +123,9 @@
     {/if}
   </ProfileBlock>
 
-  <ProfileBlock title="Why it changed, {recent}" collapsible bind:open={profileOpen.components}>
-    {#if extra && shares}
-      <ComponentsChart comp={extra.components[county.geoid]} {shares} />
+  <ProfileBlock title="Demographic sources of change, {recent}" collapsible bind:open={profileOpen.components}>
+    {#if extra}
+      <ComponentsChart comp={extra.components[county.geoid]} />
     {:else}
       <p class="status">{failed ? 'The profile data could not be loaded.' : 'Loading…'}</p>
     {/if}
@@ -131,9 +140,14 @@
   .profile {
     padding: var(--gutter);
   }
+  .backs {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    margin: -8px 0 4px;
+  }
   .back {
     min-height: 40px;
-    margin: -8px 0 4px;
     padding: 0;
     border: 0;
     background: none;

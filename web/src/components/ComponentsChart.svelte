@@ -1,13 +1,12 @@
 <script lang="ts">
   // Profile block 9 (spec 6.5): natural change, domestic and international migration, 2010–20,
   // as bars about zero. No net or total bar: the estimates' total can contradict the census
-  // change shown in blocks 4–5. Loss counties add the Table 2 driver sentence.
+  // change shown in blocks 4–5.
   import { scaleLinear } from 'd3';
-  import type { Components, Driver } from '../lib/types';
+  import type { Components } from '../lib/types';
   import { formatCount } from '../lib/format';
-  import { driverSentence } from '../lib/profile';
 
-  let { comp, shares }: { comp: Components; shares: Map<Driver, number> } = $props();
+  let { comp }: { comp: Components } = $props();
 
   let width = $state(200);
   const bars = $derived([
@@ -41,9 +40,6 @@
     </li>
   {/each}
 </ul>
-{#if comp.driver}
-  <p class="driver">{driverSentence(comp.driver, shares)}</p>
-{/if}
 
 <style>
   .sub {
@@ -76,8 +72,5 @@
   }
   .value {
     text-align: right;
-  }
-  .driver {
-    margin: 10px 0 0;
   }
 </style>

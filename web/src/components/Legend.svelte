@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { County, Meta } from '../lib/types';
   import { showsBreakdown } from '../lib/types';
-  import { toggleFilter, ui } from '../lib/state.svelte';
+  import { openAbout, toggleFilter, ui, type AboutTab } from '../lib/state.svelte';
   import { legendCounts } from '../lib/counts';
   import { formatCount } from '../lib/format';
   import { isDark } from '../lib/colors';
@@ -24,6 +24,13 @@
     ui.isolate = key;
   }
 </script>
+
+<!-- Under each legend, a way into the explainer at the section about it (spec 6.9). -->
+{#snippet explain(tab: AboutTab, section: string)}
+  <button type="button" class="link explain" aria-haspopup="dialog" onclick={() => openAbout(tab, section)}>
+    What do these mean?
+  </button>
+{/snippet}
 
 <section class="legend" aria-label="Legend">
   {#if ui.mode === 'pathways'}
@@ -53,6 +60,7 @@
         {/each}
       </ul>
     {/each}
+    {@render explain('read', 'types')}
   {:else if ui.mode === 'context'}
     <h2>Population change in spatial context, {meta.decades[decade].label}</h2>
     <p class="hint"><ArrowNote /></p>
@@ -76,6 +84,7 @@
         </li>
       {/each}
     </ul>
+    {@render explain('read', 'states')}
   {:else}
     <h2>Population change, {meta.decades[decade].label}</h2>
     <ul>
@@ -94,6 +103,7 @@
         </li>
       {/each}
     </ul>
+    {@render explain('notes', 'classes')}
     {#if showsBreakdown(ui.mode, decade)}
       <Breakdown {meta} {counties} />
     {/if}
@@ -182,6 +192,12 @@
     margin-top: 14px;
     padding-top: 10px;
     border-top: 1px solid var(--hairline);
+    font-size: var(--size-small);
+  }
+  .explain {
+    display: block;
+    min-height: 40px;
+    margin: 2px 0 -8px 6px;
     font-size: var(--size-small);
   }
   .link {

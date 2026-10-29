@@ -76,7 +76,7 @@ test('the three mode tabs fit on one line at 1024 px', async ({ page }) => {
   expect(overflow).toBeLessThanOrEqual(0);
 });
 
-test('the subtitle stays within two lines; the tabs start their own row', async ({ page }) => {
+test('header order: title, subtitle within two lines, then tabs with the tools beside them from 1280 px', async ({ page }) => {
   for (const width of [1024, 1280, 1920]) {
     await page.setViewportSize({ width, height: 800 });
     await page.goto('./');
@@ -84,8 +84,14 @@ test('the subtitle stays within two lines; the tabs start their own row', async 
     await expect(sub).toContainText('What is the geography of US population loss');
     const lines = await sub.evaluate((el) => el.getBoundingClientRect().height / parseFloat(getComputedStyle(el).lineHeight));
     expect(lines, `${width} px`).toBeLessThanOrEqual(2.05);
-    const [title, tabs] = [await page.locator('h1').boundingBox(), await page.locator('.modes').boundingBox()];
-    expect(tabs!.y).toBeGreaterThanOrEqual(title!.y + title!.height);
+    const box = (sel: string) => page.locator(sel).boundingBox().then((b) => b!);
+    const [title, subtitle, tabs, tools] = [await box('h1'), await box('.subtitle'), await box('.modes'), await box('.tools')];
+    expect(subtitle.y, `${width} px`).toBeGreaterThanOrEqual(title.y + title.height);
+    expect(tabs.y, `${width} px`).toBeGreaterThanOrEqual(subtitle.y + subtitle.height);
+    if (width >= 1280) expect(Math.abs(tools.y + tools.height / 2 - (tabs.y + tabs.height / 2)), `${width} px`).toBeLessThan(2);
+    // The explainer button is labelled, not a bare "?".
+    await expect(page.locator('.tools').getByRole('button', { name: 'How to read this map' })).toBeVisible();
+    await expect(page.locator('.tools .about .label')).toBeVisible();
   }
 });
 
@@ -186,8 +192,10 @@ test('URL state round-trips and the profile follows the map decade', async ({ pa
   expect(rowAfter.y - after.y).toBeCloseTo(rowBox!.y - before!.y, 1);
   await expect(page.locator('ul.key')).toContainText('Conterminous U.S.');
   await expect(page.getByText('Each row has its own scale.', { exact: false })).toBeVisible();
-  await page.getByRole('button', { name: 'Why it changed, 2010–20' }).click();
-  await expect(page.getByText(/like \d+% of loss counties\.$/)).toBeVisible();
+  // Demographic sources of change: three bars, and no driver sentence.
+  await page.getByRole('button', { name: 'Demographic sources of change, 2010–20' }).click();
+  await expect(page.locator('.bars li')).toHaveText([/^Natural change/, /^Domestic migration/, /^International migration/]);
+  await expect(page.getByText(/loss counties|losing counties|Lost population through/)).toHaveCount(0);
   const arial = await page.evaluate(() =>
     [...document.querySelectorAll('*')].map((el) => getComputedStyle(el).fontFamily).filter((f) => /arial/i.test(f)),
   );
@@ -410,6 +418,96 @@ test('similar counties sit after the population chart; the trajectory link opens
     .toBeLessThan(60);
 });
 
+test('similar counties: collapsed for each new county, open between a county and its matches; hiding restores the view', async ({ page }) => {
+  await page.goto('./?county=01005');
+  const view = () => page.locator('svg > g').first().getAttribute('transform');
+  const toggle = page.getByRole('button', { name: 'See similar counties', exact: true });
+  const rings = page.locator('svg g.locator');
+  await page.waitForTimeout(900);
+  const before = await view();
+  await toggle.click();
+  await expect(rings).toHaveCount(5);
+  await expect.poll(view).not.toBe(before);
+
+  // Following a match and its back link keeps the block open.
+  await page.locator('button.match').first().click();
+  await expect(profileTitle(page)).toHaveText('Barton County, MO');
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  await page.getByRole('button', { name: '← Back to Barbour County' }).click();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+
+  // "Hide similar counties" removes the rings and returns to the view from before the block opened.
+  await page.getByRole('button', { name: 'Hide similar counties' }).click();
+  await expect(rings).toHaveCount(0);
+  await expect(toggle).toBeFocused();
+  await expect.poll(view).toBe(before);
+  // Collapsing from the heading does the same.
+  await toggle.click();
+  await expect.poll(view).not.toBe(before);
+  await toggle.click();
+  await expect(page.locator('path.line.match')).toHaveCount(0);
+  await expect.poll(view).toBe(before);
+
+  // A newly selected county starts with the block collapsed.
+  await toggle.click();
+  await expect(page.locator('button.match')).toHaveCount(5);
+  await page.getByRole('combobox', { name: 'Search for a county' }).fill('newton ms');
+  await page.keyboard.press('Enter');
+  await expect(profileTitle(page)).toHaveText('Newton County, MS');
+  await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  await expect(rings).toHaveCount(0);
+});
+
+test('leaving a profile: back to the map legend, the county again or outside the U.S.; a double-click keeps it', async ({ page }) => {
+  // "Back to the map legend" follows any other back link.
+  await page.goto('./?county=01005&hl=3');
+  await expect(page.locator('.backs button')).toHaveText(['← Back to breakdown', '← Back to the map legend']);
+  await page.getByRole('button', { name: '← Back to the map legend' }).click();
+  await expect(profileTitle(page)).toHaveCount(0);
+  await expect(page.locator('.legend')).toBeVisible();
+
+  await page.goto('./');
+  await page.waitForTimeout(300);
+  const box = (await page.locator('canvas[role="img"]').boundingBox())!;
+  const [x, y] = [box.x + box.width * 0.55, box.y + box.height * 0.5];
+  await page.mouse.click(x, y);
+  await expect(profileTitle(page)).toBeVisible();
+  await expect(page.locator('.backs button')).toHaveText(['← Back to the map legend']);
+  // Clicking the selected county again deselects it.
+  await page.mouse.click(x, y);
+  await expect(profileTitle(page)).toHaveCount(0);
+  // So does clicking outside the U.S. (the map's lower-left corner is ocean).
+  await page.mouse.click(x, y);
+  await expect(profileTitle(page)).toBeVisible();
+  await page.mouse.click(box.x + 3, box.y + box.height - 3);
+  await expect(profileTitle(page)).toHaveCount(0);
+  // A double-click on the selected county zooms and keeps it selected.
+  await page.mouse.click(x, y);
+  await expect(profileTitle(page)).toBeVisible();
+  await page.waitForTimeout(400);
+  await page.mouse.dblclick(x, y);
+  await page.waitForTimeout(800);
+  await expect(profileTitle(page)).toBeVisible();
+  expect(await page.locator('svg > g').first().getAttribute('transform')).not.toBe('translate(0,0) scale(1)');
+});
+
+test('"What do these mean?" under each legend opens the explainer at its section', async ({ page }) => {
+  const cases = [
+    ['./', 'Data notes', 'Change classes and colors'],
+    ['./?mode=context', 'How to read this', 'A county and its neighbors, in one decade'],
+    ['./?mode=pathways', 'How to read this', 'The eight types of population change'],
+  ];
+  for (const [url, tab, heading] of cases) {
+    await page.goto(url);
+    await page.locator('.legend').getByRole('button', { name: 'What do these mean?' }).click();
+    const dialog = page.getByRole('dialog', { name: 'The Landscape of Loss' });
+    await expect(dialog.getByRole('tab', { name: tab })).toHaveAttribute('aria-selected', 'true');
+    await expect(dialog.getByRole('heading', { name: heading })).toBeInViewport();
+    await page.keyboard.press('Escape');
+    await expect(dialog).toBeHidden();
+  }
+});
+
 test('map clicks never zoom; search and URL loads frame the county in its region', async ({ page }) => {
   const scale = async () => {
     const t = (await page.locator('svg > g').first().getAttribute('transform'))!;
@@ -503,7 +601,9 @@ test('clicks select the county under the pointer, including near borders and wit
   const canvas = page.locator('canvas[role="img"]');
   await page.waitForTimeout(500);
   const box = (await canvas.boundingBox())!;
-  // Deterministic points whose press and release pixels (2 px apart) are both solid county fill.
+  // Deterministic points whose press and release pixels (2 px apart) are both solid county fill,
+  // with a 1 px margin: Chrome reports click coordinates in whole pixels, which can land up to a
+  // pixel away from the fractional pointer position (the map's top edge can be fractional).
   const pts: [number, number][] = await canvas.evaluate((c: HTMLCanvasElement) => {
     const d = c.getContext('2d')!.getImageData(0, 0, c.width, c.height).data;
     const s = c.width / c.clientWidth;
@@ -514,7 +614,8 @@ test('clicks select the county under the pointer, including near borders and wit
     while (out.length < 24) {
       const x = rnd() * (c.clientWidth - 4);
       const y = rnd() * c.clientHeight;
-      if (solid(x, y) && solid(x + 2, y)) out.push([x, y]);
+      const around = (u: number, v: number) => [-1, 0, 1].every((du) => [-1, 0, 1].every((dv) => solid(u + du, v + dv)));
+      if (x >= 1 && y >= 1 && around(x, y) && around(x + 2, y)) out.push([x, y]);
     }
     return out;
   });
@@ -606,14 +707,29 @@ const noArial = (page: Page) =>
 
 test('explainer: three tabs by keyboard, Esc closes only the modal, focus returns', async ({ page }) => {
   await page.goto('./?county=28101');
-  const open = page.getByRole('button', { name: 'How to read this, about and data notes' });
+  const open = page.getByRole('button', { name: 'How to read this map' });
   await open.click();
   const dialog = page.getByRole('dialog', { name: 'The Landscape of Loss' });
   await expect(dialog).toBeVisible();
   const tabs = dialog.getByRole('tab');
   await expect(tabs).toHaveText(['How to read this', 'About', 'Data notes']);
   await expect(tabs.first()).toHaveAttribute('aria-selected', 'true');
-  await expect(dialog.getByRole('tabpanel')).toContainText('Regional loss');
+  const read = dialog.getByRole('tabpanel');
+  const intro = await read.locator('p.prose').first().evaluate((el) => el.textContent!.replace(/\s+/g, ' ').trim());
+  expect(intro).toBe(
+    'This map has three views. Decadal population change colors each county by percent population change in each census period. ' +
+      'Decadal population change in spatial context shows, for the same decade, the connection between a county’s population change ' +
+      'and that of its immediate neighbors (population-weighted average). Population change trajectories includes a longer period of ' +
+      'population change, each decade from 1950 to 2020, and displays eight types of population change trajectory, reflecting ' +
+      'different temporal and spatial experiences of population change.',
+  );
+  await expect(read.locator('.says')).toHaveText([
+    'The county lost population, and so did its immediate neighbors, on average.',
+    'The county lost population, but its immediate neighbors grew, on average.',
+    'The county grew, but its immediate neighbors lost population, on average.',
+    'The county grew, and so did its immediate neighbors, on average.',
+  ]);
+  await expect(read.getByRole('heading', { name: 'The eight types of population change' })).toBeVisible();
   await expect(dialog.locator('.pathways li')).toHaveCount(8);
   await expect(dialog.locator('svg rect.centre')).toHaveCount(4);
 
@@ -621,6 +737,9 @@ test('explainer: three tabs by keyboard, Esc closes only the modal, focus return
   await page.keyboard.press('ArrowRight');
   await expect(tabs.nth(1)).toBeFocused();
   await expect(tabs.nth(1)).toHaveAttribute('aria-selected', 'true');
+  await expect(dialog.getByRole('tabpanel').locator('p').first()).toHaveText(
+    /^\s*This dashboard visualizes findings from the paper below for 3,108 conterminous U\.S\. counties\./,
+  );
   await expect(dialog.getByRole('tabpanel')).toContainText('doi:10.1080/24694452.2026.2691208');
   await expect(dialog.getByRole('tabpanel')).toContainText('Schroeder, Jonathan P. (2016)');
   await page.keyboard.press('End');
@@ -633,7 +752,7 @@ test('explainer: three tabs by keyboard, Esc closes only the modal, focus return
   await expect(dialog).not.toContainText(/\bA–D\b/);
   expect(await noArial(page)).toEqual([]);
 
-  // Esc closes the modal, not the county profile, and focus returns to "?".
+  // Esc closes the modal, not the county profile, and focus returns to the button.
   await page.keyboard.press('Escape');
   await expect(dialog).toBeHidden();
   await expect(profileTitle(page)).toHaveText('Newton County, MS');
@@ -717,12 +836,12 @@ test('axe finds no WCAG 2.1 A/AA violations: default view, profile open, explain
   await page.goto('./?county=28101');
   await page.getByRole('button', { name: 'Who lives here (ACS 2016–20)' }).click();
   await expect(page.getByText('White, non-Hispanic')).toBeVisible();
-  await page.getByRole('button', { name: 'Why it changed, 2010–20' }).click();
+  await page.getByRole('button', { name: 'Demographic sources of change, 2010–20' }).click();
   await page.getByRole('button', { name: 'See similar counties', exact: true }).click();
   await expect(page.locator('button.match')).toHaveCount(5);
   await scan('profile');
 
-  await page.getByRole('button', { name: 'How to read this, about and data notes' }).click();
+  await page.getByRole('button', { name: 'How to read this map' }).click();
   for (const tab of ['How to read this', 'About', 'Data notes']) {
     await page.getByRole('tab', { name: tab }).click();
     await scan(`explainer: ${tab}`);

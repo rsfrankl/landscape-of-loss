@@ -19,10 +19,10 @@
     { label: 'Neighbors grew', arrow: '↑' },
   ];
   const sentence: Record<AdCode, string> = {
-    A: 'The county lost population, and so did its neighbors combined.',
-    B: 'The county lost population while its neighbors combined grew.',
-    C: 'The county grew while its neighbors combined lost population.',
-    D: 'The county grew, and so did its neighbors combined.',
+    A: 'The county lost population, and so did its immediate neighbors, on average.',
+    B: 'The county lost population, but its immediate neighbors grew, on average.',
+    C: 'The county grew, but its immediate neighbors lost population, on average.',
+    D: 'The county grew, and so did its immediate neighbors, on average.',
   };
 
   // Arrow paths in a 10 × 16 box (as in Arrows.svelte).

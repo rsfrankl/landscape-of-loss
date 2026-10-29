@@ -8,82 +8,71 @@
   let { data }: { data: StartupData } = $props();
 </script>
 
-<!-- Two rows (spec 6.1): the title, with search, location and "?" on the right where they fit;
-     then the mode tabs; then the subtitle on its own full-width line. -->
+<!-- Spec 6.1: the title, the subtitle directly under it, then the mode tabs with search, location
+     and "How to read this map" on the right where they fit (otherwise on a row of their own). -->
 <header>
   <h1>The Landscape of Loss: US County-Level Depopulation Pathways, 1950–2020</h1>
-  <div class="tools">
-    <Search counties={data.counties} />
-    <LocateButton {data} />
-    <button
-      type="button"
-      class="about"
-      aria-label="How to read this, about and data notes"
-      aria-haspopup="dialog"
-      onclick={() => openAbout('read')}>?</button
-    >
-  </div>
-  <fieldset class="modes">
-    <legend class="visually-hidden">Map mode</legend>
-    {#each MODES as m (m.id)}
-      <label class:active={ui.mode === m.id}>
-        <input type="radio" name="mode" value={m.id} bind:group={ui.mode} />
-        {m.label}
-      </label>
-    {/each}
-  </fieldset>
   <p class="subtitle">
     What is the geography of US population loss, and how does it change when we account for spatial context
     (what’s happening in neighboring counties) and each county’s history of population change?
   </p>
+  <div class="controls">
+    <fieldset class="modes">
+      <legend class="visually-hidden">Map mode</legend>
+      {#each MODES as m (m.id)}
+        <label class:active={ui.mode === m.id}>
+          <input type="radio" name="mode" value={m.id} bind:group={ui.mode} />
+          {m.label}
+        </label>
+      {/each}
+    </fieldset>
+    <div class="tools">
+      <Search counties={data.counties} />
+      <LocateButton {data} />
+      <button type="button" class="about" aria-haspopup="dialog" onclick={() => openAbout('read')}>
+        <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+          <circle cx="9" cy="9" r="7.75" />
+          <path d="M6.6 7a2.4 2.4 0 1 1 3.3 2.2c-.6.3-.9.7-.9 1.3v.6" />
+          <circle class="dot" cx="9" cy="13.4" r="1" />
+        </svg>
+        <span class="label">How to read this map</span>
+      </button>
+    </div>
+  </div>
 </header>
 
 <style>
-  /* Grid areas (spec 6.1): the title, with the tools on the right where they fit (≥ 1360 px);
-     the tabs on their own row, joined by the tools where those don't fit beside the title (from
-     1024 px, with a narrower search and an icon-only location button under 1150 px), or below
-     the tabs under 1024 px; then the subtitle. */
   header {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    grid-template-areas:
-      'title tools'
-      'modes .'
-      'sub sub';
-    align-items: center;
-    gap: 8px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
     padding: 10px var(--gutter) 8px;
     border-bottom: 1px solid var(--hairline);
   }
-  @media (max-width: 1359px) {
-    header {
-      grid-template-areas:
-        'title title'
-        'modes tools'
-        'sub sub';
-    }
-  }
-  @media (max-width: 1023px) {
-    header {
-      grid-template-columns: minmax(0, 1fr);
-      grid-template-areas: 'title' 'modes' 'tools' 'sub';
-    }
-  }
   h1 {
-    grid-area: title;
     font-size: var(--size-title);
     font-weight: 800;
     line-height: 1.2;
   }
-  .tools {
-    grid-area: tools;
+  .subtitle {
+    margin: 0;
+    color: var(--muted);
+  }
+  /* The tabs, then the tools pushed to the right; the tools wrap to a row of their own when the
+     two don't fit side by side. */
+  .controls {
     display: flex;
-    justify-content: flex-end;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 16px;
+    margin-top: 2px;
+  }
+  .tools {
+    display: flex;
     gap: 8px;
+    margin-left: auto;
   }
   .modes {
-    grid-area: modes;
-    justify-self: start;
     display: flex;
     flex-wrap: nowrap;
     margin: 0;
@@ -92,23 +81,33 @@
     border-radius: 4px;
     overflow: hidden;
   }
-  .subtitle {
-    grid-area: sub;
-    margin: 0;
-    color: var(--muted);
-  }
   .about {
     flex: none;
-    width: 40px;
-    height: 40px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 0 14px 0 11px;
     border: 1px solid var(--hairline);
-    border-radius: 50%;
+    border-radius: 4px;
     background: var(--bg);
     font-weight: 800;
+    color: var(--accent);
     cursor: pointer;
   }
   .about:hover {
     border-color: var(--muted);
+  }
+  .about svg {
+    flex: none;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+  }
+  .about .dot {
+    fill: currentColor;
+    stroke: none;
   }
   label {
     position: relative;
@@ -133,8 +132,9 @@
       flex-wrap: wrap;
     }
   }
-  /* Phones (spec 8.2): a smaller title, the three tabs as equal columns whose labels wrap, the
-     search box taking the row's free width, and a smaller subtitle. */
+  /* Phones (spec 8.2): a smaller title and subtitle, the three tabs as equal columns whose labels
+     wrap, then search (taking the row's free width), location and an icon-only explainer button,
+     whose label stays for screen readers. */
   @media (max-width: 767px) {
     header {
       gap: 6px;
@@ -143,10 +143,18 @@
     h1 {
       font-size: 17px;
     }
+    .subtitle {
+      font-size: var(--size-small);
+      line-height: 1.35;
+    }
+    .controls {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 6px;
+    }
     .modes {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      justify-self: stretch;
     }
     label {
       justify-content: center;
@@ -157,14 +165,23 @@
       white-space: normal;
     }
     .tools {
-      justify-content: stretch;
+      margin-left: 0;
     }
     .tools > :global(:first-child) {
       flex: 1;
     }
-    .subtitle {
-      font-size: var(--size-small);
-      line-height: 1.35;
+    .about {
+      justify-content: center;
+      width: 40px;
+      padding: 0;
+    }
+    .about .label {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
     }
   }
   input {

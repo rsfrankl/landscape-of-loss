@@ -83,8 +83,8 @@
     position: relative;
     width: 260px;
   }
-  /* Narrow enough to share the tabs' row at 1024 px (spec 6.1); on phones the row's free width. */
-  @media (max-width: 1149px) {
+  /* Narrower below 1280 px, so the tools share the tabs' row down to about 1160 px (spec 6.1); on phones the row's free width. */
+  @media (max-width: 1279px) {
     .search {
       width: 168px;
     }

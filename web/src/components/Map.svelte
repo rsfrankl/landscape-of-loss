@@ -15,7 +15,7 @@
   } from 'd3';
   import { feature, mesh } from 'topojson-client';
   import type { StartupData } from '../lib/data';
-  import { activeMatch, breakdownHighlight, focus, selectCounty, ui } from '../lib/state.svelte';
+  import { activeMatch, breakdownHighlight, focus, mapView, selectCounty, ui, type View } from '../lib/state.svelte';
   import { dataColor, emphasis, hexToRgb, mix, palettes, type Rgb } from '../lib/colors';
   import { PICK_RADIUS, pickCandidates, pickColor } from '../lib/picking';
   import { mapLabel } from '../lib/describe';
@@ -205,10 +205,19 @@
     setHovered(hit(x, y));
   }
 
+  // Clicking another county selects it at once. Clicking the selected county again, or outside the
+  // U.S., deselects (spec 6.5), but only once no second click follows, so a double-click zoom
+  // keeps the selection.
+  const DOUBLE_CLICK_MS = 300;
+  let deselectTimer: ReturnType<typeof setTimeout> | undefined;
+
   function onClick(event: MouseEvent): void {
+    clearTimeout(deselectTimer);
+    if (event.detail > 1) return;
     const [x, y] = pointer(event, svg);
     const i = hit(x, y);
-    if (i >= 0) selectCounty(i);
+    if (i >= 0 && i !== ui.selected) selectCounty(i);
+    else if (ui.selected >= 0) deselectTimer = setTimeout(() => selectCounty(-1), DOUBLE_CLICK_MS);
   }
 
   // ---- Zoom -------------------------------------------------------------------------------
@@ -278,14 +287,23 @@
       });
   });
 
-  // Search, location and URL loads ask for a county to be framed; "Show all on map" asks for a set.
-  // Map clicks and hovering never move the map.
+  /** Returns to an earlier view (hiding similar counties). */
+  function zoomToView(v: View): void {
+    select(svg).transition().duration(600).call(zoomer.transform, zoomIdentity.translate(v.x, v.y).scale(v.k));
+  }
+
+  // Search, location and URL loads ask for a county to be framed; "Show all on map" asks for a set;
+  // hiding similar counties asks for the view before them. Map clicks and hovering never move the map.
   let handledFocus = 0;
   $effect(() => {
     const seq = focus.seq;
     if (!zoomReady || width === 0 || height === 0 || seq === handledFocus) return;
     handledFocus = seq;
-    untrack(() => (focus.counties.length ? zoomToCounties(focus.counties) : zoomToCounty(focus.county)));
+    untrack(() => {
+      if (focus.view) zoomToView(focus.view);
+      else if (focus.counties.length) zoomToCounties(focus.counties);
+      else zoomToCounty(focus.county);
+    });
   });
 
   onMount(() => {
@@ -302,7 +320,10 @@
         zooming = true;
         setHovered(-1);
       })
-      .on('zoom', (event) => (transform = event.transform))
+      .on('zoom', (event) => {
+        transform = event.transform;
+        mapView.current = { k: transform.k, x: transform.x, y: transform.y };
+      })
       .on('end', (event) => {
         zooming = false;
         settled = event.transform;
@@ -315,6 +336,7 @@
   onDestroy(() => {
     transition?.stop();
     clearTimeout(tooltipTimer);
+    clearTimeout(deselectTimer);
   });
 
   // Recolour whenever the mode, decade or emphasis changes.

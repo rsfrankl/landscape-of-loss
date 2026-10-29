@@ -22,6 +22,13 @@
     else if (!about.open && dialog.open) dialog.close();
   });
 
+  // Opened from a legend's "What do these mean?": scroll to that legend's section, once.
+  $effect(() => {
+    if (!about.open || !about.section) return;
+    dialog.querySelector(`#about-sec-${about.section}`)?.scrollIntoView({ block: 'start' });
+    about.section = null;
+  });
+
   function onTabKey(event: KeyboardEvent): void {
     const i = tabs.findIndex((t) => t.id === about.tab);
     const next = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: tabs.length - 1 }[event.key];
@@ -45,7 +52,7 @@
   const notes = $derived([
     { title: 'Counties', text: meta.notes.geography },
     { title: 'The 2010 base', text: meta.notes.base2010 },
-    { title: 'Change classes and colors', text: meta.notes.changeClasses },
+    { title: 'Change classes and colors', text: meta.notes.changeClasses, id: 'classes' },
     { title: 'Neighbors', text: meta.notes.neighbors },
     { title: 'Urban–rural classes', text: `Metro is RUCC 1–3, from the 2023 codes. ${meta.notes.rucc}` },
     { title: 'Components of change', text: meta.notes.components },
@@ -79,16 +86,17 @@
     {#if about.open && about.tab === 'read'}
       <div role="tabpanel" id="about-panel-read" aria-labelledby="about-tab-read" tabindex="0">
         <p class="prose">
-          The map has three views. <b>Decadal population change</b> colors each county by how much it grew or
-          lost in one decade. <b>Decadal population change in spatial context</b> shows, for the same decade,
-          whether the county and its neighbors together grew or lost. <b>Population change trajectories</b>
-          shows the paper's eight 70-year pathways, which group counties by their sequence of those
-          county-and-neighbors states from 1950 to 2020.
+          This map has three views. <b>Decadal population change</b> colors each county by percent population
+          change in each census period. <b>Decadal population change in spatial context</b> shows, for the same
+          decade, the connection between a county’s population change and that of its immediate neighbors
+          (population-weighted average). <b>Population change trajectories</b> includes a longer period of
+          population change, each decade from 1950 to 2020, and displays eight types of population change
+          trajectory, reflecting different temporal and spatial experiences of population change.
         </p>
-        <h3>A county and its neighbors, in one decade</h3>
+        <h3 id="about-sec-states">A county and its neighbors, in one decade</h3>
         <AdDiagram {meta} />
         <p class="hint"><ArrowNote /></p>
-        <h3>The eight pathways, 1950–2020</h3>
+        <h3 id="about-sec-types">The eight types of population change</h3>
         {#each groups as g (g.title)}
           <h4>{g.title}</h4>
           <ul class="pathways">
@@ -105,7 +113,7 @@
     {:else if about.open && about.tab === 'about'}
       <div role="tabpanel" id="about-panel-about" aria-labelledby="about-tab-about" tabindex="0">
         <p class="prose">
-          This dashboard visualizes the findings of the paper below for {formatCount(n)} conterminous U.S. counties.
+          This dashboard visualizes findings from the paper below for {formatCount(n)} conterminous U.S. counties.
           It adds no new analysis. Its one derived feature, “similar counties”, ranks counties by how closely
           their decade-by-decade population change matched; it is not part of the paper's analysis.
         </p>
@@ -134,7 +142,7 @@
     {:else if about.open}
       <div role="tabpanel" id="about-panel-notes" aria-labelledby="about-tab-notes" tabindex="0">
         {#each notes as note (note.title)}
-          <h3>{note.title}</h3>
+          <h3 id={note.id ? `about-sec-${note.id}` : undefined}>{note.title}</h3>
           <p class="prose">{note.text}</p>
         {/each}
         <h3>County profile indicators</h3>
@@ -230,6 +238,7 @@
     outline-offset: -2px;
   }
   h3 {
+    scroll-margin-top: 8px;
     margin: 18px 0 6px;
     font-size: var(--size-heading);
     font-weight: 800;

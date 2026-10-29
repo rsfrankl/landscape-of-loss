@@ -6,11 +6,16 @@
   import { untrack } from 'svelte';
   import { line, scaleLinear } from 'd3';
   import type { County, Meta } from '../lib/types';
-  import { activeMatch, openSimilar, showCounties, ui } from '../lib/state.svelte';
+  import { activeMatch, mapView, openSimilar, showCounties, similarView, ui } from '../lib/state.svelte';
   import { similarCounties } from '../lib/similar';
   import { countyTitle } from '../lib/describe';
 
-  let { meta, counties, county }: { meta: Meta; counties: County[]; county: County } = $props();
+  let {
+    meta,
+    counties,
+    county,
+    onhide,
+  }: { meta: Meta; counties: County[]; county: County; onhide: () => void } = $props();
 
   const index = $derived(counties.indexOf(county));
   const matches = $derived(similarCounties(counties, index, ui.similar));
@@ -26,11 +31,14 @@
   const fit = () => showCounties([index, ...matches.map((m) => m.index)]);
 
   // Opening the block, or changing its settings, frames the county and its matches. Following a
-  // match (a new county) does not: the map moves only on these and "Show all on map".
+  // match (a new county) does not: the map moves only on these and "Show all on map". The view
+  // from before the first framing is kept, so hiding the block can return to it.
   $effect(() => {
     void [ui.similar.any, ui.similar.size, ui.similar.metro];
     untrack(() => {
-      if (matches.length) fit();
+      if (!matches.length) return;
+      similarView.before ??= { ...mapView.current };
+      fit();
     });
   });
 
@@ -119,6 +127,7 @@
 <p class="note">
   Ranked by how closely population change matched, decade by decade, {first}–{last}. Not part of the paper's analysis.
 </p>
+<button type="button" class="hide" onclick={onhide}>Hide similar counties</button>
 
 <style>
   .pool {
@@ -272,5 +281,15 @@
     margin: 10px 0 0;
     font-size: var(--size-small);
     color: var(--muted);
+  }
+  .hide {
+    min-height: 40px;
+    margin-bottom: -10px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--accent);
+    text-decoration: underline;
+    cursor: pointer;
   }
 </style>
