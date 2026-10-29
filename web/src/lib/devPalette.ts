@@ -18,8 +18,8 @@ export function devPalette(): string | null {
 }
 
 /**
- * Recolours the pathways in the loaded meta.json to the option in the URL, and labels the page
- * with a badge at the top right.
+ * Recolours the pathways in the loaded meta.json to the option in the URL, and labels the map
+ * with a badge at its top left (added once the map area has rendered).
  */
 export function applyDevPalette(meta: Meta): void {
   const p = devPalette();
@@ -28,9 +28,14 @@ export function applyDevPalette(meta: Meta): void {
   const badge = document.createElement('p');
   badge.textContent = `Pathway colours: option ${p} (dev preview)`;
   badge.style.cssText =
-    'position: fixed; top: 8px; right: 8px; z-index: 10; margin: 0; padding: 4px 10px; pointer-events: none;' +
-    'border: 1px solid var(--heading); border-radius: 4px; background: var(--bg); font-weight: 800;';
-  document.body.append(badge);
+    'position: absolute; top: 8px; left: var(--gutter); z-index: 2; margin: 0; padding: 4px 10px;' +
+    'pointer-events: none; border: 1px solid var(--heading); border-radius: 4px; background: var(--bg); font-weight: 800;';
+  const place = () => {
+    const map = document.querySelector('main.map');
+    if (map) map.append(badge);
+    else requestAnimationFrame(place);
+  };
+  place();
 }
 
 /** Keeps `palette` in the query string when the URL sync rewrites it. */
