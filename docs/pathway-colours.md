@@ -1,7 +1,8 @@
 # Pathway colours: options for the low-contrast pairs
 
-For the author's decision (spec 7 and 8.6). **Nothing has changed:** `meta.json` still uses
-the paper's Fig. 8 colours. This note lists options to compare against the polished map.
+**Decided 28 Oct 2026: option C** is in `meta.json` (spec 7). The pipeline keeps the paper's
+Fig. 8 colours alongside (`PATHWAYS$fig8` in `pipeline/R/outputs.R`) and still checks them against
+`data_dict.docx`. The options as they were compared are below.
 
 Method: R `colorspace` simulation (Machado 2009, severity 1) and `farver` CIEDE2000, the
 same as the 27 Oct change-palette re-check. It does not exactly reproduce the 26 Oct

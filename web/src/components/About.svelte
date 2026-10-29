@@ -53,6 +53,7 @@
     { title: 'Counties', text: meta.notes.geography },
     { title: 'The 2010 base', text: meta.notes.base2010 },
     { title: 'Change classes and colors', text: meta.notes.changeClasses, id: 'classes' },
+    { title: 'Pathway colors', text: meta.notes.pathwayColors },
     { title: 'Neighbors', text: meta.notes.neighbors },
     { title: 'Urban–rural classes', text: `Metro is RUCC 1–3, from the 2023 codes. ${meta.notes.rucc}` },
     { title: 'Components of change', text: meta.notes.components },

@@ -4,11 +4,12 @@
 // module and the live site always uses meta.json. The hexes mirror pipeline/checks/pathway_colours.R.
 import type { Meta } from './types';
 
-/** Changed colours by pathway id; A is the paper's Fig. 8 palette, unchanged. */
-const OPTIONS: Record<string, Record<number, string>> = {
-  A: {},
-  B: { 2: '#f3a31a', 3: '#c0433d', 8: '#aef3a0' },
-  C: { 2: '#f3a31a', 4: '#007e40', 8: '#aef3a0' },
+/** Each option's eight pathway colours, by id. A is the paper's Fig. 8; C is the one in use. */
+const FIG8 = ['#6388b4', '#ffae34', '#ef6f6a', '#00a86b', '#8cc2ca', '#e5e522', '#bb7693', '#8cd17d'];
+const OPTIONS: Record<string, string[]> = {
+  A: FIG8,
+  B: FIG8.map((c, i) => ({ 1: '#f3a31a', 2: '#c0433d', 7: '#aef3a0' })[i] ?? c),
+  C: FIG8.map((c, i) => ({ 1: '#f3a31a', 3: '#007e40', 7: '#aef3a0' })[i] ?? c),
 };
 
 /** The option named in the URL, or null. */
@@ -24,7 +25,7 @@ export function devPalette(): string | null {
 export function applyDevPalette(meta: Meta): void {
   const p = devPalette();
   if (!p) return;
-  for (const [id, color] of Object.entries(OPTIONS[p])) meta.pathways[Number(id) - 1].color = color;
+  OPTIONS[p].forEach((color, i) => (meta.pathways[i].color = color));
   const badge = document.createElement('p');
   badge.textContent = `Pathway colours: option ${p} (dev preview)`;
   badge.style.cssText =

@@ -698,6 +698,12 @@ test('downloads: this county, the filtered counties and all counties, each with 
   expect(all.file).toBe('landscape-of-loss-all.csv');
   expect(all.lines).toHaveLength(3109);
   await expect(page.locator('footer').last()).toContainText('Please cite:');
+  await expect(page.locator('footer').last()).toContainText('Read geoid as text to keep leading zeros.');
+  await expect(page.locator('.legend .cite')).toContainText('Read geoid as text to keep leading zeros.');
+  // The footer stays on one line at 1280 px (spec 6.1).
+  await page.setViewportSize({ width: 1280, height: 800 });
+  const footer = page.locator('.footer p');
+  expect(await footer.evaluate((el) => el.getBoundingClientRect().height)).toBeLessThanOrEqual(41);
 });
 
 const noArial = (page: Page) =>
@@ -870,9 +876,10 @@ test('acceptance data on screen: pathway counts, 2010–20 losers, Sarpy in the 
 });
 
 test('the ?palette= colour preview is dev-only: the production build ignores it', async ({ page }) => {
-  await page.goto('./?mode=pathways&palette=B');
-  const swatch = page.locator('.legend .item', { hasText: 'Persistent Loss' }).locator('.swatch');
-  await expect(swatch).toHaveCSS('background-color', 'rgb(239, 111, 106)');
+  // Option A would restore the paper's Fig. 8 green; the build keeps option C's paler one (spec 7).
+  await page.goto('./?mode=pathways&palette=A');
+  const swatch = page.locator('.legend .item', { hasText: 'Emerging Growth' }).locator('.swatch');
+  await expect(swatch).toHaveCSS('background-color', 'rgb(174, 243, 160)');
   await expect(page.getByText('dev preview')).toHaveCount(0);
   await expect(page).toHaveURL(/\?mode=pathways$/);
 });

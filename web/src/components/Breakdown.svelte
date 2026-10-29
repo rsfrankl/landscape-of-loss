@@ -38,8 +38,15 @@
   }
 </script>
 
-<section class="breakdown" aria-labelledby="breakdown-title">
-  <h3 id="breakdown-title">The same {decade} loss can follow very different 70-year paths.</h3>
+<!-- The introduction is three sentences, so it is a paragraph, not the heading; the section is
+     named for screen readers instead. -->
+<section class="breakdown" aria-label="{decade} losers and gainers by pathway">
+  <p class="intro">
+    The direction and magnitude of population change for 2010 to 2020 tell only part of the story. Histories,
+    trajectories, and regional contexts also offer valuable insights into the county-level experience of
+    population change. The bars below divide counties that lost and gained population from 2010 to 2020 into
+    categories that reflect their population change trajectories from 1950 to 2020.
+  </p>
   <p class="hint">Point to a pathway to highlight its counties; select it to pin.</p>
 
   {#each bars as bar (bar.group)}
@@ -93,13 +100,11 @@
     padding-top: 14px;
     border-top: 1px solid var(--hairline);
   }
-  h3 {
-    font-size: var(--size-heading);
-    font-weight: 800;
-    line-height: 1.3;
+  .intro {
+    margin: 0;
   }
   .hint {
-    margin: 4px 0 0;
+    margin: 6px 0 0;
     font-size: var(--size-small);
     color: var(--muted);
   }

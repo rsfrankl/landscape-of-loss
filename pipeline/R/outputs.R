@@ -7,7 +7,11 @@ PATHWAYS <- data.frame(
            "Punctuated Regionalized Loss", "Constant Growth",
            "Localized Recovery and Regional Growth", "Punctuated Growth", "Emerging Growth"),
   group = rep(c("loss", "growth"), each = 4),
-  color = c("#6388b4", "#ffae34", "#ef6f6a", "#00a86b", "#8cc2ca", "#e5e522", "#bb7693", "#8cd17d"),
+  # Option C of docs/pathway-colours.md (author's decision, 28 Oct 2026): Isolated Loss slightly
+  # darker, Punctuated Regionalized Loss darker, Emerging Growth paler, for colour-vision contrast.
+  color = c("#6388b4", "#f3a31a", "#ef6f6a", "#007e40", "#8cc2ca", "#e5e522", "#bb7693", "#aef3a0"),
+  # The paper's Fig. 8 colours, as in data_dict.docx; checked by check_dict_palettes().
+  fig8 = c("#6388b4", "#ffae34", "#ef6f6a", "#00a86b", "#8cc2ca", "#e5e522", "#bb7693", "#8cd17d"),
   blurb = c(
     "Decades of shared regional growth, turning to local loss by 2010\u201320, often at the edge of growing regions.",
     "Losing population while neighboring counties grow: islands of loss inside growing regions.",
@@ -62,8 +66,8 @@ read_typology <- function(path, universe) {
   t
 }
 
-# Pathway and A-D hexes must match the author's data dictionary. The change palette is new
-# by design (spec §7) and is not checked against Figure 1.
+# The pathways' Fig. 8 hexes and the A-D hexes must match the author's data dictionary. The
+# displayed pathway colours (option C) and the change palette differ by design (spec §7).
 check_dict_palettes <- function(docx) {
   xml <- paste(readLines(unz(docx, "word/document.xml"), warn = FALSE, encoding = "UTF-8"), collapse = "")
   text <- gsub("<[^>]+>", "", gsub("</w:p>", "\n", xml, fixed = TRUE))
@@ -75,7 +79,7 @@ check_dict_palettes <- function(docx) {
     hit <- pairs$hex[grepl(paste0("^", code, " \\("), pairs$key)]
     if (length(hit) == 1) hit else NA_character_
   }, "")
-  bad <- c(PATHWAYS$name[is.na(pw) | pw != PATHWAYS$color], AD_STATES$code[is.na(ad) | ad != AD_STATES$color])
+  bad <- c(PATHWAYS$name[is.na(pw) | pw != PATHWAYS$fig8], AD_STATES$code[is.na(ad) | ad != AD_STATES$color])
   if (length(bad)) stop("palette differs from data_dict.docx for: ", paste(bad, collapse = ", "))
   list(pathways = nrow(PATHWAYS), ad = nrow(AD_STATES))
 }
@@ -183,6 +187,10 @@ build_meta <- function(counties, palette_check, pop_base_diff, t1, t2) {
         "0% to under 10%; under 0% to above \u221210%; \u221210% or less. These colors differ from the",
         "published Figure 1, whose breaks at ±9.9% and 19.9% misplace some counties.",
         "Change palette: CARTOColors Earth, CARTO, CC BY 4.0."),
+      pathwayColors = paste(
+        "The pathway colors follow the paper's Figure 8, with three made lighter or darker so pairs",
+        "stay distinct for color-vision deficiencies: Isolated Loss, Punctuated Regionalized Loss and",
+        "Emerging Growth."),
       neighbors = paste(
         "Neighbors are queen-contiguous counties. Neighbor change is population-weighted: the sum of",
         "neighbors' change over the sum of their starting populations. Dukes and Nantucket, MA, and",

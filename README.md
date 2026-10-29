@@ -21,7 +21,8 @@ The site offers CSV downloads of one county, the counties in the current pathway
 all 3,108 counties: a plain header row and one row per county (`geoid, county, state,
 pathway, seq, pop1950…pop2020, pct1950_60…pct2010_20, rucc2013, rucc2023`). If you use
 them, please cite the paper above and, for the historical counts, Schroeder (2016),
-[doi:10.13020/D6XW2H](https://doi.org/10.13020/D6XW2H).
+[doi:10.13020/D6XW2H](https://doi.org/10.13020/D6XW2H). Read geoid as text to keep leading
+zeros.
 
 The full specification is in [docs/SPEC.md](docs/SPEC.md). The data validation report is in
 [docs/validation.md](docs/validation.md).

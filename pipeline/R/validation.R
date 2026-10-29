@@ -196,7 +196,7 @@ render_validation <- function(path, ad_check, raw_hashes, provenance, base2010, 
     sprintf("Startup files (`counties.topo.json`, `meta.json`, `counties.json`): %s bytes gzipped (budget 2 MB).",
             format(startup_gz, big.mark = ",")),
     "",
-    "Pathway and A–D colours in `meta.json` match `data_dict.docx` (asserted). The change palette is new by design (spec §7) and not checked against Figure 1.",
+    "The A–D colours in `meta.json` and the pathways' Fig. 8 colours in the pipeline match `data_dict.docx` (asserted). `meta.json` shows three pathways (Isolated Loss, Punctuated Regionalized Loss, Emerging Growth) in lighter or darker versions for colour-vision contrast: option C of `docs/pathway-colours.md` (spec §7). The change palette is new by design and not checked against Figure 1.",
     "")
 
   dir.create(dirname(path), showWarnings = FALSE, recursive = TRUE)

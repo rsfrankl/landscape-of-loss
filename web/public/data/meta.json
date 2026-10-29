@@ -51,7 +51,7 @@
       "name": "Isolated Loss",
       "group": "loss",
       "n": 126,
-      "color": "#ffae34",
+      "color": "#f3a31a",
       "blurb": "Losing population while neighboring counties grow: islands of loss inside growing regions."
     },
     {
@@ -67,7 +67,7 @@
       "name": "Punctuated Regionalized Loss",
       "group": "loss",
       "n": 512,
-      "color": "#00a86b",
+      "color": "#007e40",
       "blurb": "Alternating growth and loss, with loss shared across the region since 2010."
     },
     {
@@ -99,7 +99,7 @@
       "name": "Emerging Growth",
       "group": "growth",
       "n": 69,
-      "color": "#8cd17d",
+      "color": "#aef3a0",
       "blurb": "Long-run loss turning to growth in the latest decades."
     }
   ],
@@ -189,6 +189,7 @@
     "geography": "3,108 conterminous U.S. counties in 2020 boundaries. Shannon County, SD (46113) is recoded to Oglala Lakota County (46102), and Bedford city, VA (51515) is counted in Bedford County (51019).",
     "base2010": "The 2010 count is the Schroeder (2016) workbook value used by the paper's sequences. It differs slightly from the GeoPackage's 2010 field in 716 counties; the workbook value is used everywhere.",
     "changeClasses": "Decadal change uses five classes with exact breaks: 20% or more; 10% to under 20%; 0% to under 10%; under 0% to above −10%; −10% or less. These colors differ from the published Figure 1, whose breaks at ±9.9% and 19.9% misplace some counties. Change palette: CARTOColors Earth, CARTO, CC BY 4.0.",
+    "pathwayColors": "The pathway colors follow the paper's Figure 8, with three made lighter or darker so pairs stay distinct for color-vision deficiencies: Isolated Loss, Punctuated Regionalized Loss and Emerging Growth.",
     "neighbors": "Neighbors are queen-contiguous counties. Neighbor change is population-weighted: the sum of neighbors' change over the sum of their starting populations. Dukes and Nantucket, MA, and San Juan, WA, have no neighbors and count as neighbor growth.",
     "rucc": "RUCC 2023 codes Connecticut by planning region, not county; the 2013 code is used for metro status.",
     "profile": "Race and ethnicity are from the 2020 Census (PL 94-171, table P2); the other profile indicators are ACS 2016–20 5-year estimates. Language is the share of people aged 5+ who speak a language other than English at home. Education is bachelor's degree or higher (age 25+), which differs from Table 1 of the paper (bachelor's degree only). The \"Conterminous U.S.\" comparison values are pooled over the 3,108 conterminous counties in this study, not the whole country, so they differ slightly from national figures (non-Hispanic white: 58.0% here, 57.8% nationally).",

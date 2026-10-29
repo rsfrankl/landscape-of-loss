@@ -206,12 +206,12 @@ RUCC 2023 is primary; metro = codes 1–3. 8 Connecticut counties have no 2023 c
 | file | bytes | gzip_bytes |
 | --- | --- | --- |
 | counties.topo.json | 1,119,539 | 308,442 |
-| meta.json | 11,530 | 3,343 |
+| meta.json | 11,755 | 3,433 |
 | counties.json | 1,537,444 | 434,564 |
 | acs.json | 1,313,359 | 165,748 |
 | components.json | 291,651 | 56,395 |
 
-Startup files (`counties.topo.json`, `meta.json`, `counties.json`): 746,349 bytes gzipped (budget 2 MB).
+Startup files (`counties.topo.json`, `meta.json`, `counties.json`): 746,439 bytes gzipped (budget 2 MB).
 
-Pathway and A–D colours in `meta.json` match `data_dict.docx` (asserted). The change palette is new by design (spec §7) and not checked against Figure 1.
+The A–D colours in `meta.json` and the pathways' Fig. 8 colours in the pipeline match `data_dict.docx` (asserted). `meta.json` shows three pathways (Isolated Loss, Punctuated Regionalized Loss, Emerging Growth) in lighter or darker versions for colour-vision contrast: option C of `docs/pathway-colours.md` (spec §7). The change palette is new by design and not checked against Figure 1.
 

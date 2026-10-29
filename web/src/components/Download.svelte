@@ -21,6 +21,7 @@
   <span class="cite">
     Please cite: {authors} ({c.year}), <i>{c.journal}</i>, <a href={c.url}>doi:{c.doi}</a>.
     Historical counts: Schroeder (2016), DRUM, <a href="https://doi.org/10.13020/D6XW2H">doi:10.13020/D6XW2H</a>.
+    Read geoid as text to keep leading zeros.
   </span>
 </span>
 
