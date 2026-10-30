@@ -3,6 +3,7 @@ message: "If you use this dashboard or its data, please cite the article below."
 title: "The Landscape of Loss: US County-Level Depopulation Pathways, 1950–2020"
 type: software
 repository-code: "https://github.com/rsfrankl/landscape-of-loss"
+url: "https://www.rachelfranklin.org/landscape-of-loss/"
 authors:
   - family-names: Park
     given-names: G.

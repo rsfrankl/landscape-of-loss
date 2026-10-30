@@ -1,5 +1,7 @@
 # The Landscape of Loss: US County-Level Depopulation Pathways, 1950–2020
 
+**Live site:** <https://www.rachelfranklin.org/landscape-of-loss/>
+
 A static web dashboard for exploring the eight county population-change pathways
 (1950–2020) published in:
 
